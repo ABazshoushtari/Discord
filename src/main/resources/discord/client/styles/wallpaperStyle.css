@@ -1,0 +1,5 @@
+.image {
+    -fx-background-image: url(wallpaper.png);
+    -fx-background-size: contain;
+    -fx-background-position: center;
+}

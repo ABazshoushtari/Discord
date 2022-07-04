@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane minHeight="-Infinity" minWidth="-Infinity" prefHeight="512.0" prefWidth="1024.0" styleClass="image" stylesheets="@styles/wallpaperStyle.css" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <VBox alignment="CENTER" layoutX="213.0" layoutY="50.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" style="-fx-background-color: #242526;">
+         <children>
+            <Label alignment="CENTER" contentDisplay="CENTER" focusTraversable="false" maxWidth="518.0" prefHeight="57.0" prefWidth="560.0" text="Welcome back!" textAlignment="CENTER" textFill="WHITE">
+               <font>
+                  <Font name="System Bold" size="24.0" />
+               </font>
+            </Label>
+            <Label alignment="CENTER" contentDisplay="CENTER" focusTraversable="false" maxWidth="518.0" prefHeight="9.0" prefWidth="560.0" text="We're so excited to see you again!" textAlignment="CENTER" textFill="GREY">
+               <font>
+                  <Font size="14.0" />
+               </font>
+               <padding>
+                  <Insets bottom="20.0" />
+               </padding>
+            </Label>
+            <HBox maxWidth="518.0" prefHeight="24.0" prefWidth="560.0">
+               <children>
+                  <Label focusTraversable="false" maxHeight="1.7976931348623157E308" prefHeight="19.0" prefWidth="76.0" text="USERNAME -" textAlignment="CENTER" textFill="#e07575">
+                     <font>
+                        <Font name="System Bold" size="12.0" />
+                     </font>
+                  </Label>
+                  <Label focusTraversable="false" maxHeight="1.7976931348623157E308" prefHeight="24.0" prefWidth="123.0" text="This field is required" textFill="#e07575">
+                     <font>
+                        <Font name="System Bold Italic" size="12.0" />
+                     </font>
+                  </Label>
+               </children>
+               <padding>
+                  <Insets bottom="5.0" />
+               </padding>
+            </HBox>
+            <TextField fx:id="usernameOnLoginMenu" maxWidth="518.0" prefHeight="45.0" prefWidth="520.0" style="-fx-text-fill: white; -fx-background-color: black;">
+               <font>
+                  <Font size="14.0" />
+               </font>
+            </TextField>
+            <HBox maxWidth="518.0" prefHeight="24.0" prefWidth="560.0">
+               <children>
+                  <Label focusTraversable="false" maxHeight="1.7976931348623157E308" prefHeight="17.0" prefWidth="78.0" text="PASSWORD -" textAlignment="CENTER" textFill="#e07575">
+                     <font>
+                        <Font name="System Bold" size="12.0" />
+                     </font>
+                  </Label>
+                  <Label focusTraversable="false" maxHeight="1.7976931348623157E308" prefHeight="24.0" prefWidth="123.0" text="This field is required" textFill="#e07575">
+                     <font>
+                        <Font name="System Bold Italic" size="12.0" />
+                     </font>
+                  </Label>
+               </children>
+               <padding>
+                  <Insets bottom="5.0" top="20.0" />
+               </padding>
+            </HBox>
+            <TextField fx:id="passwordOnLoginMenu" maxWidth="518.0" prefHeight="45.0" prefWidth="520.0" style="-fx-text-fill: white; -fx-background-color: black;">
+               <font>
+                  <Font size="14.0" />
+               </font>
+            </TextField>
+            <Label prefHeight="23.0" prefWidth="133.0" text="Forgot your password?" textFill="#4577db">
+               <VBox.margin>
+                  <Insets bottom="20.0" />
+               </VBox.margin>
+               <padding>
+                  <Insets top="5.0" />
+               </padding>
+               <font>
+                  <Font name="System Bold" size="12.0" />
+               </font>
+            </Label>
+            <Button alignment="CENTER" contentDisplay="CENTER" maxWidth="518.0" mnemonicParsing="false" onAction="#login" prefHeight="41.0" prefWidth="520.0" style="-fx-background-color: #253DA1;" text="Login" textFill="WHITE">
+               <font>
+                  <Font name="System Bold" size="13.0" />
+               </font>
+               <VBox.margin>
+                  <Insets />
+               </VBox.margin>
+            </Button>
+            <HBox maxWidth="518.0" prefHeight="24.0" prefWidth="560.0">
+               <children>
+                  <Label focusTraversable="false" maxHeight="1.7976931348623157E308" prefHeight="17.0" prefWidth="106.0" text="Need an account?" textAlignment="CENTER" textFill="GREY">
+                     <font>
+                        <Font name="System Bold" size="12.0" />
+                     </font>
+                  </Label>
+                  <Label maxHeight="1.7976931348623157E308" onMouseClicked="#loadSignupMenu" prefHeight="17.0" prefWidth="52.0" text="Register" textFill="#4577db">
+                     <font>
+                        <Font name="System Bold" size="12.0" />
+                     </font>
+                  </Label>
+                  <Label fx:id="loginErrorMessage" focusTraversable="false" maxHeight="1.7976931348623157E308" prefHeight="17.0" prefWidth="354.0" textAlignment="CENTER" textFill="RED">
+                     <font>
+                        <Font name="System Bold" size="12.0" />
+                     </font>
+                  </Label>
+               </children>
+               <padding>
+                  <Insets bottom="5.0" top="10.0" />
+               </padding>
+            </HBox>
+         </children>
+         <opaqueInsets>
+            <Insets />
+         </opaqueInsets>
+         <padding>
+            <Insets bottom="20.0" left="40.0" right="40.0" top="20.0" />
+         </padding>
+      </VBox>
+   </children>
+</AnchorPane>
