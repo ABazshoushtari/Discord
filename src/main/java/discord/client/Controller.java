@@ -45,27 +45,38 @@ public class Controller {
 
     // login methods:
     @FXML
-    void login(MouseEvent event) throws IOException, ClassNotFoundException {
+    void login(Event event) throws IOException, ClassNotFoundException {
         loginErrorMessage.setText("");
         String usernameField = usernameOnLoginMenu.getText();
         String passwordField = passwordOnLoginMenu.getText();
-        Model user = mySocket.sendSignalAndGetResponse(new LoginAction(usernameField, passwordField));
-        if (user == null) {
-            loginErrorMessage.setText("A username by this password could not be found!");
+        if (!"".equals(usernameField.trim()) && !"".equals(passwordField.trim())) {
+            Model user = mySocket.sendSignalAndGetResponse(new LoginAction(usernameField, passwordField));
+            if (user == null) {
+                loginErrorMessage.setText("A username by this password could not be found!");
+            } else {
+                this.user = user;
+                loadProfilePage(event);
+            }
         } else {
-            this.user = user;
-            //loadProfilePage(event);
+            loginErrorMessage.setText("You have empty fields!");
         }
     }
 
-    private void loadProfilePage(MouseEvent event) {
+    private void loadProfilePage(Event event) {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("profilePage.fxml"));
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         App.loadNewScene(loader, stage, this);
+        profileUsername.setText(user.getUsername());
+        profileEmail.setText(user.getEmail());
+        if (user.getPhoneNumber() != null) {
+            profilePhoneNumber.setText(user.getPhoneNumber());
+        } else {
+            profilePhoneNumber.setText("You haven't added a phone number yet.");
+        }
     }
 
     @FXML
-    void loadSignupMenu(MouseEvent event) {
+    void loadSignupMenu(Event event) {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("signupMenu.fxml"));
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         App.loadNewScene(loader, stage, this);
@@ -136,7 +147,8 @@ public class Controller {
             mySocket.sendSignalAndGetResponse(signupAction); // always returns true and gets ignored
 
             signupAction.finalizeStage();
-            /*user =*/mySocket.sendSignalAndGetResponse(signupAction);  // we can get the signed-up user here but ignore for now
+            /*user =*/
+            mySocket.sendSignalAndGetResponse(signupAction);  // we can get the signed-up user here but ignore for now
             //conditionMessage1.setText(user.getUsername() + " successfully signed up");
             loadLoginMenu(event);
         }
@@ -148,4 +160,23 @@ public class Controller {
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         App.loadNewScene(loader, stage, this);
     }
+
+    //////////////////////////////////////////////////////////// profile page scene ->
+    // profile fields:
+    //@FXML
+    //private Avatar avatar;
+    @FXML
+    private Label status;
+    @FXML
+    private TextField profileUsername;
+    @FXML
+    private Label usernameEditButton;
+    @FXML
+    private TextField profileEmail;
+    @FXML
+    private Label emailEditButton;
+    @FXML
+    private TextField profilePhoneNumber;
+    @FXML
+    private Label phoneNumberEditButton;
 }

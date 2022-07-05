@@ -131,6 +131,7 @@ public class MainServer {
     }
 
     public static boolean signUpUser(Model newUser) {
+        IDs.put(newUser.getUsername(), newUser.getUID());
         users.put(newUser.getUID(), newUser);
         return updateDatabase(newUser);
     }
