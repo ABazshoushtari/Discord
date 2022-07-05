@@ -14,17 +14,22 @@ public class SendFriendRequestAction implements Action {
 
     @Override
     public Object act() {
-        if (!MainServer.getUsers().containsKey(username)) {
+        Integer UID = MainServer.getIDs().getOrDefault(username, null);
+        if (UID == null) {
+            return 0;
+        }
+        if (!MainServer.getUsers().containsKey(UID)) {
             return 0;
         } else {
-            Model user = MainServer.getUsers().get(username);
-            if (user.getFriendRequests().contains(requester)) {
+            Model user = MainServer.getUsers().get(UID);
+            int requesterID = MainServer.getIDs().get(requester);
+            if (user.getFriendRequests().contains(requesterID)) {
                 return 1;
             }
-            if (user.getBlockedList().contains(requester)) {
+            if (user.getBlockedList().contains(requesterID)) {
                 return 2;
             }
-            user.getFriendRequests().add(requester);
+            user.getFriendRequests().add(requesterID);
             if (!MainServer.updateDatabase(user)) {
                 return 3;
             }

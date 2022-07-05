@@ -10,12 +10,12 @@ public class Server implements Asset {
     private final int unicode;
     private String serverName;
     private HashMap<String, Role> serverRoles;      // maps the roles' names to their Role object
-    private HashMap<String, HashSet<Role>> members;     // maps the members' username to their set of roles
+    private HashMap<Integer, HashSet<Role>> members;     // maps the members' IDs to their set of roles
     private ArrayList<TextChannel> textChannels;
-    private HashSet<String> bannedUsers;
+    private HashSet<Integer> bannedUsers;
 
     // Constructors:
-    public Server(int unicode, String serverName, String creator) {
+    public Server(int unicode, String serverName, int creatorID) {
         // construct and initialize the fields
         this.unicode = unicode;
         this.serverName = serverName;
@@ -32,10 +32,10 @@ public class Server implements Asset {
         HashSet<Ability> ownerAbilities = new HashSet<>(Arrays.asList(Ability.values()));
         Role ownerRole = new Role("owner", ownerAbilities);
         HashSet<Role> ownerRoleSet = new HashSet<>(List.of(ownerRole, memberRole));
-        members.put(creator, ownerRoleSet);
+        members.put(creatorID, ownerRoleSet);
 
         //initialize the first default text channel called general with just a creator member
-        textChannels.add(new TextChannel("general", new HashSet<>(List.of(creator))));
+        textChannels.add(new TextChannel("general", new HashSet<>(List.of(creatorID))));
     }
 
     // Getters:
@@ -47,7 +47,7 @@ public class Server implements Asset {
         return serverName;
     }
 
-    public HashMap<String, HashSet<Role>> getMembers() {
+    public HashMap<Integer, HashSet<Role>> getMembers() {
         return members;
     }
 
@@ -104,9 +104,9 @@ public class Server implements Asset {
     }
 
     private void seeAllMembersRoles() {
-        for (String username : members.keySet()) {
-            HashSet<Role> roles = members.get(username);
-            System.out.println(username);
+        for (int ID : members.keySet()) {
+            HashSet<Role> roles = members.get(ID);
+            System.out.println(ID);
             for (Role role : roles) {
                 System.out.println(role.toString());
             }
@@ -188,12 +188,10 @@ public class Server implements Asset {
         return null;
     }
 
-    private void addInitialRoleHolders(Role newRole, String list) {
-        String[] initialRoleHolders = list.split(" ");
-        for (String member : initialRoleHolders) {
-            member = member.trim();
-            if (members.containsKey(member)) {
-                members.get(member).add(newRole);
+    private void addInitialRoleHolders(Role newRole, ArrayList<Integer> list) {
+        for (int UID : list) {
+            if (members.containsKey(UID)) {
+                members.get(UID).add(newRole);
             }
         }
     }
@@ -310,12 +308,12 @@ public class Server implements Asset {
         return true;
     }
 
-    public boolean addNewMember(String username) {
-        if (!bannedUsers.contains(username)) {
-            members.put(username, new HashSet<>(List.of(serverRoles.get("member"))));  // anyone gets the "member" role
+    public boolean addNewMember(int UID) {
+        if (!bannedUsers.contains(UID)) {
+            members.put(UID, new HashSet<>(List.of(serverRoles.get("member"))));  // anyone gets the "member" role
             //anyone gets added all the text channels
             for (TextChannel textChannel : textChannels) {
-                textChannel.getMembers().put(username, false);
+                textChannel.getMembers().put(UID, false);
             }
             return true;
         }
@@ -538,9 +536,9 @@ public class Server implements Asset {
         return false;
     }
 
-    private HashSet<Ability> getAllAbilities(String username) {
+    private HashSet<Ability> getAllAbilities(int UID) {
         HashSet<Ability> abilities = new HashSet<>();
-        for (Role role : members.get(username)) {
+        for (Role role : members.get(UID)) {
             abilities.addAll(role.getAbilities());
         }
         return abilities;

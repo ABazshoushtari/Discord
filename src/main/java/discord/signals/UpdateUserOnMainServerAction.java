@@ -12,7 +12,7 @@ public class UpdateUserOnMainServerAction implements Action {
 
     @Override
     public Object act() {
-        MainServer.getUsers().replace(me.getUsername(), me);
+        MainServer.getUsers().replace(me.getUID(), me);
         return MainServer.updateDatabase(me);
     }
 }

@@ -7,25 +7,29 @@ import java.util.LinkedList;
 
 public class Model implements Asset {
     // Fields:
-    private final String username;
+    private final int UID;
+    private String username;
     private String password;
     private String email;
     private String phoneNumber;
     private Status status;
-    private final LinkedList<String> friendRequests;
-    private final LinkedList<String> friends;
-    private final LinkedList<String> blockedList;
-    private final HashMap<String, Boolean> isInChat;
-    // maps all the friends' usernames to whether this user is in their private char (true) or not (false)
-    private final HashMap<String, ArrayList<String>> privateChats;
-    // maps all the friend's usernames to all the exchanged messages between this user and them
-    private final HashMap<String, ArrayList<URL>> urlsOfPrivateChat;
-    private final HashMap<String, ArrayList<DownloadableFile>> filesOfPrivateChat;
+    private final LinkedList<Integer> friendRequests;
+    private final LinkedList<Integer> friends;
+    private final LinkedList<Integer> blockedList;
+    private final HashMap<Integer, Boolean> isInChat;
+    // maps all the friends' UIDs to whether this user is in their private char (true) or not (false)
+    private final HashMap<Integer, ArrayList<String>> privateChats;
+    // maps all the friend's UIDs to all the exchanged messages between this user and them
+    private final HashMap<Integer, ArrayList<URL>> urlsOfPrivateChat;
+    // maps all the friends UIDs to all the urls exchanged between then
+    private final HashMap<Integer, ArrayList<DownloadableFile>> filesOfPrivateChat;
+    // maps all the friends UIDs to all the downloaded files exchanged between then
     private final ArrayList<Integer> servers;
     // holds only the unicode of the servers this user is a part of
 
     // Constructors:
-    public Model(String username, String password, String email, String phoneNumber) {
+    public Model(int UID, String username, String password, String email, String phoneNumber) {
+        this.UID = UID;
         this.username = username;
         this.password = password;
         this.email = email;
@@ -42,6 +46,10 @@ public class Model implements Asset {
     }
 
     // Getters:
+    public int getUID() {
+        return UID;
+    }
+
     public String getUsername() {
         return username;
     }
@@ -62,31 +70,31 @@ public class Model implements Asset {
         return status;
     }
 
-    public LinkedList<String> getFriendRequests() {
+    public LinkedList<Integer> getFriendRequests() {
         return friendRequests;
     }
 
-    public LinkedList<String> getFriends() {
+    public LinkedList<Integer> getFriends() {
         return friends;
     }
 
-    public LinkedList<String> getBlockedList() {
+    public LinkedList<Integer> getBlockedList() {
         return blockedList;
     }
 
-    public HashMap<String, Boolean> getIsInChat() {
+    public HashMap<Integer, Boolean> getIsInChat() {
         return isInChat;
     }
 
-    public HashMap<String, ArrayList<String>> getPrivateChats() {
+    public HashMap<Integer, ArrayList<String>> getPrivateChats() {
         return privateChats;
     }
 
-    public HashMap<String, ArrayList<URL>> getUrlsOfPrivateChat() {
+    public HashMap<Integer, ArrayList<URL>> getUrlsOfPrivateChat() {
         return urlsOfPrivateChat;
     }
 
-    public HashMap<String, ArrayList<DownloadableFile>> getFilesOfPrivateChat() {
+    public HashMap<Integer, ArrayList<DownloadableFile>> getFilesOfPrivateChat() {
         return filesOfPrivateChat;
     }
 
@@ -95,6 +103,10 @@ public class Model implements Asset {
     }
 
     // Setters:
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
     public void setPassword(String password) {
         this.password = password;
     }

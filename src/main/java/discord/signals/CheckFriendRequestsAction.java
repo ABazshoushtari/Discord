@@ -1,52 +1,55 @@
 package discord.signals;
 
-//import discord.DownloadableFile;
 import discord.mainServer.MainServer;
 import discord.client.Model;
 
-import java.net.URL;
 import java.util.ArrayList;
 
 public class CheckFriendRequestsAction implements Action {
-    private final String username;
+    private final String myUsername;
     private final int index;
     private final boolean accept;
 
-    public CheckFriendRequestsAction(String username, int index, boolean accept) {
-        this.username = username;
+    public CheckFriendRequestsAction(String myUsername, int index, boolean accept) {
+        this.myUsername = myUsername;
         this.index = index;
         this.accept = accept;
     }
 
     @Override
     public Object act() {
-        if (!MainServer.getUsers().containsKey(username)) {
+        int myUID = MainServer.getIDs().get(myUsername);
+        if (!MainServer.getUsers().containsKey(myUID)) {
             return null;
         }
-        Model user = MainServer.getUsers().get(username);
-        String requesterUsername = user.getFriendRequests().get(index);
-        Model requester = MainServer.getUsers().get(requesterUsername);
+        Model myUser = MainServer.getUsers().get(myUID);
+
+        int requesterID = myUser.getFriendRequests().get(index);
+        Model requester = MainServer.getUsers().get(requesterID);
+
         boolean DBConnect = true;
         if (accept) {
 
-            user.getFriends().add(requesterUsername);
-            requester.getFriends().add(username);
+            myUser.getFriends().add(requesterID);
+            requester.getFriends().add(myUID);
 
+            myUser.getIsInChat().put(requesterID, false);
+            myUser.getPrivateChats().put(requesterID, new ArrayList<>());
+            myUser.getUrlsOfPrivateChat().put(requesterID, new ArrayList<>());
+            myUser.getFilesOfPrivateChat().put(requesterID, new ArrayList<>());
 
-            user.getIsInChat().put(requesterUsername, false);
-            user.getPrivateChats().put(requesterUsername, new ArrayList<>());
-            user.getUrlsOfPrivateChat().put(requesterUsername, new ArrayList<>());
-            //user.getFilesOfPrivateChat().put(requesterUsername, new ArrayList<DownloadableFile>());
-
-            requester.getIsInChat().put(username, false);
-            requester.getPrivateChats().put(username, new ArrayList<>());
-            requester.getUrlsOfPrivateChat().put(username, new ArrayList<>());
-            //requester.getFilesOfPrivateChat().put(username, new ArrayList<DownloadableFile>());
+            requester.getIsInChat().put(myUID, false);
+            requester.getPrivateChats().put(myUID, new ArrayList<>());
+            requester.getUrlsOfPrivateChat().put(myUID, new ArrayList<>());
+            requester.getFilesOfPrivateChat().put(myUID, new ArrayList<>());
 
             DBConnect = MainServer.updateDatabase(requester);
         }
-        user.getFriendRequests().remove(index);
-        DBConnect = DBConnect && MainServer.updateDatabase(user);
+
+        myUser.getFriendRequests().remove(index);
+
+        DBConnect = DBConnect && MainServer.updateDatabase(myUser);
+
         return DBConnect;
     }
 }

@@ -11,8 +11,10 @@ import java.util.concurrent.Executors;
 
 public class MainServer {
     // Fields:
-    private static Map<String, Model> users = Collections.synchronizedMap(new HashMap<>());
-    // maps the users' username to their Model object
+    private static final HashMap<String, Integer> IDs = new HashMap<>();
+    // maps the users' usernames to their ID
+    private static Map<Integer, Model> users = Collections.synchronizedMap(new HashMap<>());
+    // maps the users' ID to their Model object
     private static Map<Integer, Server> servers = Collections.synchronizedMap(new HashMap<>());
     // maps the servers' unicode to their Server object
     private final ServerSocket serverSocket;
@@ -26,21 +28,37 @@ public class MainServer {
         executorService = Executors.newCachedThreadPool();
     }
 
+    // Getters:
+    public static Map<String, Integer> getIDs() {
+        return IDs;
+    }
+
+    public static Map<Integer, Model> getUsers() {
+        return users;
+    }
+
+    public static Map<Integer, Server> getServers() {
+        return servers;
+    }
+
     // Methods:
-    private static HashMap<String, Model> readUsers() {
+    private static HashMap<Integer, Model> readUsers() {
         makeDirectory("assets");
         makeDirectory("assets\\users");
-        HashMap<String, Model> clients = new HashMap<>();
+        HashMap<Integer, Model> users = new HashMap<>();
         File folder = new File("assets\\users");
         File[] listOfFiles = folder.listFiles();
         if (listOfFiles != null)
             for (File file : listOfFiles) {
                 Model user = read(file);
-                if (user != null)
-                    clients.put(user.getUsername(), user);
-                else System.err.println("null user was read!");
+                if (user != null) {
+                    users.put(user.getUID(), user);
+                    IDs.put(user.getUsername(), user.getUID());
+                } else {
+                    System.err.println("null user was read!");
+                }
             }
-        return clients;
+        return users;
     }
 
     private static void makeDirectory(String path) {
@@ -88,15 +106,6 @@ public class MainServer {
         return servers;
     }
 
-    // Getters:
-    public static Map<String, Model> getUsers() {
-        return users;
-    }
-
-    public static Map<Integer, Server> getServers() {
-        return servers;
-    }
-
     // Other Methods:
     public void startServer() {
         try {
@@ -122,7 +131,7 @@ public class MainServer {
     }
 
     public static boolean signUpUser(Model newUser) {
-        users.put(newUser.getUsername(), newUser);
+        users.put(newUser.getUID(), newUser);
         return updateDatabase(newUser);
     }
 
@@ -131,16 +140,16 @@ public class MainServer {
         ObjectOutputStream out = null;
         try {
             String path = "assets\\";
-            String id = "";
+            String identification = "";
             if (asset instanceof Model) {
-                id = ((Model) asset).getUsername();
+                identification = ((Model) asset).getUID() + "";
                 path = path.concat("users");
             }
             if (asset instanceof Server) {
-                id = ((Server) asset).getUnicode() + "";
+                identification = ((Server) asset).getUnicode() + "";
                 path = path.concat("servers");
             }
-            fileOut = new FileOutputStream(path + "\\" + id.concat(".bin"));
+            fileOut = new FileOutputStream(path + "\\" + identification.concat(".bin"));
             out = new ObjectOutputStream(fileOut);
             out.writeObject(asset);
             return true;

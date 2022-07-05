@@ -6,9 +6,9 @@ public class CreateNewServerAction implements Action {
     @Override
     public Object act() {
         int unicode = 0;
-        do {
+        while (MainServer.getServers().containsKey(unicode)) {
             unicode++;
-        } while (MainServer.getServers().containsKey(unicode));
+        }
         return unicode;
     }
 }

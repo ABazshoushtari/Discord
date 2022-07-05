@@ -18,9 +18,9 @@ public class TextChannelChatAction implements Action {
     private String message;
     private final int serverUnicode;
     private final int textChannelIndex;
-    private final ArrayList<String> receivers;  // all the members of the textChannel except the sender
+    private final ArrayList<Integer> receivers;  // holds the UID all the members of the textChannel except the sender
 
-    public TextChannelChatAction(String sender, String message, int serverUnicode, int textChannelIndex, ArrayList<String> receivers) {
+    public TextChannelChatAction(String sender, String message, int serverUnicode, int textChannelIndex, ArrayList<Integer> receivers) {
         this.sender = sender;
         message = message.trim();
         this.message = message;
@@ -31,7 +31,8 @@ public class TextChannelChatAction implements Action {
 
     @Override
     public Object act() throws IOException {
-        Model senderUser = MainServer.getUsers().get(sender);
+        int senderID = MainServer.getIDs().get(sender);
+        Model senderUser = MainServer.getUsers().get(senderID);
         if (!message.equalsIgnoreCase("#exit")) {
             if (message.startsWith("/") || message.startsWith("#")) {
                 if (message.equalsIgnoreCase("#pin")) {
@@ -166,9 +167,9 @@ public class TextChannelChatAction implements Action {
             for (ClientHandler c : clientHandlers) {
                 Model userOfClientHandler = c.getUser();
                 if (userOfClientHandler != null) {
-                    if (receivers.contains(userOfClientHandler.getUsername())) {
-                        userOfClientHandler = MainServer.getUsers().get(userOfClientHandler.getUsername()); // updating userOfClientHandler
-                        if (updatedTextChannelFromMainServer.getMembers().get(userOfClientHandler.getUsername())) {
+                    if (receivers.contains(userOfClientHandler.getUID())) {
+                        userOfClientHandler = MainServer.getUsers().get(userOfClientHandler.getUID()); // updating userOfClientHandler
+                        if (updatedTextChannelFromMainServer.getMembers().get(userOfClientHandler.getUID())) {
                             // synchronize!!!!!!!
                             synchronized (c.getMySocket()) {
                                 c.getMySocket().write(textChannelMessage); // we can also write "this" object

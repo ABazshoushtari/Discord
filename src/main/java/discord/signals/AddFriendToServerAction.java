@@ -14,7 +14,8 @@ public class AddFriendToServerAction implements Action {
 
     @Override
     public Object act() {
-        Model targetFriend = MainServer.getUsers().get(friendUsername);
+        int friendID = MainServer.getIDs().get(friendUsername);
+        Model targetFriend = MainServer.getUsers().get(friendID);
         targetFriend.getServers().add(unicode);
         return MainServer.updateDatabase(targetFriend);
     }

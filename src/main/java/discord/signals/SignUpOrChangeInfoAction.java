@@ -7,7 +7,9 @@ import java.util.regex.Pattern;
 
 public class SignUpOrChangeInfoAction implements Action {
     // Fields:
+    private int UID; // used when changing info
     private String username;
+    private String oldUsername; // used when changing username
     private String password;
     private String email;
     private String phoneNumber;
@@ -24,6 +26,7 @@ public class SignUpOrChangeInfoAction implements Action {
     }       // used when signing up
 
     public SignUpOrChangeInfoAction(String username) {      //used when changing a field from the user
+        UID = MainServer.getIDs().get(username);
         this.username = username;
         this.stage = -1;
     }
@@ -38,9 +41,15 @@ public class SignUpOrChangeInfoAction implements Action {
         stage = 5;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
-        stage = 1;
+    public void setUsername(String newUsername) {
+        if (stage != -1) {
+            this.username = newUsername;
+            stage = 1;
+        } else {
+            oldUsername = this.username;
+            this.username = newUsername;
+            subStage = 1;
+        }
         regex = "^\\w{6,}$";
     }
 
@@ -79,7 +88,7 @@ public class SignUpOrChangeInfoAction implements Action {
         switch (stage) {
             // case 1-5: signing up processes
             case 1 -> {
-                if (MainServer.getUsers().containsKey(username)) {
+                if (MainServer.getIDs().containsKey(username)) {
                     return null;
                 }
                 return isMatched(username);
@@ -99,39 +108,52 @@ public class SignUpOrChangeInfoAction implements Action {
             }
             case 5 -> {
                 if ("0".equals(phoneNumber)) phoneNumber = null;
-                Model newUser = new Model(username, password, email, phoneNumber);
+                // generate a new ID for the new user
+                int UID = 0;
+                while (MainServer.getIDs().containsValue(UID)) {
+                    UID++;
+                }
+                Model newUser = new Model(UID, username, password, email, phoneNumber);
                 if (MainServer.signUpUser(newUser)) {
                     return newUser;
                 }
             }
             // change one of the fields process:
             case -1 -> {
-                boolean success = false;
+                boolean match = false;
                 boolean DBConnect = true;
-                Model changedUser = MainServer.getUsers().get(username);
+                Model changedUser = MainServer.getUsers().get(UID);
                 switch (subStage) {
+                    case 1 -> {
+                        match = isMatched(username);
+                        if (match)  changedUser.setUsername(username);
+                    }
                     case 2 -> {
-                        success = isMatched(password);
-                        if (success) changedUser.setPassword(password);
+                        match = isMatched(password);
+                        if (match) changedUser.setPassword(password);
                     }
                     case 3 -> {
-                        success = isAValidEmail(email);
-                        if (success) changedUser.setEmail(email);
+                        match = isAValidEmail(email);
+                        if (match) changedUser.setEmail(email);
                     }
                     case 4 -> {
                         if ("0".equals(phoneNumber)) {
                             changedUser.setPhoneNumber(null);
                             return true;
                         }
-                        success = isMatched(phoneNumber);
-                        if (success) changedUser.setPhoneNumber(phoneNumber);
+                        match = isMatched(phoneNumber);
+                        if (match) changedUser.setPhoneNumber(phoneNumber);
                     }
                 }
-                if (success) {
-                    MainServer.getUsers().replace(username, changedUser);
+                if (match) {
+                    if (subStage == 1) {    // when changing username
+                        MainServer.getIDs().remove(oldUsername);
+                        MainServer.getIDs().put(username, UID);
+                    }
+                    MainServer.getUsers().replace(UID, changedUser);
                     DBConnect = MainServer.updateDatabase(changedUser);
                 }
-                return success && DBConnect;
+                return match && DBConnect;
             }
         }
         return null;

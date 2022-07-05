@@ -11,6 +11,10 @@ public class GetUserFromMainServerAction implements Action {
 
     @Override
     public Object act() {
-        return MainServer.getUsers().getOrDefault(username, null);
+        Integer UID = MainServer.getIDs().getOrDefault(username, null);
+        if (UID == null) {
+            return null;
+        }
+        return MainServer.getUsers().getOrDefault(UID, null);
     }
 }

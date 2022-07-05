@@ -15,12 +15,13 @@ public class LoginAction implements Action {
 
     @Override
     public Object act() {
-        if (!MainServer.getUsers().containsKey(username)) {
+        int UID = MainServer.getIDs().get(username);
+        if (!MainServer.getUsers().containsKey(UID)) {
             return null;
-        } else if (!MainServer.getUsers().get(username).getPassword().equals(password)) {
+        } else if (!MainServer.getUsers().get(UID).getPassword().equals(password)) {
             return null;
         } else {
-            Model user = MainServer.getUsers().get(username);
+            Model user = MainServer.getUsers().get(UID);
             user.setStatus(Status.Online);
             return user;
         }

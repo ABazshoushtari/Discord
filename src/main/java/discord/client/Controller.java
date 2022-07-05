@@ -54,13 +54,12 @@ public class Controller {
             loginErrorMessage.setText("A username by this password could not be found!");
         } else {
             this.user = user;
-            loginErrorMessage.setText(this.user.getEmail());
+            //loadProfilePage(event);
         }
-        //loadLoggedInMenu(event);
     }
 
-    private void loadLoggedInMenu(MouseEvent event) {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("loggedInMenu.fxml"));
+    private void loadProfilePage(MouseEvent event) {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("profilePage.fxml"));
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         App.loadNewScene(loader, stage, this);
     }

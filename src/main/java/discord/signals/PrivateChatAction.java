@@ -28,16 +28,19 @@ public class PrivateChatAction implements Action {
     @Override
     public Object act() throws IOException {
 
-        Model senderUser = MainServer.getUsers().get(sender);
-        Model receiverUser = MainServer.getUsers().get(receiver);
+        int senderID = MainServer.getIDs().get(sender);
+        int receiverID = MainServer.getIDs().get(receiver);
+
+        Model senderUser = MainServer.getUsers().get(senderID);
+        Model receiverUser = MainServer.getUsers().get(receiverID);
 
         if (!message.equalsIgnoreCase("#exit")) {
             if (message.startsWith("/") || message.startsWith("#")) {
                 if (message.equalsIgnoreCase("#urls")) {
-                    return showList(senderUser.getUrlsOfPrivateChat().get(receiver));
+                    return showList(senderUser.getUrlsOfPrivateChat().get(receiverID));
                 }
                 if (message.equalsIgnoreCase("#files")) {
-                    return showList(senderUser.getFilesOfPrivateChat().get(receiver));
+                    return showList(senderUser.getFilesOfPrivateChat().get(receiverID));
                 }
                 if (message.equalsIgnoreCase("#help")) {
                     return helpMenu();
@@ -49,11 +52,11 @@ public class PrivateChatAction implements Action {
                         return "WARNING: Invalid format. Enter a file's directory which exists";
                     }
                     FileInputStream fileInputStream = new FileInputStream(file);
-                    senderUser.getFilesOfPrivateChat().get(receiver).add(new DownloadableFile(file.getName(), fileInputStream));
+                    senderUser.getFilesOfPrivateChat().get(receiverID).add(new DownloadableFile(file.getName(), fileInputStream));
                     fileInputStream.close();
 
                     fileInputStream = new FileInputStream(file);
-                    receiverUser.getFilesOfPrivateChat().get(sender).add(new DownloadableFile(file.getName(), fileInputStream));
+                    receiverUser.getFilesOfPrivateChat().get(senderID).add(new DownloadableFile(file.getName(), fileInputStream));
                     fileInputStream.close();
 
                     message = sender + ": uploaded " + file.getName();
@@ -68,14 +71,14 @@ public class PrivateChatAction implements Action {
                                 } catch (MalformedURLException e) {
                                     return "WARNING: Invalid format. Enter a URL";
                                 }
-                                senderUser.getUrlsOfPrivateChat().get(receiver).add(url);
-                                receiverUser.getUrlsOfPrivateChat().get(sender).add(url);
+                                senderUser.getUrlsOfPrivateChat().get(receiverID).add(url);
+                                receiverUser.getUrlsOfPrivateChat().get(senderID).add(url);
 
                                 message = command[1];
                             }
 
                             case "#file" -> {
-                                int fileIndex = checkIndex(senderUser.getFilesOfPrivateChat().get(receiver), command[1]);
+                                int fileIndex = checkIndex(senderUser.getFilesOfPrivateChat().get(receiverID), command[1]);
                                 if (fileIndex == -1) {
                                     return "WARNING: Invalid format";
                                 } else if (fileIndex == -2) {
@@ -83,20 +86,20 @@ public class PrivateChatAction implements Action {
                                 } else {
                                     // return the DownloadableFile
                                     if (command.length >= 3) {  // download the file with a different name
-                                        return new DownloadableFile(command[2], senderUser.getFilesOfPrivateChat().get(receiver).get(fileIndex).getBytes());
+                                        return new DownloadableFile(command[2], senderUser.getFilesOfPrivateChat().get(receiverID).get(fileIndex).getBytes());
                                     } else {
-                                        return senderUser.getFilesOfPrivateChat().get(receiver).get(fileIndex);
+                                        return senderUser.getFilesOfPrivateChat().get(receiverID).get(fileIndex);
                                     }
                                 }
                             }
                             case "#url" -> {
-                                int urlIndex = checkIndex(senderUser.getUrlsOfPrivateChat().get(receiver), command[1]);
+                                int urlIndex = checkIndex(senderUser.getUrlsOfPrivateChat().get(receiverID), command[1]);
                                 if (urlIndex == -1) {
                                     return "WARNING: Invalid format";
                                 } else if (urlIndex == -2) {
                                     return "WARNING: invalid index. out of boundary";
                                 } else {
-                                    return new DownloadURL(command[2], senderUser.getUrlsOfPrivateChat().get(receiver).get(urlIndex));  //returns DownloadURL for downloading the URL
+                                    return new DownloadURL(command[2], senderUser.getUrlsOfPrivateChat().get(receiverID).get(urlIndex));  //returns DownloadURL for downloading the URL
                                 }
                             }
                         }
@@ -108,8 +111,8 @@ public class PrivateChatAction implements Action {
                 message = sender + ": " + message;
             }
             // updating database and server
-            senderUser.getPrivateChats().get(receiver).add(message);
-            receiverUser.getPrivateChats().get(sender).add(message);
+            senderUser.getPrivateChats().get(receiverID).add(message);
+            receiverUser.getPrivateChats().get(senderID).add(message);
 
             boolean DBConnect = MainServer.updateDatabase(senderUser) && MainServer.updateDatabase(receiverUser);
             if (!DBConnect) {
@@ -121,8 +124,8 @@ public class PrivateChatAction implements Action {
                 Model userOfClientHandler = c.getUser();
                 if (userOfClientHandler != null) {
                     if (receiver.equals(userOfClientHandler.getUsername())) {
-                        userOfClientHandler = MainServer.getUsers().get(userOfClientHandler.getUsername());
-                        if (userOfClientHandler.getIsInChat().get(sender)) {
+                        userOfClientHandler = MainServer.getUsers().get(userOfClientHandler.getUID());
+                        if (userOfClientHandler.getIsInChat().get(senderID)) {
                             c.getMySocket().write(message); // we can also write "this" object
                             return true;  //seen by the receiver in the moment
                         }

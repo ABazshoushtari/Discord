@@ -4,28 +4,32 @@ import discord.client.Model;
 import discord.mainServer.MainServer;
 
 public class BlockAction implements Action {
-    private final String blocker;
-    private final String beingBlocked;
+    private final String blockerUsername;
+    private final String beingBlockedUsername;
 
-    public BlockAction(String blocker, String beingBlocked) {
-        this.blocker = blocker;
-        this.beingBlocked = beingBlocked;
+    public BlockAction(String blockerUsername, String beingBlockedUsername) {
+        this.blockerUsername = blockerUsername;
+        this.beingBlockedUsername = beingBlockedUsername;
     }
 
     @Override
     public Object act() {
-        if (!MainServer.getUsers().containsKey(beingBlocked)) {
+
+        int beingBlockedID = MainServer.getIDs().get(beingBlockedUsername);
+
+        if (!MainServer.getUsers().containsKey(beingBlockedID)) {
             return null;
         } else {
 
-            Model blockerUser = MainServer.getUsers().get(blocker);
-            blockerUser.getFriendRequests().remove(beingBlocked);
-            blockerUser.getFriends().remove(beingBlocked);
-            blockerUser.getBlockedList().add(beingBlocked);
+            int blockerID = MainServer.getIDs().get(blockerUsername);
+            Model blockerUser = MainServer.getUsers().get(blockerID);
+            blockerUser.getFriendRequests().remove(beingBlockedID);
+            blockerUser.getFriends().remove(beingBlockedID);
+            blockerUser.getBlockedList().add(beingBlockedID);
 
-            Model beingBlockerUser = MainServer.getUsers().get(beingBlocked);
-            beingBlockerUser.getFriendRequests().remove(blocker);
-            beingBlockerUser.getFriends().remove(blocker);
+            Model beingBlockerUser = MainServer.getUsers().get(beingBlockedID);
+            beingBlockerUser.getFriendRequests().remove(beingBlockedID);
+            beingBlockerUser.getFriends().remove(beingBlockedID);
 
             return MainServer.updateDatabase(blockerUser) && MainServer.updateDatabase(beingBlockerUser);
         }

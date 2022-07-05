@@ -10,19 +10,19 @@ public class TextChannel implements Serializable {
     // Fields:
     private String name;
     private String pinnedMessage;
-    private final HashMap<String, Boolean> members;
-    // maps all the members' username to whether they're in this text channel right now (true) or not (false)
+    private final HashMap<Integer, Boolean> members;
+    // maps all the members' IDs to whether they're in this text channel right now (true) or not (false)
     private final ArrayList<TextChannelMessage> textChannelMessages;
     // holds all the messages exchanged in this text channel
     private final ArrayList<URL> urls;
     private final ArrayList<DownloadableFile> files;
 
     // Constructors:
-    public TextChannel(String name, Set<String> members) {
+    public TextChannel(String name, Set<Integer> membersIDs) {
         this.name = name;
         pinnedMessage = "";
         this.members = new HashMap<>();
-        for (String member : members) {
+        for (int member : membersIDs) {
             this.members.put(member, false);
         }
         textChannelMessages = new ArrayList<>();
@@ -42,7 +42,7 @@ public class TextChannel implements Serializable {
         return pinnedMessage;
     }
 
-    public HashMap<String, Boolean> getMembers() {
+    public HashMap<Integer, Boolean> getMembers() {
         return members;
     }
 
@@ -75,7 +75,7 @@ public class TextChannel implements Serializable {
         this.pinnedMessage = pinnedMessage;
     }
 
-    public void removeMember(String username) {
-        members.remove(username);
+    public void removeMember(int UID) {
+        members.remove(UID);
     }
 }
