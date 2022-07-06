@@ -10,7 +10,8 @@ import java.util.LinkedList;
 public class Model implements Asset {
     // Fields:
     private final int UID;
-    private Image avatarImage;
+    private byte[] avatarImage;
+    private String contentType;  // type of avatarImage
     private String username;
     private String password;
     private String email;
@@ -56,8 +57,12 @@ public class Model implements Asset {
         return UID;
     }
 
-    public Image getAvatarImage() {
+    public byte[] getAvatarImage() {
         return avatarImage;
+    }
+
+    public String getContentType() {
+        return contentType;
     }
 
     public String getUsername() {
@@ -117,8 +122,12 @@ public class Model implements Asset {
     }
 
     // Setters:
-    public void setAvatarImage(Image avatarImage) {
+    public void setAvatarImage(byte[] avatarImage) {
         this.avatarImage = avatarImage;
+    }
+
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
     }
 
     public void setUsername(String username) {

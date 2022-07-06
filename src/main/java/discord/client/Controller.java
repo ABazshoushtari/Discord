@@ -13,13 +13,23 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javax.imageio.ImageIO;
+
+import javafx.scene.image.PixelFormat;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.ImagePattern;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import com.gluonhq.charm.glisten.control.Avatar;
 
-import java.io.IOException;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
+import java.io.*;
 
 public class Controller {
 
@@ -70,10 +80,22 @@ public class Controller {
         }
     }
 
-    private void loadProfilePage(Event event) {
+    private void loadProfilePage(Event event) throws IOException {
         loadScene(event, "profilePage.fxml");
-        //user.setAvatarImage();
-        //avatar.setImage(user.getAvatarImage());
+
+        if (user.getAvatarImage() != null) {
+            Image img;
+            try (FileOutputStream fileOutputStream = new FileOutputStream("avatar." + user.getContentType());
+                FileInputStream fileInputStream = new FileInputStream("avatar." + user.getContentType())) {
+                fileOutputStream.write(user.getAvatarImage());
+                img = new Image(fileInputStream);
+            }
+//            ByteArrayInputStream inStreambj = new ByteArrayInputStream(user.getAvatarImage());
+//            Image newImage = ImageIO.read();
+//            Image image = newImage();
+//            avatar.setImage(newImage);
+            avatar.setImage(img); // Image object
+        }
         profileUsername.setText(user.getUsername());
         profileEmail.setText(user.getEmail());
         setStatusLabel(user.getStatus());
@@ -204,7 +226,7 @@ public class Controller {
     //////////////////////////////////////////////////////////// profile page scene ->
     // profile fields:
     @FXML
-    private Avatar avatar;
+    private ImageView avatar;
     @FXML
     private Label profileStatus;
     @FXML
@@ -337,8 +359,42 @@ public class Controller {
     }
 
     @FXML
-    void changeAvatar(MouseEvent event) {
+    void changeAvatar(MouseEvent event) throws IOException, ClassNotFoundException {
+//        Rectangle clip = new Rectangle(
+//                avatar.getFitWidth(), avatar.getFitHeight()
+//        );
+//        clip.setArcWidth(1000);
+//        clip.setArcHeight(1000);
 
+
+//        avatar.setClip(clip);
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Select a profile pic");
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("All Images", "*.jpg", "*.png"), new FileChooser.ExtensionFilter("JPG", "*.jpg"), new FileChooser.ExtensionFilter("PNG", "*.png"));
+        File selectedFile = App.fileChooser(fileChooser);
+        if (selectedFile == null) {
+            return;
+        }
+        Image selectedImage = new Image(selectedFile.getAbsolutePath());
+//        Circle circle = new Circle(65);
+//        ImagePattern pattern = new ImagePattern(selectedImage);
+//        circle.setFill(pattern);
+//        avatar.setClip(clip);
+        avatar.setImage(selectedImage);
+
+//        BufferedImage image = ImageIO.read(selectedFile);
+//        user.setAvatarImage(((DataBufferByte) image.getRaster().getDataBuffer()).getData());
+
+//        ByteArrayOutputStream outStreamObj = new ByteArrayOutputStream();
+        String[] parts = selectedFile.getName().split("\\.");
+        user.setContentType(parts[parts.length - 1]);
+//        ImageIO.write(image, parts[parts.length - 1], outStreamObj);
+//        user.setAvatarImage(outStreamObj.toByteArray());
+
+        try (FileInputStream fileInputStream = new FileInputStream(selectedFile)) {
+            user.setAvatarImage(fileInputStream.readAllBytes());
+        }
+        boolean DBConnect = mySocket.sendSignalAndGetResponse(new UpdateUserOnMainServerAction(user));
     }
 
     @FXML
