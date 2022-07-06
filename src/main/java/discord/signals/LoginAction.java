@@ -15,7 +15,10 @@ public class LoginAction implements Action {
 
     @Override
     public Object act() {
-        int UID = MainServer.getIDs().get(username);
+        Integer UID = MainServer.getIDs().get(username);
+        if (UID == null) {
+            return null;
+        }
         if (!MainServer.getUsers().containsKey(UID)) {
             return null;
         } else if (!MainServer.getUsers().get(UID).getPassword().equals(password)) {

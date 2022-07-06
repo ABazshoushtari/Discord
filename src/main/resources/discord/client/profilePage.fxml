@@ -12,12 +12,12 @@
 
 <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="512.0" prefWidth="1024.0" style="-fx-background-color: #242526;" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1">
    <children>
-      <Label fx:id="status" alignment="CENTER" contentDisplay="CENTER" layoutX="177.0" layoutY="152.0" prefHeight="31.0" prefWidth="70.0" style="-fx-background-color: #253DA1;" text="status" textFill="WHITE">
+      <Label fx:id="profileStatus" alignment="CENTER" contentDisplay="CENTER" layoutX="177.0" layoutY="152.0" onMouseClicked="#changeStatus" style="-fx-background-color: blue;" textFill="WHITE">
          <font>
             <Font name="System Bold" size="18.0" />
          </font>
          <padding>
-            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+            <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
          </padding>
       </Label>
       <VBox alignment="CENTER_RIGHT" layoutX="17.0" layoutY="205.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="279.0" prefWidth="989.0" style="-fx-background-color: #464546;">
@@ -35,7 +35,7 @@
                         <Font name="System Bold" size="14.0" />
                      </font>
                   </Label>
-                  <Button fx:id="editButton" alignment="CENTER" contentDisplay="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#editEnabled" style="-fx-background-color: #616161;" text="Edit" textFill="WHITE" />
+                  <Button fx:id="editButton" alignment="CENTER" contentDisplay="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#editEnabledOrDone" style="-fx-background-color: #616161;" text="Edit" textFill="WHITE" />
                </children>
             </HBox>
             <Label maxWidth="1.7976931348623157E308" text="USERNAME" textFill="#a6a6a6">
@@ -76,15 +76,7 @@
             </TextField>
          </children>
       </VBox>
-      <Label alignment="CENTER" contentDisplay="CENTER" layoutX="176.0" layoutY="37.0" style="-fx-background-color: #253DA1;" text="Change Avatar" textFill="WHITE">
-         <font>
-            <Font name="System Bold" size="16.0" />
-         </font>
-         <padding>
-            <Insets bottom="10.0" left="15.0" right="15.0" top="10.0" />
-         </padding>
-      </Label>
-      <Label alignment="CENTER" contentDisplay="CENTER" layoutX="334.0" layoutY="152.0" style="-fx-background-color: #253DA1;" text="Change password" textFill="WHITE">
+      <Label alignment="CENTER" contentDisplay="CENTER" layoutX="176.0" layoutY="37.0" onMouseClicked="#changeAvatar" style="-fx-background-color: #253DA1;" text="Change Avatar" textFill="WHITE">
          <font>
             <Font name="System Bold" size="16.0" />
          </font>
@@ -92,7 +84,7 @@
             <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
          </padding>
       </Label>
-      <Label alignment="CENTER" contentDisplay="CENTER" layoutX="925.0" layoutY="152.0" style="-fx-background-color: red;" text="Log Out" textFill="WHITE">
+      <Label fx:id="changePasswordButton" alignment="CENTER" contentDisplay="CENTER" layoutX="359.0" layoutY="152.0" onMouseClicked="#changePassword" style="-fx-background-color: #253DA1;" text="Change Password" textFill="WHITE">
          <font>
             <Font name="System Bold" size="16.0" />
          </font>
@@ -100,7 +92,15 @@
             <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
          </padding>
       </Label>
-      <Label alignment="CENTER" contentDisplay="CENTER" layoutX="689.0" layoutY="153.0" style="-fx-background-color: green;" text="Enter" textFill="WHITE">
+      <Label alignment="CENTER" contentDisplay="CENTER" layoutX="925.0" layoutY="152.0" onMouseClicked="#logout" style="-fx-background-color: red;" text="Log Out" textFill="WHITE">
+         <font>
+            <Font name="System Bold" size="16.0" />
+         </font>
+         <padding>
+            <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
+         </padding>
+      </Label>
+      <Label alignment="CENTER" contentDisplay="CENTER" layoutX="689.0" layoutY="153.0" onMouseClicked="#enter" style="-fx-background-color: green;" text="Enter" textFill="WHITE">
          <font>
             <Font name="System Bold" size="16.0" />
          </font>
@@ -109,5 +109,26 @@
          </padding>
       </Label>
       <Avatar fx:id="avatar" layoutX="17.0" layoutY="37.0" radius="70.0" />
+      <Label fx:id="enterPasswordLabel" alignment="TOP_LEFT" focusTraversable="false" layoutX="359.0" layoutY="37.0" onMouseClicked="#changePassword" style="-fx-background-color: black;" text="enter your new password:" textFill="WHITE" visible="false">
+         <font>
+            <Font name="System Bold" size="16.0" />
+         </font>
+         <padding>
+            <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
+         </padding>
+      </Label>
+      <TextField fx:id="enterPasswordTextField" editable="false" focusTraversable="false" layoutX="574.0" layoutY="42.0" onAction="#doneChangingPassword" visible="false">
+         <font>
+            <Font name="System Bold" size="16.0" />
+         </font>
+      </TextField>
+      <Label fx:id="profileErrorMessage" focusTraversable="false" layoutX="359.0" layoutY="82.0" style="-fx-background-color: red;" text="Invalid Format!" textFill="WHITE" visible="false">
+         <font>
+            <Font name="System Bold" size="14.0" />
+         </font>
+         <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </padding>
+      </Label>
    </children>
 </AnchorPane>

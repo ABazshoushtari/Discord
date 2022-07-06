@@ -3,14 +3,16 @@ package discord.client;
 import discord.signals.LoginAction;
 import discord.signals.SignUpOrChangeInfoAction;
 import discord.signals.UpdateUserOnMainServerAction;
+import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.scene.image.Image;
+import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 import com.gluonhq.charm.glisten.control.Avatar;
 
@@ -66,13 +68,12 @@ public class Controller {
     }
 
     private void loadProfilePage(Event event) {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("profilePage.fxml"));
-        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        App.loadNewScene(loader, stage, this);
+        loadScene(event, "profilePage.fxml");
         //user.setAvatarImage();
         //avatar.setImage(user.getAvatarImage());
         profileUsername.setText(user.getUsername());
         profileEmail.setText(user.getEmail());
+        profileStatus.setText(user.getStatus().toString());
         if (user.getPhoneNumber() != null) {
             profilePhoneNumber.setText(user.getPhoneNumber());
         } else {
@@ -80,11 +81,21 @@ public class Controller {
         }
     }
 
+    private void loadScene(Event event, String sceneName) {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource(sceneName));
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        try {
+            loader.setController(this);
+            Scene scene = new Scene(loader.load());
+            stage.setScene(scene);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @FXML
     void loadSignupMenu(Event event) {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("signupMenu.fxml"));
-        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        App.loadNewScene(loader, stage, this);
+        loadScene(event, "signupMenu.fxml");
     }
 
     //////////////////////////////////////////////////////////// signup scene ->
@@ -160,9 +171,7 @@ public class Controller {
 
     @FXML
     void loadLoginMenu(Event event) {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("loginMenu.fxml"));
-        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        App.loadNewScene(loader, stage, this);
+        loadScene(event, "loginMenu.fxml");
     }
 
     //////////////////////////////////////////////////////////// profile page scene ->
@@ -170,7 +179,7 @@ public class Controller {
     @FXML
     private Avatar avatar;
     @FXML
-    private Label status;
+    private Label profileStatus;
     @FXML
     private TextField profileUsername;
     @FXML
@@ -181,9 +190,19 @@ public class Controller {
     private Button editButton;
     @FXML
     private Label editErrorMessage;
-
     @FXML
-    void editEnabled() throws IOException, ClassNotFoundException {
+    private Label enterPasswordLabel;
+    @FXML
+    private TextField enterPasswordTextField;
+    @FXML
+    private Label changePasswordButton;
+    @FXML
+    private Label profileErrorMessage;
+
+
+    // profile methods:
+    @FXML
+    void editEnabledOrDone() throws IOException, ClassNotFoundException {
         switch (editButton.getText()) {
             case "Edit" -> {
                 profileUsername.setEditable(true);
@@ -202,14 +221,16 @@ public class Controller {
                 boolean validEmail = mySocket.sendSignalAndGetResponse(changeInfoAction);
 
                 changeInfoAction.setUsername(profilePhoneNumber.getText());
-                boolean validPhoneNumber = (boolean) mySocket.sendSignalAndGetResponse(changeInfoAction) || "".equals(profilePhoneNumber.getText());
+                String emptyMessage = "You haven't added a phone number yet.";
+                boolean empty = profilePhoneNumber.getText().equals(emptyMessage) || profilePhoneNumber.getText().trim().equals("");
+                boolean validPhoneNumber = (boolean) mySocket.sendSignalAndGetResponse(changeInfoAction) || empty;
 
                 if (!validUsername) {
                     editErrorMessage.setText("Invalid username!");
                 } else if (!validEmail) {
                     editErrorMessage.setText("Invalid email");
                 } else if (!validPhoneNumber) {
-                    editErrorMessage.setText("Invalid phone number (you can empty this field to remove your phone number");
+                    editErrorMessage.setText("Invalid phone number (you can empty this field to remove your phone number)");
                 } else {
                     profileUsername.setEditable(false);
                     profileEmail.setEditable(false);
@@ -219,13 +240,75 @@ public class Controller {
                     String oldUsername = user.getUsername();
                     user.setUsername(profileUsername.getText());
                     user.setEmail(profileEmail.getText());
-                    user.setPhoneNumber(profilePhoneNumber.getText());
-                    if ("".equals(user.getPhoneNumber().trim())) {
+                    if (!empty) {
+                        user.setPhoneNumber(profilePhoneNumber.getText());
+                    } else {
+                        user.setPhoneNumber(null);
+                    }
+                    if (empty) {
                         profilePhoneNumber.setText("You haven't added a phone number yet.");
                     }
                     boolean DBConnect = mySocket.sendSignalAndGetResponse(new UpdateUserOnMainServerAction(user, oldUsername));
                 }
             }
         }
+    }
+
+    @FXML
+    void changeAvatar(MouseEvent event) {
+
+    }
+
+    @FXML
+    void changePassword(MouseEvent event) {
+        switch (changePasswordButton.getText()) {
+            case "Change Password" -> {
+                enterPasswordLabel.setVisible(true);
+                enterPasswordTextField.setVisible(true);
+                enterPasswordTextField.setEditable(true);
+                changePasswordButton.setText("Cancel");
+            }
+            case "Cancel" -> doneWithPasswordChange();
+        }
+    }
+
+    private void doneWithPasswordChange() {
+        enterPasswordTextField.setEditable(false);
+        enterPasswordTextField.setVisible(false);
+        enterPasswordLabel.setVisible(false);
+        profileErrorMessage.setVisible(false);
+        enterPasswordTextField.setText("");
+        changePasswordButton.setText("Change Password");
+    }
+
+    @FXML
+    void doneChangingPassword(ActionEvent event) throws IOException, ClassNotFoundException {
+        String newPassword = enterPasswordTextField.getText().trim();
+        SignUpOrChangeInfoAction changeInfoAction = new SignUpOrChangeInfoAction(user.getUsername());
+        changeInfoAction.setPassword(newPassword);
+        if (mySocket.sendSignalAndGetResponse(changeInfoAction)) {
+            doneWithPasswordChange();
+            user.setPassword(newPassword);
+            boolean DBConnect = mySocket.sendSignalAndGetResponse(new UpdateUserOnMainServerAction(user, user.getUsername()));
+        } else {
+            profileErrorMessage.setVisible(true);
+            profileErrorMessage.setText("Invalid format!");
+        }
+    }
+
+    @FXML
+    void changeStatus(MouseEvent event) {
+
+    }
+
+    @FXML
+    void enter(MouseEvent event) {
+
+    }
+
+    @FXML
+    void logout(Event event) {
+        user = null;
+        loadLoginMenu(event);
     }
 }

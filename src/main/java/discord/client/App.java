@@ -25,14 +25,4 @@ public class App extends Application {
     public static void main(String[] args) {
         launch();
     }
-
-    public static void loadNewScene(FXMLLoader loader, Stage stage, Controller controller) {
-        try {
-            loader.setController(controller);
-            Scene scene = new Scene(loader.load());
-            stage.setScene(scene);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 }
