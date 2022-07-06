@@ -2,14 +2,17 @@ package discord.client;
 
 import discord.signals.LoginAction;
 import discord.signals.SignUpOrChangeInfoAction;
+import discord.signals.UpdateUserOnMainServerAction;
 import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
+import com.gluonhq.charm.glisten.control.Avatar;
 
 import java.io.IOException;
 
@@ -66,6 +69,8 @@ public class Controller {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("profilePage.fxml"));
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         App.loadNewScene(loader, stage, this);
+        //user.setAvatarImage();
+        //avatar.setImage(user.getAvatarImage());
         profileUsername.setText(user.getUsername());
         profileEmail.setText(user.getEmail());
         if (user.getPhoneNumber() != null) {
@@ -143,14 +148,13 @@ public class Controller {
             }
 
             // no phone number is taken from the user at first
-            signupAction.setPhoneNumber("0");
+            signupAction.setPhoneNumber("");
             mySocket.sendSignalAndGetResponse(signupAction); // always returns true and gets ignored
 
             signupAction.finalizeStage();
-            /*user =*/
-            mySocket.sendSignalAndGetResponse(signupAction);  // we can get the signed-up user here but ignore for now
-            //conditionMessage1.setText(user.getUsername() + " successfully signed up");
-            loadLoginMenu(event);
+            user = mySocket.sendSignalAndGetResponse(signupAction);  // we can get the signed-up user here but ignore for now
+            //loadLoginMenu(event);
+            loadProfilePage(event);
         }
     }
 
@@ -163,20 +167,65 @@ public class Controller {
 
     //////////////////////////////////////////////////////////// profile page scene ->
     // profile fields:
-    //@FXML
-    //private Avatar avatar;
+    @FXML
+    private Avatar avatar;
     @FXML
     private Label status;
     @FXML
     private TextField profileUsername;
     @FXML
-    private Label usernameEditButton;
-    @FXML
     private TextField profileEmail;
-    @FXML
-    private Label emailEditButton;
     @FXML
     private TextField profilePhoneNumber;
     @FXML
-    private Label phoneNumberEditButton;
+    private Button editButton;
+    @FXML
+    private Label editErrorMessage;
+
+    @FXML
+    void editEnabled() throws IOException, ClassNotFoundException {
+        switch (editButton.getText()) {
+            case "Edit" -> {
+                profileUsername.setEditable(true);
+                profileEmail.setEditable(true);
+                profilePhoneNumber.setEditable(true);
+                editButton.setText("Done");
+            }
+            case "Done" -> {
+
+                SignUpOrChangeInfoAction changeInfoAction = new SignUpOrChangeInfoAction(user.getUsername());
+
+                changeInfoAction.setUsername(profileUsername.getText());
+                boolean validUsername = mySocket.sendSignalAndGetResponse(changeInfoAction);
+
+                changeInfoAction.setEmail(profileEmail.getText());
+                boolean validEmail = mySocket.sendSignalAndGetResponse(changeInfoAction);
+
+                changeInfoAction.setUsername(profilePhoneNumber.getText());
+                boolean validPhoneNumber = (boolean) mySocket.sendSignalAndGetResponse(changeInfoAction) || "".equals(profilePhoneNumber.getText());
+
+                if (!validUsername) {
+                    editErrorMessage.setText("Invalid username!");
+                } else if (!validEmail) {
+                    editErrorMessage.setText("Invalid email");
+                } else if (!validPhoneNumber) {
+                    editErrorMessage.setText("Invalid phone number (you can empty this field to remove your phone number");
+                } else {
+                    profileUsername.setEditable(false);
+                    profileEmail.setEditable(false);
+                    profilePhoneNumber.setEditable(false);
+                    editButton.setText("Edit");
+
+                    String oldUsername = user.getUsername();
+                    user.setUsername(profileUsername.getText());
+                    user.setEmail(profileEmail.getText());
+                    user.setPhoneNumber(profilePhoneNumber.getText());
+                    if ("".equals(user.getPhoneNumber().trim())) {
+                        profilePhoneNumber.setText("You haven't added a phone number yet.");
+                    }
+                    boolean DBConnect = mySocket.sendSignalAndGetResponse(new UpdateUserOnMainServerAction(user, oldUsername));
+                }
+            }
+        }
+    }
 }

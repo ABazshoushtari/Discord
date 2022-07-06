@@ -1,5 +1,7 @@
 package discord.client;
 
+import javafx.scene.image.Image;
+
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,6 +10,7 @@ import java.util.LinkedList;
 public class Model implements Asset {
     // Fields:
     private final int UID;
+    private Image avatarImage;
     private String username;
     private String password;
     private String email;
@@ -30,6 +33,7 @@ public class Model implements Asset {
     // Constructors:
     public Model(int UID, String username, String password, String email, String phoneNumber) {
         this.UID = UID;
+        this.avatarImage = null;
         this.username = username;
         this.password = password;
         this.email = email;
@@ -48,6 +52,10 @@ public class Model implements Asset {
     // Getters:
     public int getUID() {
         return UID;
+    }
+
+    public Image getAvatarImage() {
+        return avatarImage;
     }
 
     public String getUsername() {
@@ -103,6 +111,10 @@ public class Model implements Asset {
     }
 
     // Setters:
+    public void setAvatarImage(Image avatarImage) {
+        this.avatarImage = avatarImage;
+    }
+
     public void setUsername(String username) {
         this.username = username;
     }

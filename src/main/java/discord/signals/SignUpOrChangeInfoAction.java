@@ -7,7 +7,6 @@ import java.util.regex.Pattern;
 
 public class SignUpOrChangeInfoAction implements Action {
     // Fields:
-    private int UID; // used when changing info
     private String username;
     private String oldUsername; // used when changing username
     private String password;
@@ -26,7 +25,6 @@ public class SignUpOrChangeInfoAction implements Action {
     }       // used when signing up
 
     public SignUpOrChangeInfoAction(String username) {      //used when changing a field from the user
-        UID = MainServer.getIDs().get(username);
         this.username = username;
         this.stage = -1;
     }
@@ -100,14 +98,15 @@ public class SignUpOrChangeInfoAction implements Action {
                 return isAValidEmail(email);
             }
             case 4 -> {
-                if ("0".equals(phoneNumber)) {
+                phoneNumber = phoneNumber.trim();
+                if ("".equals(phoneNumber)) {
                     return true;
                 } else {
                     return isMatched(phoneNumber);
                 }
             }
             case 5 -> {
-                if ("0".equals(phoneNumber)) phoneNumber = null;
+                if ("".equals(phoneNumber)) phoneNumber = null;
                 // generate a new ID for the new user
                 int UID = 0;
                 while (MainServer.getIDs().containsValue(UID)) {
@@ -118,42 +117,25 @@ public class SignUpOrChangeInfoAction implements Action {
                     return newUser;
                 }
             }
-            // change one of the fields process:
+            // when trying to change one of the fields see if the new value is acceptable
             case -1 -> {
-                boolean match = false;
-                boolean DBConnect = true;
-                Model changedUser = MainServer.getUsers().get(UID);
                 switch (subStage) {
                     case 1 -> {
-                        match = isMatched(username);
-                        if (match)  changedUser.setUsername(username);
+                        return oldUsername.equals(username) || (isMatched(username) && !MainServer.getIDs().containsKey(username));
                     }
                     case 2 -> {
-                        match = isMatched(password);
-                        if (match) changedUser.setPassword(password);
+                        return isMatched(password);
                     }
                     case 3 -> {
-                        match = isAValidEmail(email);
-                        if (match) changedUser.setEmail(email);
+                        return isAValidEmail(email);
                     }
                     case 4 -> {
-                        if ("0".equals(phoneNumber)) {
-                            changedUser.setPhoneNumber(null);
+                        if ("".equals(phoneNumber)) {
                             return true;
                         }
-                        match = isMatched(phoneNumber);
-                        if (match) changedUser.setPhoneNumber(phoneNumber);
+                        return isMatched(phoneNumber);
                     }
                 }
-                if (match) {
-                    if (subStage == 1) {    // when changing username
-                        MainServer.getIDs().remove(oldUsername);
-                        MainServer.getIDs().put(username, UID);
-                    }
-                    MainServer.getUsers().replace(UID, changedUser);
-                    DBConnect = MainServer.updateDatabase(changedUser);
-                }
-                return match && DBConnect;
             }
         }
         return null;
