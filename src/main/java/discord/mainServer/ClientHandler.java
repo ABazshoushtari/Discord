@@ -40,22 +40,23 @@ public class ClientHandler implements Runnable {
                     if (action instanceof LoginAction || ((action instanceof SignUpOrChangeInfoAction && ((SignUpOrChangeInfoAction) action).getStage() == 5))) {
                         user = (Model) action.act();
                         if (user != null) {
-                            user.setStatus(Status.Online);
+                            if (user.getStatus() == null) {
+                                user.setStatus(Status.Online);
+                            }
                         }
+                        // write back the Model of the logged in/ signed-up user
                         mySocket.write(user);
                     } else {
+                        // used for signing up stages before finalizing the registration (validating fields)
                         mySocket.write(action.act());
                     }
                 }
                 // the second while loop is for any other action after logging in or signing up
-                while (true) {
+                while (user != null) {
                     action = mySocket.read();
+                    mySocket.write(action.act());
                     if (action instanceof LogoutAction) {
                         user = null;
-                        break;
-                    } else {
-                        // for any other action besides logging out
-                        mySocket.write(action.act());
                     }
                 }
             } catch (IOException | ClassNotFoundException e) {

@@ -1,6 +1,7 @@
 package discord.client;
 
 import discord.signals.LoginAction;
+import discord.signals.LogoutAction;
 import discord.signals.SignUpOrChangeInfoAction;
 import discord.signals.UpdateUserOnMainServerAction;
 import javafx.event.ActionEvent;
@@ -13,6 +14,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.HBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import com.gluonhq.charm.glisten.control.Avatar;
 
@@ -73,11 +76,32 @@ public class Controller {
         //avatar.setImage(user.getAvatarImage());
         profileUsername.setText(user.getUsername());
         profileEmail.setText(user.getEmail());
-        profileStatus.setText(user.getStatus().toString());
+        setStatusLabel(user.getStatus());
         if (user.getPhoneNumber() != null) {
             profilePhoneNumber.setText(user.getPhoneNumber());
         } else {
             profilePhoneNumber.setText("You haven't added a phone number yet.");
+        }
+    }
+
+    private void setStatusLabel(Status status) {
+        switch (status) {
+            case Online -> {
+                profileStatus.setText("Online");
+                profileStatus.setTextFill(new Color(0, 1, 0, 1));
+            }
+            case Idle -> {
+                profileStatus.setText("Idle");
+                profileStatus.setTextFill(new Color(1, 0.647, 0, 1));
+            }
+            case DoNotDisturb -> {
+                profileStatus.setText("Do Not Disturb");
+                profileStatus.setTextFill(new Color(1, 0, 0, 1));
+            }
+            case Invisible -> {
+                profileStatus.setText("Invisible");
+                profileStatus.setTextFill(new Color(0.502, 0.502, 0.502, 1));
+            }
         }
     }
 
@@ -89,7 +113,7 @@ public class Controller {
             Scene scene = new Scene(loader.load());
             stage.setScene(scene);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
     }
 
@@ -117,24 +141,27 @@ public class Controller {
     // signup methods
     @FXML
     void signup(Event event) throws IOException, ClassNotFoundException {
+
         signupErrorMessage.setText("");
         conditionMessage1.setText("");
         conditionMessage2.setText("");
+
         String emailField = email.getText().trim();
         String usernameField = usernameOnSignupMenu.getText().trim();
         String passwordField = passwordOnSignupMenu.getText().trim();
+
         if (!"".equals(emailField) && !"".equals(usernameField) && !"".equals(passwordField)) {
 
             SignUpOrChangeInfoAction signupAction = new SignUpOrChangeInfoAction();
 
             // validating username
             signupAction.setUsername(usernameOnSignupMenu.getText());
-            Boolean success = mySocket.sendSignalAndGetResponse(signupAction);
-            if (success == null) {
+            Boolean valid = mySocket.sendSignalAndGetResponse(signupAction);
+            if (valid == null) {
                 signupErrorMessage.setText("This username is already taken!");
                 return;
             }
-            if (!success) {
+            if (!valid) {
                 signupErrorMessage.setText("Invalid username format!");
                 conditionMessage1.setText("A username should consist of only English letters/numbers and be of a minimal length of 6");
                 return;
@@ -142,8 +169,8 @@ public class Controller {
 
             // validating password
             signupAction.setPassword(passwordField);
-            success = mySocket.sendSignalAndGetResponse(signupAction);
-            if (!success) {
+            valid = mySocket.sendSignalAndGetResponse(signupAction);
+            if (!valid) {
                 signupErrorMessage.setText("Invalid password format!");
                 conditionMessage1.setText("A password should consist of only English letters/numbers and be of a minimal length of 8");
                 conditionMessage2.setText("It should also at least have 1 small and 1 capital letter and 1 number");
@@ -152,8 +179,8 @@ public class Controller {
 
             // validating email
             signupAction.setEmail(emailField);
-            success = mySocket.sendSignalAndGetResponse(signupAction);
-            if (!success) {
+            valid = mySocket.sendSignalAndGetResponse(signupAction);
+            if (!valid) {
                 signupErrorMessage.setText("Invalid email format!");
                 return;
             }
@@ -191,14 +218,15 @@ public class Controller {
     @FXML
     private Label editErrorMessage;
     @FXML
-    private Label enterPasswordLabel;
+    private HBox newPasswordHBox;
     @FXML
-    private TextField enterPasswordTextField;
+    private TextField newPasswordTextField;
     @FXML
     private Label changePasswordButton;
     @FXML
     private Label profileErrorMessage;
-
+    @FXML
+    private HBox changeStatusMenu;
 
     // profile methods:
     @FXML
@@ -255,17 +283,11 @@ public class Controller {
     }
 
     @FXML
-    void changeAvatar(MouseEvent event) {
-
-    }
-
-    @FXML
     void changePassword(MouseEvent event) {
         switch (changePasswordButton.getText()) {
             case "Change Password" -> {
-                enterPasswordLabel.setVisible(true);
-                enterPasswordTextField.setVisible(true);
-                enterPasswordTextField.setEditable(true);
+                newPasswordHBox.setVisible(true);
+                newPasswordTextField.setEditable(true);
                 changePasswordButton.setText("Cancel");
             }
             case "Cancel" -> doneWithPasswordChange();
@@ -273,23 +295,22 @@ public class Controller {
     }
 
     private void doneWithPasswordChange() {
-        enterPasswordTextField.setEditable(false);
-        enterPasswordTextField.setVisible(false);
-        enterPasswordLabel.setVisible(false);
+        newPasswordTextField.setEditable(false);
+        newPasswordHBox.setVisible(false);
         profileErrorMessage.setVisible(false);
-        enterPasswordTextField.setText("");
+        newPasswordTextField.setText("");
         changePasswordButton.setText("Change Password");
     }
 
     @FXML
     void doneChangingPassword(ActionEvent event) throws IOException, ClassNotFoundException {
-        String newPassword = enterPasswordTextField.getText().trim();
+        String newPassword = newPasswordTextField.getText().trim();
         SignUpOrChangeInfoAction changeInfoAction = new SignUpOrChangeInfoAction(user.getUsername());
         changeInfoAction.setPassword(newPassword);
         if (mySocket.sendSignalAndGetResponse(changeInfoAction)) {
             doneWithPasswordChange();
             user.setPassword(newPassword);
-            boolean DBConnect = mySocket.sendSignalAndGetResponse(new UpdateUserOnMainServerAction(user, user.getUsername()));
+            boolean DBConnect = mySocket.sendSignalAndGetResponse(new UpdateUserOnMainServerAction(user));
         } else {
             profileErrorMessage.setVisible(true);
             profileErrorMessage.setText("Invalid format!");
@@ -297,7 +318,26 @@ public class Controller {
     }
 
     @FXML
-    void changeStatus(MouseEvent event) {
+    void editStatus(MouseEvent event) {
+        changeStatusMenu.setVisible(true);
+    }
+
+    @FXML
+    void setStatus(MouseEvent event) throws IOException, ClassNotFoundException {
+        String newStatus = ((Label) event.getSource()).getText();
+        switch (newStatus) {
+            case "Online" -> user.setStatus(Status.Online);
+            case "Idle" -> user.setStatus(Status.Idle);
+            case "Do Not Disturb" -> user.setStatus(Status.DoNotDisturb);
+            case "Invisible" -> user.setStatus(Status.Invisible);
+        }
+        setStatusLabel(user.getStatus());
+        changeStatusMenu.setVisible(false);
+        boolean DBConnect = mySocket.sendSignalAndGetResponse(new UpdateUserOnMainServerAction(user));
+    }
+
+    @FXML
+    void changeAvatar(MouseEvent event) {
 
     }
 
@@ -307,7 +347,8 @@ public class Controller {
     }
 
     @FXML
-    void logout(Event event) {
+    void logout(Event event) throws IOException, ClassNotFoundException {
+        boolean DBConnect = getMySocket().sendSignalAndGetResponse(new LogoutAction(user));
         user = null;
         loadLoginMenu(event);
     }

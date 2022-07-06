@@ -16,6 +16,7 @@ public class Model implements Asset {
     private String email;
     private String phoneNumber;
     private Status status;
+    private Status previousSetStatus;
     private final LinkedList<Integer> friendRequests;
     private final LinkedList<Integer> friends;
     private final LinkedList<Integer> blockedList;
@@ -38,7 +39,8 @@ public class Model implements Asset {
         this.password = password;
         this.email = email;
         this.phoneNumber = phoneNumber;
-        status = Status.Offline;
+        status = null;
+        previousSetStatus = null;
         friendRequests = new LinkedList<>();
         friends = new LinkedList<>();
         blockedList = new LinkedList<>();
@@ -76,6 +78,10 @@ public class Model implements Asset {
 
     public Status getStatus() {
         return status;
+    }
+
+    public Status getPreviousSetStatus() {
+        return previousSetStatus;
     }
 
     public LinkedList<Integer> getFriendRequests() {
@@ -133,6 +139,10 @@ public class Model implements Asset {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    public void setPreviousSetStatus(Status previousSetStatus) {
+        this.previousSetStatus = previousSetStatus;
     }
 
     // Other Methods:

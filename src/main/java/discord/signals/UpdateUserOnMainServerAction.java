@@ -1,22 +1,32 @@
 package discord.signals;
 
+import discord.client.Status;
 import discord.mainServer.MainServer;
 import discord.client.Model;
 
 public class UpdateUserOnMainServerAction implements Action {
-    private final Model me;
-    private final String oldUsername;
+    private final Model updatedMe;
+    private String oldUsername;
+    private final boolean usernameIsChanged;
 
-    public UpdateUserOnMainServerAction(Model me, String oldUsername) {
-        this.me = me;
+    public UpdateUserOnMainServerAction(Model updatedMe, String oldUsername) {
+        this.updatedMe = updatedMe;
         this.oldUsername = oldUsername;
+        usernameIsChanged = true;
+    }
+
+    public UpdateUserOnMainServerAction(Model updatedMe) {
+        this.updatedMe = updatedMe;
+        usernameIsChanged = false;
     }
 
     @Override
     public Object act() {
-        MainServer.getIDs().remove(oldUsername);
-        MainServer.getIDs().put(me.getUsername(), me.getUID());
-        MainServer.getUsers().replace(me.getUID(), me);
-        return MainServer.updateDatabase(me);
+        if (usernameIsChanged) {
+            MainServer.getIDs().remove(oldUsername);
+            MainServer.getIDs().put(updatedMe.getUsername(), updatedMe.getUID());
+        }
+        MainServer.getUsers().replace(updatedMe.getUID(), updatedMe);
+        return MainServer.updateDatabase(updatedMe);
     }
 }

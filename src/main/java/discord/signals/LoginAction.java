@@ -1,8 +1,7 @@
 package discord.signals;
 
-import discord.mainServer.MainServer;
 import discord.client.Model;
-import discord.client.Status;
+import discord.mainServer.MainServer;
 
 public class LoginAction implements Action {
     private final String username;
@@ -25,7 +24,10 @@ public class LoginAction implements Action {
             return null;
         } else {
             Model user = MainServer.getUsers().get(UID);
-            user.setStatus(Status.Online);
+            user.setStatus(user.getPreviousSetStatus());
+            user.setPreviousSetStatus(null);
+            MainServer.getUsers().replace(UID, user);
+            boolean DBConnect = MainServer.updateDatabase(user);
             return user;
         }
     }

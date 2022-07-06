@@ -1,5 +1,5 @@
 package discord.client;
 
 public enum Status {
-    Online, Idle, DoNotDisturb, Invisible, Offline
+    Online, Idle, DoNotDisturb, Invisible
 }

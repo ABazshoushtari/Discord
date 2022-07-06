@@ -106,7 +106,9 @@ public class SignUpOrChangeInfoAction implements Action {
                 }
             }
             case 5 -> {
-                if ("".equals(phoneNumber)) phoneNumber = null;
+                if ("".equals(phoneNumber)) {
+                    phoneNumber = null;
+                }
                 // generate a new ID for the new user
                 int UID = 0;
                 while (MainServer.getIDs().containsValue(UID)) {
