@@ -23,12 +23,12 @@ public class LoginAction implements Action {
         } else if (!MainServer.getUsers().get(UID).getPassword().equals(password)) {
             return null;
         } else {
-            Model user = MainServer.getUsers().get(UID);
-            user.setStatus(user.getPreviousSetStatus());
-            user.setPreviousSetStatus(null);
-            MainServer.getUsers().replace(UID, user);
-            boolean DBConnect = MainServer.updateDatabase(user);
-            return user;
+            Model me = MainServer.getUsers().get(UID);
+            me.setStatus(me.getPreviousSetStatus());
+            me.setPreviousSetStatus(null);
+            MainServer.getUsers().replace(UID, me);
+            boolean DBConnect = MainServer.updateDatabase(me);
+            return me;
         }
     }
 }

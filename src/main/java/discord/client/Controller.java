@@ -1,9 +1,6 @@
 package discord.client;
 
-import discord.signals.LoginAction;
-import discord.signals.LogoutAction;
-import discord.signals.SignUpOrChangeInfoAction;
-import discord.signals.UpdateUserOnMainServerAction;
+import discord.signals.*;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.fxml.FXML;
@@ -15,6 +12,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+
 import javax.imageio.ImageIO;
 
 import javafx.scene.image.PixelFormat;
@@ -86,7 +84,7 @@ public class Controller {
         if (user.getAvatarImage() != null) {
             Image img;
             try (FileOutputStream fileOutputStream = new FileOutputStream("avatar." + user.getContentType());
-                FileInputStream fileInputStream = new FileInputStream("avatar." + user.getContentType())) {
+                 FileInputStream fileInputStream = new FileInputStream("avatar." + user.getContentType())) {
                 fileOutputStream.write(user.getAvatarImage());
                 img = new Image(fileInputStream);
             }
@@ -108,22 +106,10 @@ public class Controller {
 
     private void setStatusLabel(Status status) {
         switch (status) {
-            case Online -> {
-                profileStatus.setText("Online");
-                profileStatus.setTextFill(new Color(0, 1, 0, 1));
-            }
-            case Idle -> {
-                profileStatus.setText("Idle");
-                profileStatus.setTextFill(new Color(1, 0.647, 0, 1));
-            }
-            case DoNotDisturb -> {
-                profileStatus.setText("Do Not Disturb");
-                profileStatus.setTextFill(new Color(1, 0, 0, 1));
-            }
-            case Invisible -> {
-                profileStatus.setText("Invisible");
-                profileStatus.setTextFill(new Color(0.502, 0.502, 0.502, 1));
-            }
+            case Online -> profileStatus.setFill(new Color(0, 1, 0, 1));
+            case Idle -> profileStatus.setFill(new Color(1, 0.647, 0, 1));
+            case DoNotDisturb -> profileStatus.setFill(new Color(1, 0, 0, 1));
+            case Invisible -> profileStatus.setFill(new Color(0.502, 0.502, 0.502, 1));
         }
     }
 
@@ -228,7 +214,7 @@ public class Controller {
     @FXML
     private ImageView avatar;
     @FXML
-    private Label profileStatus;
+    private Circle profileStatus;
     @FXML
     private TextField profileUsername;
     @FXML
@@ -285,6 +271,7 @@ public class Controller {
                     profileUsername.setEditable(false);
                     profileEmail.setEditable(false);
                     profilePhoneNumber.setEditable(false);
+                    editErrorMessage.setText("");
                     editButton.setText("Edit");
 
                     String oldUsername = user.getUsername();
@@ -398,8 +385,15 @@ public class Controller {
     }
 
     @FXML
-    void enter(MouseEvent event) {
+    void removeAvatar() throws IOException, ClassNotFoundException {
+        avatar.setImage(null);
+        user.setAvatarImage(null);
+        boolean DBConnect = mySocket.sendSignalAndGetResponse(new UpdateUserOnMainServerAction(user));
+    }
 
+    @FXML
+    void enter(Event event) {
+        loadScene(event, "MainPage.fxml");
     }
 
     @FXML
@@ -408,4 +402,9 @@ public class Controller {
         user = null;
         loadLoginMenu(event);
     }
+
+    //////////////////////////////////////////////////////////// main page scene ->
+    // main page fields:
+
+    // main page methods:
 }

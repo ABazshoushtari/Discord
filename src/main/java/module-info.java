@@ -1,7 +1,6 @@
 module discord.advancedprogrammingfinalproject {
     requires javafx.controls;
     requires javafx.fxml;
-    requires charm.glisten;
     requires java.desktop;
 
 
