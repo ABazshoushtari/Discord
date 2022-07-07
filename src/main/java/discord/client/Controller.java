@@ -106,10 +106,10 @@ public class Controller {
 
     private void setStatusLabel(Status status) {
         switch (status) {
-            case Online -> profileStatus.setFill(new Color(0, 1, 0, 1));
-            case Idle -> profileStatus.setFill(new Color(1, 0.647, 0, 1));
-            case DoNotDisturb -> profileStatus.setFill(new Color(1, 0, 0, 1));
-            case Invisible -> profileStatus.setFill(new Color(0.502, 0.502, 0.502, 1));
+            case Online -> profileStatus.setStyle("-fx-background-color: #3ca45c");
+            case Idle -> profileStatus.setStyle("-fx-background-color: #faa81a");
+            case DoNotDisturb -> profileStatus.setStyle("-fx-background-color: #d83c3e");
+            case Invisible -> profileStatus.setStyle("-fx-background-color: #747f8d");
         }
     }
 
@@ -229,14 +229,27 @@ public class Controller {
     private HBox newPasswordHBox;
     @FXML
     private TextField newPasswordTextField;
+//    @FXML
+//    private Label changePasswordButton;
     @FXML
-    private Label changePasswordButton;
+    private Button changePasswordButton;
     @FXML
     private Label profileErrorMessage;
     @FXML
     private HBox changeStatusMenu;
 
     // profile methods:
+    @FXML
+    void changeRedOnEnter(MouseEvent event) {
+        Button redButton = (Button) event.getSource();
+        redButton.setStyle("-fx-background-color: #A12D2F");
+    }
+
+    @FXML
+    void changeRedOnExit(MouseEvent event) {
+        Button redButton = (Button) event.getSource();
+        redButton.setStyle("-fx-background-color:  #d83c3e");
+    }
     @FXML
     void editEnabledOrDone() throws IOException, ClassNotFoundException {
         switch (editButton.getText()) {
@@ -292,7 +305,7 @@ public class Controller {
     }
 
     @FXML
-    void changePassword(MouseEvent event) {
+    void changePassword(ActionEvent event) {
         switch (changePasswordButton.getText()) {
             case "Change Password" -> {
                 newPasswordHBox.setVisible(true);
@@ -358,7 +371,8 @@ public class Controller {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select a profile pic");
         fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("All Images", "*.jpg", "*.png"), new FileChooser.ExtensionFilter("JPG", "*.jpg"), new FileChooser.ExtensionFilter("PNG", "*.png"));
-        File selectedFile = App.fileChooser(fileChooser);
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        File selectedFile = fileChooser.showOpenDialog(stage);
         if (selectedFile == null) {
             return;
         }

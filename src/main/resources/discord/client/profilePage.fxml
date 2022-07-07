@@ -6,7 +6,10 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
@@ -33,22 +36,22 @@
                         <ImageView fx:id="avatar" fitHeight="100.0" fitWidth="100.0" onMouseClicked="#changeAvatar" pickOnBounds="true" preserveRatio="true" />
                         <VBox spacing="10.0">
                            <children>
-                              <Label alignment="CENTER" contentDisplay="CENTER" maxWidth="1.7976931348623157E308" onMouseClicked="#changeAvatar" style="-fx-background-color: #5862fd; -fx-background-radius: 5;" text="Change Avatar" textFill="WHITE">
+                              <Button alignment="CENTER" contentDisplay="CENTER" maxWidth="1.7976931348623157E308" onMouseClicked="#changeAvatar" style="-fx-background-color: #5862fd; -fx-background-radius: 5;" text="Change Avatar" textFill="WHITE">
                                  <font>
                                     <Font name="System Bold" size="14.0" />
                                  </font>
                                  <padding>
                                     <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
                                  </padding>
-                              </Label>
-                              <Label alignment="CENTER" contentDisplay="CENTER" onMouseClicked="#removeAvatar" style="-fx-background-color: #d83c3e; -fx-background-radius: 5;" text="Remove Avatar" textFill="WHITE">
+                              </Button>
+                              <Button alignment="CENTER" contentDisplay="CENTER" onAction="#removeAvatar" onMouseEntered="#changeRedOnEnter" onMouseExited="#changeRedOnExit" style="-fx-background-color: #d83c3e; -fx-background-radius: 5;" text="Remove Avatar" textFill="WHITE">
                                  <font>
                                     <Font name="System Bold" size="14.0" />
                                  </font>
                                  <padding>
                                     <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
                                  </padding>
-                              </Label>
+                              </Button>
                               <Circle fx:id="profileStatus" onMouseClicked="#editStatus" radius="6.0" stroke="BLACK" strokeType="INSIDE" />
                            </children>
                            <HBox.margin>
@@ -99,7 +102,7 @@
                         </HBox>
                      </children>
                   </HBox>
-                  <VBox alignment="CENTER_LEFT" maxHeight="-Infinity" maxWidth="-Infinity" style="-fx-background-color: #2f3136; -fx-background-radius: 12;">
+                  <VBox alignment="CENTER_LEFT" maxHeight="-Infinity" maxWidth="1.7976931348623157E308" style="-fx-background-color: #2f3136; -fx-background-radius: 12;">
                      <padding>
                         <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
                      </padding>
@@ -107,16 +110,23 @@
                         <Insets />
                      </opaqueInsets>
                      <children>
-                        <HBox alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" prefWidth="674.0">
+                        <GridPane>
+                          <columnConstraints>
+                            <ColumnConstraints halignment="LEFT" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                            <ColumnConstraints halignment="RIGHT" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                          </columnConstraints>
+                          <rowConstraints>
+                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                          </rowConstraints>
                            <children>
-                              <Label fx:id="editErrorMessage" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefWidth="620.0" textFill="RED">
+                              <Label fx:id="editErrorMessage" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="29.0" prefWidth="609.0" textFill="RED">
                                  <font>
                                     <Font name="System Bold" size="14.0" />
                                  </font>
                               </Label>
-                              <Button fx:id="editButton" alignment="CENTER_RIGHT" contentDisplay="CENTER" mnemonicParsing="false" onAction="#editEnabledOrDone" style="-fx-background-color: #616161; -fx-background-radius: 5;" text="Edit" textFill="WHITE" />
+                              <Button fx:id="editButton" alignment="CENTER_RIGHT" contentDisplay="CENTER" mnemonicParsing="false" onAction="#editEnabledOrDone" style="-fx-background-color: #616161; -fx-background-radius: 5;" text="Edit" textFill="WHITE" GridPane.columnIndex="1" />
                            </children>
-                        </HBox>
+                        </GridPane>
                         <Label maxWidth="1.7976931348623157E308" text="USERNAME" textFill="#a6a6a6">
                            <font>
                               <Font name="System Bold" size="14.0" />
@@ -198,38 +208,29 @@
       </VBox>
    </center>
    <left>
-      <VBox maxHeight="1.7976931348623157E308" maxWidth="-Infinity" prefWidth="160.0" spacing="7.0" BorderPane.alignment="CENTER">
+      <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" spacing="7.0" BorderPane.alignment="CENTER">
          <children>
-            <Label alignment="CENTER" contentDisplay="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" onMouseClicked="#enter" style="-fx-background-color: #3ca45c; -fx-background-radius: 5;" text="Enter" textFill="WHITE">
-               <font>
-                  <Font name="System Bold" size="16.0" />
-               </font>
-               <padding>
-                  <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
-               </padding>
-            </Label>
-            <Label alignment="CENTER" contentDisplay="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" onMouseClicked="#logout" style="-fx-background-color: #d83c3e; -fx-background-radius: 5;" text="Log Out" textFill="WHITE">
-               <font>
-                  <Font name="System Bold" size="16.0" />
-               </font>
-               <padding>
-                  <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
-               </padding>
-            </Label>
-            <Label fx:id="changePasswordButton" alignment="CENTER" contentDisplay="CENTER" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" onMouseClicked="#changePassword" style="-fx-background-color: #5862fd; -fx-background-radius: 5;" text="Change Password" textFill="WHITE">
+            <Button alignment="CENTER" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#enter" style="-fx-background-color: #3ca45c; -fx-background-radius: 5;" text="Enter" textFill="WHITE">
                <font>
                   <Font name="System Bold" size="14.0" />
                </font>
-               <padding>
-                  <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
-               </padding>
-            </Label>
+            </Button>
+            <Button fx:id="changePasswordButton" alignment="CENTER" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#changePassword" style="-fx-background-color: #5862fd; -fx-background-radius: 5;" text="Change Password" textFill="WHITE">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+            </Button>
+            <Button alignment="CENTER" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#logout" onMouseEntered="#changeRedOnEnter" onMouseExited="#changeRedOnExit" style="-fx-background-color: #d83c3e; -fx-background-radius: 5;" text="Log out" textFill="WHITE">
+               <font>
+                  <Font name="System Bold" size="14.0" />
+               </font>
+            </Button>
          </children>
          <padding>
             <Insets bottom="8.0" left="8.0" right="8.0" top="34.0" />
          </padding>
          <BorderPane.margin>
-            <Insets left="10.0" right="10.0" />
+            <Insets left="110.0" right="10.0" />
          </BorderPane.margin>
       </VBox>
    </left>
