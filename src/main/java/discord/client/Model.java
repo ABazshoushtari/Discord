@@ -1,7 +1,5 @@
 package discord.client;
 
-import javafx.scene.image.Image;
-
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,7 +9,7 @@ public class Model implements Asset {
     // Fields:
     private final int UID;
     private byte[] avatarImage;
-    private String contentType;  // type of avatarImage
+    private String avatarContentType;  // type of avatarImage
     private String username;
     private String password;
     private String email;
@@ -61,8 +59,8 @@ public class Model implements Asset {
         return avatarImage;
     }
 
-    public String getContentType() {
-        return contentType;
+    public String getAvatarContentType() {
+        return avatarContentType;
     }
 
     public String getUsername() {
@@ -126,8 +124,8 @@ public class Model implements Asset {
         this.avatarImage = avatarImage;
     }
 
-    public void setContentType(String contentType) {
-        this.contentType = contentType;
+    public void setAvatarContentType(String avatarContentType) {
+        this.avatarContentType = avatarContentType;
     }
 
     public void setUsername(String username) {

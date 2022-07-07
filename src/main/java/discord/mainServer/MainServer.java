@@ -45,6 +45,7 @@ public class MainServer {
     private static HashMap<Integer, Model> readUsers() {
         makeDirectory("assets");
         makeDirectory("assets\\users");
+        makeDirectory("assets" + File.separator + "user profile pictures");
         HashMap<Integer, Model> users = new HashMap<>();
         File folder = new File("assets\\users");
         File[] listOfFiles = folder.listFiles();
@@ -93,6 +94,7 @@ public class MainServer {
 
     private static HashMap<Integer, Server> readServers() {
         makeDirectory("assets\\servers");
+        makeDirectory("assets" + File.separator + "server profile pictures");
         HashMap<Integer, Server> servers = new HashMap<>();
         File folder = new File("assets\\servers");
         File[] listOfFiles = folder.listFiles();
@@ -142,17 +144,30 @@ public class MainServer {
         try {
             String path = "assets\\";
             String identification = "";
-            if (asset instanceof Model) {
-                identification = ((Model) asset).getUID() + "";
+            String avatarContentType = "";
+            String imagePath = path;
+            if (asset instanceof Model model) {
+                identification = model.getUID() + "";
+                avatarContentType = model.getAvatarContentType();
                 path = path.concat("users");
+                imagePath = imagePath.concat("user profile pictures" + File.separator);
             }
-            if (asset instanceof Server) {
-                identification = ((Server) asset).getUnicode() + "";
+            if (asset instanceof Server server) {
+                identification = server.getUnicode() + "";
+                // avatarContentType = server.getAvatarContentType();
                 path = path.concat("servers");
+                imagePath = imagePath.concat("server profile pictures" + File.separator);
             }
-            fileOut = new FileOutputStream(path + "\\" + identification.concat(".bin"));
+            // writing .bin file
+            fileOut = new FileOutputStream(path + File.separator + identification.concat(".bin"));
             out = new ObjectOutputStream(fileOut);
             out.writeObject(asset);
+
+            // writing image
+            if (((Model) asset).getAvatarImage() != null) {
+                fileOut = new FileOutputStream(imagePath + identification + "." + avatarContentType);
+                fileOut.write(((Model) asset).getAvatarImage());
+            }
             return true;
         } catch (FileNotFoundException e) {
             System.err.println("Could not find this file!");

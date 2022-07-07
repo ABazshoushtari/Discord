@@ -1,33 +1,28 @@
 package discord.client;
 
 import discord.signals.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 
-import javax.imageio.ImageIO;
-
-import javafx.scene.image.PixelFormat;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
-import javafx.scene.paint.Color;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
-import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
 import java.io.*;
+import java.util.ArrayList;
 
 public class Controller {
 
@@ -82,18 +77,23 @@ public class Controller {
         loadScene(event, "profilePage.fxml");
 
         if (user.getAvatarImage() != null) {
-            Image img;
-            try (FileOutputStream fileOutputStream = new FileOutputStream("avatar." + user.getContentType());
-                 FileInputStream fileInputStream = new FileInputStream("avatar." + user.getContentType())) {
+            Image avatarImage;
+            makeDirectory("Cache");
+            makeDirectory("Cache" + File.separator + "User Profile Pictures");
+            makeDirectory("Cache" + File.separator + "User Profile Pictures" + File.separator + user.getUID());
+            String directory = "Cache" + File.separator + "User Profile Pictures" + File.separator + user.getUID();
+            try (FileOutputStream fileOutputStream = new FileOutputStream(directory + File.separator + user.getUID() + "." + user.getAvatarContentType());
+                 FileInputStream fileInputStream = new FileInputStream(directory + File.separator + user.getUID() + "." + user.getAvatarContentType())) {
                 fileOutputStream.write(user.getAvatarImage());
-                img = new Image(fileInputStream);
+                avatarImage = new Image(fileInputStream);
             }
 //            ByteArrayInputStream inStreambj = new ByteArrayInputStream(user.getAvatarImage());
 //            Image newImage = ImageIO.read();
 //            Image image = newImage();
 //            avatar.setImage(newImage);
-            avatar.setImage(img); // Image object
+            avatar.setFill(new ImagePattern(avatarImage));
         }
+
         profileUsername.setText(user.getUsername());
         profileEmail.setText(user.getEmail());
         setStatusLabel(user.getStatus());
@@ -212,7 +212,7 @@ public class Controller {
     //////////////////////////////////////////////////////////// profile page scene ->
     // profile fields:
     @FXML
-    private ImageView avatar;
+    private Circle avatar;
     @FXML
     private Circle profileStatus;
     @FXML
@@ -229,7 +229,7 @@ public class Controller {
     private HBox newPasswordHBox;
     @FXML
     private TextField newPasswordTextField;
-//    @FXML
+    //    @FXML
 //    private Label changePasswordButton;
     @FXML
     private Button changePasswordButton;
@@ -250,6 +250,7 @@ public class Controller {
         Button redButton = (Button) event.getSource();
         redButton.setStyle("-fx-background-color:  #d83c3e");
     }
+
     @FXML
     void editEnabledOrDone() throws IOException, ClassNotFoundException {
         switch (editButton.getText()) {
@@ -360,54 +361,49 @@ public class Controller {
 
     @FXML
     void changeAvatar(MouseEvent event) throws IOException, ClassNotFoundException {
-//        Rectangle clip = new Rectangle(
-//                avatar.getFitWidth(), avatar.getFitHeight()
-//        );
-//        clip.setArcWidth(1000);
-//        clip.setArcHeight(1000);
-
-
-//        avatar.setClip(clip);
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select a profile pic");
-        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("All Images", "*.jpg", "*.png"), new FileChooser.ExtensionFilter("JPG", "*.jpg"), new FileChooser.ExtensionFilter("PNG", "*.png"));
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("All Images", "*.jpg", "*.jpeg", "*.png"), new FileChooser.ExtensionFilter("JPG", "*.jpg", "*.jpeg"), new FileChooser.ExtensionFilter("PNG", "*.png"));
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         File selectedFile = fileChooser.showOpenDialog(stage);
         if (selectedFile == null) {
             return;
         }
         Image selectedImage = new Image(selectedFile.getAbsolutePath());
-//        Circle circle = new Circle(65);
-//        ImagePattern pattern = new ImagePattern(selectedImage);
-//        circle.setFill(pattern);
-//        avatar.setClip(clip);
-        avatar.setImage(selectedImage);
+        avatar.setFill(new ImagePattern(selectedImage));
 
 //        BufferedImage image = ImageIO.read(selectedFile);
 //        user.setAvatarImage(((DataBufferByte) image.getRaster().getDataBuffer()).getData());
 
 //        ByteArrayOutputStream outStreamObj = new ByteArrayOutputStream();
         String[] parts = selectedFile.getName().split("\\.");
-        user.setContentType(parts[parts.length - 1]);
+        user.setAvatarContentType(parts[parts.length - 1]);
 //        ImageIO.write(image, parts[parts.length - 1], outStreamObj);
 //        user.setAvatarImage(outStreamObj.toByteArray());
 
-        try (FileInputStream fileInputStream = new FileInputStream(selectedFile)) {
+        makeDirectory("Cache");
+        makeDirectory("Cache" + File.separator + "User Profile Pictures");
+        makeDirectory("Cache" + File.separator + "User Profile Pictures" + File.separator + user.getUID());
+        String directory = "Cache" + File.separator + "User Profile Pictures" + File.separator + user.getUID();
+        try (FileOutputStream fileOutputStream = new FileOutputStream(directory + File.separator + user.getUID() + "." + user.getAvatarContentType());
+             FileInputStream fileInputStream = new FileInputStream(selectedFile)) {
             user.setAvatarImage(fileInputStream.readAllBytes());
+            fileOutputStream.write(user.getAvatarImage());
         }
         boolean DBConnect = mySocket.sendSignalAndGetResponse(new UpdateUserOnMainServerAction(user));
     }
 
     @FXML
     void removeAvatar() throws IOException, ClassNotFoundException {
-        avatar.setImage(null);
+        avatar.setFill(null);
         user.setAvatarImage(null);
         boolean DBConnect = mySocket.sendSignalAndGetResponse(new UpdateUserOnMainServerAction(user));
     }
 
     @FXML
-    void enter(Event event) {
+    void enter(Event event) throws IOException, ClassNotFoundException {
         loadScene(event, "MainPage.fxml");
+        initializeMainPage();
     }
 
     @FXML
@@ -419,6 +415,135 @@ public class Controller {
 
     //////////////////////////////////////////////////////////// main page scene ->
     // main page fields:
+    @FXML
+    private TextField friendRequestTextField;
 
+    @FXML
+    private ListView<Model> friendRequestsListView;
+
+    private ArrayList<Button> acceptButtons = new ArrayList<>();
+    private ArrayList<Button> rejectButtons = new ArrayList<>();
+
+    @FXML
+    private Label successOrError;
+    private final ObservableList<Model> friendRequests = FXCollections.observableArrayList();
     // main page methods:
+    private void acceptRequest(int index) throws IOException, ClassNotFoundException {
+        // index?????????????????????????????????
+        Boolean DBConnect = mySocket.sendSignalAndGetResponse(new CheckFriendRequestsAction(user.getUsername(), index, true));
+        friendRequests.remove(index);
+        user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(user.getUID()));
+        initializeMainPage();
+    }
+    private void rejectRequest(int index) throws IOException, ClassNotFoundException {
+        Boolean DBConnect = mySocket.sendSignalAndGetResponse(new CheckFriendRequestsAction(user.getUsername(), index, false));
+        friendRequests.remove(index);
+        user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(user.getUID()));
+        initializeMainPage();
+    }
+    public void initializeMainPage() throws IOException, ClassNotFoundException {
+        friendRequestsListView.setStyle("-fx-background-color:  #36393f");
+        for (Integer UID : user.getFriendRequests()) {
+            Model friend = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(UID));
+            friendRequests.add(friend);
+        }
+        System.out.println("friend requests by:");
+        for (Model o : friendRequests) {
+            System.out.println(o.getUsername());
+//            acceptButtons.add(new Button("accept"));
+//            rejectButtons.add(new Button("reject"));
+        }
+        friendRequestsListView.setItems(friendRequests);
+        friendRequestsListView.setCellFactory(new Callback<ListView<Model>, ListCell<Model>>() {
+            @Override
+            public ListCell<Model> call(ListView<Model> modelListView) {
+                acceptButtons.add(new Button("accept"));
+                rejectButtons.add(new Button("reject"));
+                return new FriendRequestCell(acceptButtons.get(acceptButtons.size() - 1), rejectButtons.get(rejectButtons.size() - 1));
+            }
+        });
+        System.out.println("accept buttons size: " + acceptButtons.size());
+        System.out.println("reject buttons size: " + rejectButtons.size());
+        if (acceptButtons != null) {
+            for (Button button : acceptButtons) {
+                button.setOnAction(new EventHandler<ActionEvent>() {
+                    @Override
+                    public void handle(ActionEvent actionEvent) {
+                        int index = acceptButtons.indexOf((Button) actionEvent.getSource());
+                        System.out.println("index of accept button which was selected: " + index);
+                        try {
+                            acceptRequest(index);
+                        } catch (IOException | ClassNotFoundException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+            }
+        }
+
+        if (rejectButtons != null) {
+            for (Button button : rejectButtons) {
+                button.setOnAction(new EventHandler<ActionEvent>() {
+                    @Override
+                    public void handle(ActionEvent actionEvent) {
+                        int index = rejectButtons.indexOf((Button) actionEvent.getSource());
+                        System.out.println("index of reject button which was selected: " + index);
+                        try {
+                            rejectRequest(index);
+                        } catch (IOException | ClassNotFoundException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+            }
+        }
+    }
+    @FXML
+    void sendFriendRequest(ActionEvent event) throws IOException, ClassNotFoundException {
+        String receivedUsername = friendRequestTextField.getText().trim();
+        Integer friendUID = mySocket.sendSignalAndGetResponse(new GetUIDbyUsernameAction(receivedUsername));
+        if (friendUID == null) {
+            successOrError.setText("A user by this username was not found!");
+            return;
+        }
+        if (receivedUsername.length() > 0) {
+            successOrError.setStyle("-fx-text-fill: #E38082");
+            if (user.getUsername().equals(receivedUsername)) {
+                successOrError.setText("You can't send a friend request to yourself!");
+                return;
+            }
+            if (user.getFriends().contains(friendUID)) {
+                successOrError.setText("This user is already your friend!");
+                return;
+            }
+            if (user.getFriendRequests().contains(friendUID)) {
+                successOrError.setText("Check your pending friend requests! :)");
+                return;
+            }
+            int scenario = mySocket.sendSignalAndGetResponse(new SendFriendRequestAction(user.getUsername(), receivedUsername));
+            switch (scenario) {
+                case 0 -> successOrError.setText("A user by this username was not found!");
+                case 1 -> successOrError.setText("You have already sent a friend request to this user!");
+                case 2 -> successOrError.setText("This user has blocked you! You can't send them a friend request");
+                case 3 -> successOrError.setText("Could not connect to the database!");
+                case 4 -> {
+                    successOrError.setStyle("-fx-text-fill: #46C46E");
+                    successOrError.setText("The request was sent successfully");
+                    Model friend = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(receivedUsername));
+//                    System.out.println(friend.getUID());
+//                    friendRequests.add(friend);
+                }
+            }
+        }
+    }
+    // Other Methods:
+    private void makeDirectory(String path) {
+        File directory = new File(path);
+        if (!directory.exists()) {
+            if (!directory.mkdir()) {
+                //printer.printErrorMessage("Could not create the " + path + " directory!");
+                throw new RuntimeException();
+            }
+        }
+    }
 }
