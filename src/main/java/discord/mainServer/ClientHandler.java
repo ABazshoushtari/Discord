@@ -51,7 +51,7 @@ public class ClientHandler implements Runnable {
                     action = mySocket.read();
                     if (action instanceof UpdateUserOnMainServerAction) {
                         user = (Model) action.act();
-                    } else if (action instanceof LogoutSignal) {
+                    } else if (action instanceof LogoutAction) {
                         user.setStatus(Status.Invisible);
                         MainServer.getUsers().replace(user.getUID(), user);
                         boolean DBConnect = MainServer.updateDatabase(user);

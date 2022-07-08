@@ -7,7 +7,7 @@ import java.util.LinkedList;
 
 public class Model implements Asset {
     // Fields:
-    private final int UID;
+    private final Integer UID;
     private byte[] avatarImage;
     private String avatarContentType;  // type of avatarImage
     private String username;
@@ -32,7 +32,7 @@ public class Model implements Asset {
     // holds only the unicode of the servers this user is a part of
 
     // Constructors:
-    public Model(int UID, String username, String password, String email, String phoneNumber) {
+    public Model(Integer UID, String username, String password, String email, String phoneNumber) {
         this.UID = UID;
         this.avatarImage = null;
         this.username = username;

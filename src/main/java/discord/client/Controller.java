@@ -5,7 +5,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.HPos;
@@ -414,7 +413,7 @@ public class Controller {
 
     @FXML
     void logout(Event event) throws IOException {
-        getMySocket().write(new LogoutSignal());
+        getMySocket().write(new LogoutAction());
         user = null;
         loadLoginMenu(event);
     }
@@ -484,13 +483,15 @@ public class Controller {
 
     // main page methods:
     public void initializeMainPage() throws IOException, ClassNotFoundException {
+
         blockedPeopleObservableList = FXCollections.observableArrayList();
         friendRequestsObservableList = FXCollections.observableArrayList();
         allFriendsObservableList = FXCollections.observableArrayList();
         onlineFriendsObservableList = FXCollections.observableArrayList();
+
         //discord logo:
-        discordLogo.setFill(new ImagePattern(new Image("E:\\AUT University\\Term4\\Advanced Programming\\Projects\\AdvancedProgramming-FinalProject\\requirements\\discordLogo.jpg")));
-        setting.setFill(new ImagePattern(new Image("E:\\AUT University\\Term4\\Advanced Programming\\Projects\\AdvancedProgramming-FinalProject\\requirements\\user setting.jpg")));
+        discordLogo.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\discordLogo.jpg"))));
+        setting.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\user setting.jpg"))));
         mainPageAvatar.setFill(new ImagePattern(avatarImage));
         usernameLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
         usernameLabel.setText(user.getUsername());
@@ -536,7 +537,7 @@ public class Controller {
         onlineListView.setItems(onlineFriendsObservableList);
 
         //construct blocked cells:
-        blockedListView.setCellFactory(frc -> new ListCell<Model>() {
+        blockedListView.setCellFactory(frc -> new ListCell<>() {
             @Override
             protected void updateItem(Model model, boolean empty) {
                 super.updateItem(model, empty);
@@ -570,15 +571,8 @@ public class Controller {
                     gridPane.add(username, 1, 0, 1, 1);
                     gridPane.add(label, 1, 1, 1, 1);
                     gridPane.add(unblockButton, 2, 0, 1, GridPane.REMAINING);
-//        GridPane.setConstraints(avatarPic, 0, 0);
-//        GridPane.setConstraints(username, 1, 0);
-//        GridPane.setConstraints(status, 1, 1);
-//        GridPane.setConstraints(acceptButton, 2, 0);
-//        GridPane.setConstraints(rejectButton, 3, 0);
-
 
                     gridPane.setHgap(8);
-//        gridPane.setAlignment(Pos.CENTER);
 
                     gridPane.setMinHeight(GridPane.USE_COMPUTED_SIZE);
                     gridPane.setPrefHeight(GridPane.USE_COMPUTED_SIZE);
@@ -592,10 +586,6 @@ public class Controller {
                     GridPane.setHalignment(username, HPos.LEFT);
                     GridPane.setHalignment(unblockButton, HPos.LEFT);
 
-//        gridPane.getChildren().addAll(avatarPic, username, acceptButton, rejectButton);
-
-                    // setting information using the model. (the actual part of updateItem)
-                    // setting avatar of the blocked user
                     if (model.getAvatarImage() != null) {
                         Image avatarImage;
                         try {
@@ -609,23 +599,16 @@ public class Controller {
                         avatarPic.setStyle("-fx-background-color: BLACK");
                     }
 
-                    // setting username of the blocked user
                     username.setText(model.getUsername());
 
-                    // setting the unblock button
-                    unblockButton.setOnAction(new EventHandler<ActionEvent>() {
-                        @Override
-                        public void handle(ActionEvent actionEvent) {
-                            int index = user.getBlockedList().indexOf(model.getUID());
-                            //user.getBlockedList().remove(index);
-                            user.getBlockedList().remove(model.getUID());
-                            blockedCount.setText("Blocked - " + user.getBlockedList().size());
-                            blockedPeopleObservableList.remove(index);
-                            try {
-                               mySocket.write(new UpdateUserOnMainServerAction(user));
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
+                    unblockButton.setOnAction(actionEvent -> {
+                        user.getBlockedList().remove(model.getUID());
+                        blockedPeopleObservableList.remove(model);
+                        blockedCount.setText("Blocked - " + user.getIncomingFriendRequests().size());
+                        try {
+                           mySocket.write(new UpdateUserOnMainServerAction(user));
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
                     });
 
@@ -635,7 +618,7 @@ public class Controller {
         });
 
         // construct pending cells:
-        pendingListView.setCellFactory(frc -> new ListCell<Model>() {
+        pendingListView.setCellFactory(frc -> new ListCell<>() {
             @Override
             protected void updateItem(Model model, boolean empty) {
                 super.updateItem(model, empty);
@@ -675,15 +658,8 @@ public class Controller {
                     gridPane.add(label, 1, 1, 1, 1);
                     gridPane.add(acceptButton, 2, 0, 1, GridPane.REMAINING);
                     gridPane.add(rejectButton, 3, 0, 1, GridPane.REMAINING);
-//        GridPane.setConstraints(avatarPic, 0, 0);
-//        GridPane.setConstraints(username, 1, 0);
-//        GridPane.setConstraints(label, 1, 1);
-//        GridPane.setConstraints(acceptButton, 2, 0);
-//        GridPane.setConstraints(rejectButton, 3, 0);
-
 
                     gridPane.setHgap(8);
-//        gridPane.setAlignment(Pos.CENTER);
 
                     gridPane.setMinHeight(GridPane.USE_COMPUTED_SIZE);
                     gridPane.setPrefHeight(GridPane.USE_COMPUTED_SIZE);
@@ -698,10 +674,6 @@ public class Controller {
                     GridPane.setHalignment(acceptButton, HPos.RIGHT);
                     GridPane.setHalignment(rejectButton, HPos.LEFT);
 
-//        gridPane.getChildren().addAll(avatarPic, username, acceptButton, rejectButton);
-
-                    // setting information using the model. (the actual part of updateItem)
-                    // setting avatar of the requester
                     if (model.getAvatarImage() != null) {
                         Image avatarImage;
                         try {
@@ -715,40 +687,30 @@ public class Controller {
                         avatarPic.setStyle("-fx-background-color: BLACK");
                     }
 
-                    // setting username of the requester
                     username.setText(model.getUsername());
                     label.setText("incoming friend request");
 
-                    // setting acceptButton and rejectButton
-                    acceptButton.setOnAction(new EventHandler<ActionEvent>() {
-                        @Override
-                        public void handle(ActionEvent actionEvent) {
-                            int index = user.getIncomingFriendRequests().indexOf(model.getUID());
-                            try {
-                                Boolean DBConnect = mySocket.sendSignalAndGetResponse(new CheckFriendRequestsAction(user.getUID(), index, true));
-                                friendRequestsObservableList.remove(index);
-//                                pendingListView.getItems().remove(index);
-                                user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(user.getUID()));
-                                pendingCount.setText("Pending - " + user.getIncomingFriendRequests().size());
-                            } catch (IOException | ClassNotFoundException e) {
-                                e.printStackTrace();
-                            }
+                    acceptButton.setOnAction(actionEvent -> {
+                        int index = user.getIncomingFriendRequests().indexOf(model.getUID());
+                        try {
+                            Boolean DBConnect = mySocket.sendSignalAndGetResponse(new CheckFriendRequestsAction(user.getUID(), index, true));
+                            friendRequestsObservableList.remove(model);
+                            user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(user.getUID()));
+                            pendingCount.setText("Pending - " + user.getIncomingFriendRequests().size());
+                        } catch (IOException | ClassNotFoundException e) {
+                            e.printStackTrace();
                         }
                     });
 
-                    rejectButton.setOnAction(new EventHandler<ActionEvent>() {
-                        @Override
-                        public void handle(ActionEvent actionEvent) {
-                            int index = user.getIncomingFriendRequests().indexOf(model.getUID());
-                            try {
-                                Boolean DBConnect = mySocket.sendSignalAndGetResponse(new CheckFriendRequestsAction(user.getUID(), index, false));
-                                friendRequestsObservableList.remove(index);
-//                                pendingListView.getItems().remove(index);
-                                user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(user.getUID()));
-                                pendingCount.setText("Pending - " +  user.getIncomingFriendRequests().size());
-                            } catch (IOException | ClassNotFoundException e) {
-                                e.printStackTrace();
-                            }
+                    rejectButton.setOnAction(actionEvent -> {
+                        int index = user.getIncomingFriendRequests().indexOf(model.getUID());
+                        try {
+                            Boolean DBConnect = mySocket.sendSignalAndGetResponse(new CheckFriendRequestsAction(user.getUID(), index, false));
+                            friendRequestsObservableList.remove(model);
+                            user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(user.getUID()));
+                            pendingCount.setText("Pending - " +  user.getIncomingFriendRequests().size());
+                        } catch (IOException | ClassNotFoundException e) {
+                            e.printStackTrace();
                         }
                     });
 
@@ -758,7 +720,7 @@ public class Controller {
         });
 
         // construct all friends cells:
-        allListView.setCellFactory(frc -> new ListCell<Model>() {
+        allListView.setCellFactory(frc -> new ListCell<>() {
             @Override
             protected void updateItem(Model model, boolean empty) {
                 super.updateItem(model, empty);
@@ -798,15 +760,8 @@ public class Controller {
                     gridPane.add(label, 1, 1, 1, 1);
                     gridPane.add(enterChatButton, 2, 0, 1, GridPane.REMAINING);
                     gridPane.add(removeButton, 3, 0, 1, GridPane.REMAINING);
-//        GridPane.setConstraints(avatarPic, 0, 0);
-//        GridPane.setConstraints(username, 1, 0);
-//        GridPane.setConstraints(label, 1, 1);
-//        GridPane.setConstraints(acceptButton, 2, 0);
-//        GridPane.setConstraints(rejectButton, 3, 0);
-
 
                     gridPane.setHgap(8);
-//        gridPane.setAlignment(Pos.CENTER);
 
                     gridPane.setMinHeight(GridPane.USE_COMPUTED_SIZE);
                     gridPane.setPrefHeight(GridPane.USE_COMPUTED_SIZE);
@@ -821,10 +776,7 @@ public class Controller {
                     GridPane.setHalignment(enterChatButton, HPos.RIGHT);
                     GridPane.setHalignment(removeButton, HPos.LEFT);
 
-//        gridPane.getChildren().addAll(avatarPic, username, acceptButton, rejectButton);
 
-                    // setting information using the model. (the actual part of updateItem)
-                    // setting avatar of the friend
                     if (model.getAvatarImage() != null) {
                         Image avatarImage;
                         try {
@@ -838,10 +790,8 @@ public class Controller {
                         avatarPic.setStyle("-fx-background-color: BLACK");
                     }
 
-                    // setting username of the requester
                     username.setText(model.getUsername());
 
-                    // setting the status
                     label.setText(model.getStatus().toString());
                     switch (model.getStatus()) {
                         case Online -> label.setTextFill(new Color(0.24, 0.64, 0.36, 1));
@@ -850,28 +800,17 @@ public class Controller {
                         case Invisible -> label.setTextFill(new Color(0.4549, 0.498, 0.553, 1));
                     }
 
-                    // setting enterChatButton and removeButton
-                    enterChatButton.setOnAction(new EventHandler<ActionEvent>() {
-                        @Override
-                        public void handle(ActionEvent actionEvent) {
-                            enterChat(model.getUID());
-                        }
-                    });
+                    enterChatButton.setOnAction(actionEvent -> enterChat(model.getUID()));
 
-                    removeButton.setOnAction(new EventHandler<ActionEvent>() {
-                        @Override
-                        public void handle(ActionEvent actionEvent) {
-                            int index = user.getFriends().indexOf(model.getUID());
-//                            user.getFriends().remove(index);
-                            user.getFriends().remove(model.getUID());
-                            allFriendsObservableList.remove(index);
-                            onlineFriendsObservableList.remove(model);
-                            allCount.setText("All - " + user.getFriends().size());
-                            try {
-                                boolean DBConnect = mySocket.sendSignalAndGetResponse(new RemoveFriendAction(user.getUID(), model.getUID()));
-                            } catch (IOException | ClassNotFoundException e) {
-                                e.printStackTrace();
-                            }
+                    removeButton.setOnAction(actionEvent -> {
+                        user.getFriends().remove(model.getUID());
+                        allCount.setText("All - " + user.getFriends().size());
+                        allFriendsObservableList.remove(model);
+                        onlineFriendsObservableList.remove(model);
+                        try {
+                            boolean DBConnect = mySocket.sendSignalAndGetResponse(new RemoveFriendAction(user.getUID(), model.getUID()));
+                        } catch (IOException | ClassNotFoundException e) {
+                            e.printStackTrace();
                         }
                     });
 
@@ -881,7 +820,7 @@ public class Controller {
         });
 
         // construct online friends cell
-        onlineListView.setCellFactory(frc -> new ListCell<Model>() {
+        onlineListView.setCellFactory(frc -> new ListCell<>() {
             @Override
             protected void updateItem(Model model, boolean empty) {
                 super.updateItem(model, empty);
@@ -909,7 +848,6 @@ public class Controller {
 
                     gridPane.setStyle("-fx-background-color:  #36393f");
 
-                    // javafx codes. creating gridPane for showing friend request
                     ColumnConstraints col1 = new ColumnConstraints(USE_PREF_SIZE, USE_COMPUTED_SIZE, USE_PREF_SIZE);
                     ColumnConstraints col2 = new ColumnConstraints(GridPane.USE_PREF_SIZE, 250, Double.MAX_VALUE);
                     ColumnConstraints col3 = new ColumnConstraints(GridPane.USE_PREF_SIZE, GridPane.USE_COMPUTED_SIZE, GridPane.USE_PREF_SIZE);
@@ -921,15 +859,8 @@ public class Controller {
                     gridPane.add(label, 1, 1, 1, 1);
                     gridPane.add(enterChatButton, 2, 0, 1, GridPane.REMAINING);
                     gridPane.add(removeButton, 3, 0, 1, GridPane.REMAINING);
-//        GridPane.setConstraints(avatarPic, 0, 0);
-//        GridPane.setConstraints(username, 1, 0);
-//        GridPane.setConstraints(label, 1, 1);
-//        GridPane.setConstraints(acceptButton, 2, 0);
-//        GridPane.setConstraints(rejectButton, 3, 0);
-
 
                     gridPane.setHgap(8);
-//        gridPane.setAlignment(Pos.CENTER);
 
                     gridPane.setMinHeight(GridPane.USE_COMPUTED_SIZE);
                     gridPane.setPrefHeight(GridPane.USE_COMPUTED_SIZE);
@@ -944,10 +875,6 @@ public class Controller {
                     GridPane.setHalignment(enterChatButton, HPos.RIGHT);
                     GridPane.setHalignment(removeButton, HPos.LEFT);
 
-//        gridPane.getChildren().addAll(avatarPic, username, acceptButton, rejectButton);
-
-                    // setting information using the model. (the actual part of updateItem)
-                    // setting avatar of the friend
                     if (model.getAvatarImage() != null) {
                         Image avatarImage;
                         try {
@@ -961,9 +888,7 @@ public class Controller {
                         avatarPic.setStyle("-fx-background-color: BLACK");
                     }
 
-                    // setting username of the requester
                     username.setText(model.getUsername());
-                    // setting the status
                     label.setText(model.getStatus().toString());
                     switch (model.getStatus()) {
                         case Online -> label.setTextFill(new Color(0.24, 0.64, 0.36, 1));
@@ -972,27 +897,17 @@ public class Controller {
                         case Invisible -> label.setTextFill(new Color(0.4549, 0.498, 0.553, 1));
                     }
 
-                    // setting enterChatButton and removeButton
-                    enterChatButton.setOnAction(new EventHandler<ActionEvent>() {
-                        @Override
-                        public void handle(ActionEvent actionEvent) {
-                            enterChat(model.getUID());
-                        }
-                    });
+                    enterChatButton.setOnAction(actionEvent -> enterChat(model.getUID()));
 
-                    removeButton.setOnAction(new EventHandler<ActionEvent>() {
-                        @Override
-                        public void handle(ActionEvent actionEvent) {
-                            int index = user.getFriends().indexOf(model.getUID());
-                            user.getFriends().remove(model.getUID());
-                            allFriendsObservableList.remove(index);
-                            onlineFriendsObservableList.remove(index);
-                            onlineCount.setText("Online - " + user.getIncomingFriendRequests().size());
-                            try {
-                                boolean DBConnect = mySocket.sendSignalAndGetResponse(new RemoveFriendAction(user.getUID(), model.getUID()));
-                            } catch (IOException | ClassNotFoundException e) {
-                                e.printStackTrace();
-                            }
+                    removeButton.setOnAction(actionEvent -> {
+                        user.getFriends().remove(model.getUID());
+                        onlineCount.setText("Online - " + user.getIncomingFriendRequests().size());
+                        onlineFriendsObservableList.remove(model);
+                        allFriendsObservableList.remove(model);
+                        try {
+                            boolean DBConnect = mySocket.sendSignalAndGetResponse(new RemoveFriendAction(user.getUID(), model.getUID()));
+                        } catch (IOException | ClassNotFoundException e) {
+                            e.printStackTrace();
                         }
                     });
 
@@ -1055,16 +970,15 @@ public class Controller {
 
     @FXML
     void mouseEnteredSetting(MouseEvent event) {
-        setting.setFill(new ImagePattern(new Image("E:\\AUT University\\Term4\\Advanced Programming\\Projects\\AdvancedProgramming-FinalProject\\requirements\\user setting entered.jpg")));
+        setting.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\user setting entered.jpg"))));
     }
 
     @FXML
     void mouseExitedSetting(MouseEvent event) {
-        setting.setFill(new ImagePattern(new Image("E:\\AUT University\\Term4\\Advanced Programming\\Projects\\AdvancedProgramming-FinalProject\\requirements\\user setting.jpg")));
-
+        setting.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\user setting.jpg"))));
     }
 
-    // Other Methods:
+    // some useful universal methods:
     private void makeDirectory(String path) {
         File directory = new File(path);
         if (!directory.exists()) {
