@@ -1,6 +1,5 @@
 package discord.signals;
 
-import discord.client.Status;
 import discord.mainServer.MainServer;
 import discord.client.Model;
 

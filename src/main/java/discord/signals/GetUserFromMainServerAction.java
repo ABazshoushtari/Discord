@@ -5,7 +5,7 @@ import discord.mainServer.MainServer;
 public class GetUserFromMainServerAction implements Action {
     private String username;
     private Integer UID;
-    private boolean byUID;
+    private final boolean byUID;
 
     public GetUserFromMainServerAction(String username) {
         this.username = username;

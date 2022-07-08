@@ -144,19 +144,19 @@ public class MainServer {
         try {
             String path = "assets\\";
             String identification = "";
-            String avatarContentType = "";
-            String imagePath = path;
+            //String avatarContentType = "";
+            //String imagePath = path;
             if (asset instanceof Model model) {
                 identification = model.getUID() + "";
-                avatarContentType = model.getAvatarContentType();
+                //avatarContentType = model.getAvatarContentType();
                 path = path.concat("users");
-                imagePath = imagePath.concat("user profile pictures" + File.separator);
+                //imagePath = imagePath.concat("user profile pictures" + File.separator);
             }
             if (asset instanceof Server server) {
                 identification = server.getUnicode() + "";
                 // avatarContentType = server.getAvatarContentType();
                 path = path.concat("servers");
-                imagePath = imagePath.concat("server profile pictures" + File.separator);
+                //imagePath = imagePath.concat("server profile pictures" + File.separator);
             }
             // writing .bin file
             fileOut = new FileOutputStream(path + File.separator + identification.concat(".bin"));
@@ -164,10 +164,10 @@ public class MainServer {
             out.writeObject(asset);
 
             // writing image
-            if (((Model) asset).getAvatarImage() != null) {
-                fileOut = new FileOutputStream(imagePath + identification + "." + avatarContentType);
-                fileOut.write(((Model) asset).getAvatarImage());
-            }
+//            if (((Model) asset).getAvatarImage() != null) {
+//                fileOut = new FileOutputStream(imagePath + identification + "." + avatarContentType);
+//                fileOut.write(((Model) asset).getAvatarImage());
+//            }
             return true;
         } catch (FileNotFoundException e) {
             System.err.println("Could not find this file!");

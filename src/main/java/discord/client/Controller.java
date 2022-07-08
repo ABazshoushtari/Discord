@@ -346,7 +346,7 @@ public class Controller {
     }
 
     @FXML
-    void setStatus(MouseEvent event) throws IOException, ClassNotFoundException {
+    void setStatus(MouseEvent event) throws IOException {
         String newStatus = ((Label) event.getSource()).getText();
         switch (newStatus) {
             case "Online" -> user.setStatus(Status.Online);
@@ -361,7 +361,7 @@ public class Controller {
     }
 
     @FXML
-    void changeAvatar(MouseEvent event) throws IOException, ClassNotFoundException {
+    void changeAvatar(MouseEvent event) throws IOException {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select a profile pic");
         fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("All Images", "*.jpg", "*.jpeg", "*.png"), new FileChooser.ExtensionFilter("JPG", "*.jpg", "*.jpeg"), new FileChooser.ExtensionFilter("PNG", "*.png"));
@@ -395,7 +395,7 @@ public class Controller {
     }
 
     @FXML
-    void removeAvatar() throws IOException, ClassNotFoundException {
+    void removeAvatar() throws IOException {
         avatar.setFill(null);
         user.setAvatarImage(null);
         mySocket.write(new UpdateUserOnMainServerAction(user));
@@ -408,8 +408,8 @@ public class Controller {
     }
 
     @FXML
-    void logout(Event event) throws IOException, ClassNotFoundException {
-        getMySocket().write(new LogoutAction(user));
+    void logout(Event event) throws IOException {
+        getMySocket().write(new LogoutSignal());
         user = null;
         loadLoginMenu(event);
     }
@@ -497,15 +497,15 @@ public class Controller {
 
         // online friends:
         onlineListView.setStyle("-fx-background-color:  #36393f");
-        int onlineCount = 0;
+        int onlineFriendsCount = 0;
         for (Integer UID : user.getFriends()) {
             Model friend = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(UID));
             if (friend.getStatus() != Status.Invisible) {
                 onlineFriends.add(friend);
-                onlineCount++;
+                onlineFriendsCount++;
             }
         }
-        this.onlineCount.setText("Online - " + onlineCount);
+        this.onlineCount.setText("Online - " + onlineFriendsCount);
         onlineListView.setItems(onlineFriends);
 
         //construct blocked cells:
@@ -592,6 +592,7 @@ public class Controller {
                             //int index = user.getBlockedList().indexOf(model.getUID());
                             //user.getBlockedList().remove(index);
                             user.getBlockedList().remove(model.getUID());
+                            blockedCount.setText("Blocked - " + user.getIncomingFriendRequests().size());
 //                          pendingListView.getItems().remove(index);
                             try {
                                mySocket.write(new UpdateUserOnMainServerAction(user));
@@ -700,7 +701,8 @@ public class Controller {
                                 Boolean DBConnect = mySocket.sendSignalAndGetResponse(new CheckFriendRequestsAction(user.getUID(), index, true));
                                 friendRequests.remove(index);
 //                                pendingListView.getItems().remove(index);
-                                //user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(user.getUID()));
+                                user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(user.getUID()));
+                                pendingCount.setText("Pending - " + user.getIncomingFriendRequests().size());
                             } catch (IOException | ClassNotFoundException e) {
                                 e.printStackTrace();
                             }
@@ -832,6 +834,7 @@ public class Controller {
                         @Override
                         public void handle(ActionEvent actionEvent) {
                             user.getFriends().remove(model.getUID());
+                            allCount.setText("All - " + user.getFriends().size());
                             try {
                                 boolean DBConnect = mySocket.sendSignalAndGetResponse(new RemoveFriendAction(user.getUID(), model.getUID()));
                             } catch (IOException | ClassNotFoundException e) {
@@ -949,6 +952,7 @@ public class Controller {
                         @Override
                         public void handle(ActionEvent actionEvent) {
                             user.getFriends().remove(model.getUID());
+                            onlineCount.setText("Online - " + user.getIncomingFriendRequests().size());
                             try {
                                 boolean DBConnect = mySocket.sendSignalAndGetResponse(new RemoveFriendAction(user.getUID(), model.getUID()));
                             } catch (IOException | ClassNotFoundException e) {
