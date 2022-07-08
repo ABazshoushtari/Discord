@@ -23,12 +23,12 @@ public class BlockAction implements Action {
 
             int blockerID = MainServer.getIDs().get(blockerUsername);
             Model blockerUser = MainServer.getUsers().get(blockerID);
-            blockerUser.getFriendRequests().remove(beingBlockedID);
+            blockerUser.getIncomingFriendRequests().remove(beingBlockedID);
             blockerUser.getFriends().remove(beingBlockedID);
             blockerUser.getBlockedList().add(beingBlockedID);
 
             Model beingBlockerUser = MainServer.getUsers().get(beingBlockedID);
-            beingBlockerUser.getFriendRequests().remove(beingBlockedID);
+            beingBlockerUser.getIncomingFriendRequests().remove(beingBlockedID);
             beingBlockerUser.getFriends().remove(beingBlockedID);
 
             return MainServer.updateDatabase(blockerUser) && MainServer.updateDatabase(beingBlockerUser);
