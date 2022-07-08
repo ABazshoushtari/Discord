@@ -18,14 +18,14 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.paint.Color;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import javafx.util.Callback;
 
 import java.io.*;
-import java.util.ArrayList;
+import java.util.LinkedList;
 
 public class Controller {
 
@@ -99,7 +99,7 @@ public class Controller {
 
         profileUsername.setText(user.getUsername());
         profileEmail.setText(user.getEmail());
-        setStatusLabel(user.getStatus());
+        setStatusColor(user.getStatus());
         if (user.getPhoneNumber() != null) {
             profilePhoneNumber.setText(user.getPhoneNumber());
         } else {
@@ -107,12 +107,12 @@ public class Controller {
         }
     }
 
-    private void setStatusLabel(Status status) {
+    private void setStatusColor(Status status) {
         switch (status) {
-            case Online -> profileStatus.setStyle("-fx-background-color: #3ca45c");
-            case Idle -> profileStatus.setStyle("-fx-background-color: #faa81a");
-            case DoNotDisturb -> profileStatus.setStyle("-fx-background-color: #d83c3e");
-            case Invisible -> profileStatus.setStyle("-fx-background-color: #747f8d");
+            case Online -> profileStatus.setFill(new Color(0.24, 0.64, 0.36, 1));
+            case Idle -> profileStatus.setFill(new Color(0.98, 0.66, 0.1, 1));
+            case DoNotDisturb -> profileStatus.setFill(new Color(0.85, 0.24, 0.24, 1));
+            case Invisible -> profileStatus.setFill(new Color(0.4549, 0.498, 0.553, 1));
         }
     }
 
@@ -232,8 +232,6 @@ public class Controller {
     private HBox newPasswordHBox;
     @FXML
     private TextField newPasswordTextField;
-    //    @FXML
-//    private Label changePasswordButton;
     @FXML
     private Button changePasswordButton;
     @FXML
@@ -357,7 +355,7 @@ public class Controller {
             case "Do Not Disturb" -> user.setStatus(Status.DoNotDisturb);
             case "Invisible" -> user.setStatus(Status.Invisible);
         }
-        setStatusLabel(user.getStatus());
+        setStatusColor(user.getStatus());
         changeStatusMenu.setVisible(false);
         boolean DBConnect = mySocket.sendSignalAndGetResponse(new UpdateUserOnMainServerAction(user));
     }
@@ -418,27 +416,72 @@ public class Controller {
 
     //////////////////////////////////////////////////////////// main page scene ->
     // main page fields:
+
+    // send a friend request:
     @FXML
     private TextField friendRequestTextField;
-
-    @FXML
-    private ListView<Model> friendRequestsListView;
-
     @FXML
     private Label successOrError;
 
+    // blocked:
+    @FXML
+    private ListView<Model> blockedListView;
+    @FXML
+    private Label blockedCount;
+    private final ObservableList<Model> blockedPeople = FXCollections.observableArrayList();
+
+    // pending:
+    @FXML
+    private ListView<Model> pendingListView;
+    @FXML
+    private Label pendingCount;
     private final ObservableList<Model> friendRequests = FXCollections.observableArrayList();
+
+    // all friends:
+    @FXML
+    private ListView<Model> allListView;
+    @FXML
+    private Label allCount;
+    private final ObservableList<Model> allFriends = FXCollections.observableArrayList();
+
+    // online friends:
+    @FXML
+    private ListView<Model> onlineListView;
+    @FXML
+    private Label onlineCount;
+    private final ObservableList<Model> onlineFriends = FXCollections.observableArrayList();
 
     // main page methods:
     public void initializeMainPage() throws IOException, ClassNotFoundException {
-        friendRequestsListView.setStyle("-fx-background-color:  #36393f");
-        for (Integer UID : user.getFriendRequests()) {
-            Model friend = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(UID));
-            friendRequests.add(friend);
-        }
 
-        friendRequestsListView.setItems(friendRequests);
-        friendRequestsListView.setCellFactory(frc -> new ListCell<Model>() {
+        // blocked:
+        blockedListView.setStyle("-fx-background-color:  #36393f");
+        for (Integer UID : user.getBlockedList()) {
+            Model blockedUser = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(UID));
+            blockedPeople.add(blockedUser);
+        }
+        blockedCount.setText("Blocked - " +  user.getBlockedList().size());
+        blockedListView.setItems(blockedPeople);
+
+        // pending:
+        pendingListView.setStyle("-fx-background-color:  #36393f");
+        for (Integer UID : user.getFriendRequests()) {
+            Model user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(UID));
+            friendRequests.add(user);
+        }
+        pendingCount.setText("Pending - " +  user.getFriendRequests().size());
+        pendingListView.setItems(friendRequests);
+
+        // all friends:
+        allListView.setStyle("-fx-background-color:  #36393f");
+        for (Integer UID : user.getFriends()) {
+            Model friend = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(UID));
+            allFriends.add(friend);
+        }
+        allCount.setText("All - " +  user.getFriends().size());
+        allListView.setItems(allFriends);
+
+        pendingListView.setCellFactory(frc -> new ListCell<Model>() {
             @Override
             protected void updateItem(Model model, boolean empty) {
                 super.updateItem(model, empty);
@@ -533,9 +576,9 @@ public class Controller {
                         public void handle(ActionEvent actionEvent) {
                             int index = user.getFriendRequests().indexOf(model.getUID());
                             try {
-                                Boolean DBConnect = mySocket.sendSignalAndGetResponse(new CheckFriendRequestsAction(user.getUsername(), index, true));
+                                Boolean DBConnect = mySocket.sendSignalAndGetResponse(new CheckFriendRequestsAction(user.getUID(), index, true));
                                 friendRequests.remove(index);
-//                                friendRequestsListView.getItems().remove(index);
+//                                pendingListView.getItems().remove(index);
                                 user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(user.getUID()));
                             } catch (IOException | ClassNotFoundException e) {
                                 e.printStackTrace();
@@ -548,9 +591,9 @@ public class Controller {
                         public void handle(ActionEvent actionEvent) {
                             int index = user.getFriendRequests().indexOf(model.getUID());
                             try {
-                                Boolean DBConnect = mySocket.sendSignalAndGetResponse(new CheckFriendRequestsAction(user.getUsername(), index, false));
+                                Boolean DBConnect = mySocket.sendSignalAndGetResponse(new CheckFriendRequestsAction(user.getUID(), index, false));
                                 friendRequests.remove(index);
-//                                friendRequestsListView.getItems().remove(index);
+//                                pendingListView.getItems().remove(index);
                                 user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(user.getUID()));
                             } catch (IOException | ClassNotFoundException e) {
                                 e.printStackTrace();

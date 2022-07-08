@@ -9,7 +9,6 @@
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
@@ -23,19 +22,71 @@
       <ListView prefWidth="360.0" style="-fx-background-color: #2f3136;" />
       <TabPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #36393F;" stylesheets="@styles/TabPaneStyle.css" tabClosingPolicy="UNAVAILABLE" tabMinWidth="68.0">
          <tabs>
-            <Tab disable="true" text="Friends">
-               <content>
-                  <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
-               </content>
-            </Tab>
+            <Tab disable="true" text="Friends" />
             <Tab text="Online">
                <content>
-                  <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
+                  <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0">
+                     <children>
+                        <Separator focusTraversable="false" maxWidth="1.7976931348623157E308" opacity="0.4">
+                           <VBox.margin>
+                              <Insets />
+                           </VBox.margin>
+                        </Separator>
+                        <Label fx:id="onlineCount" textFill="WHITE">
+                           <font>
+                              <Font name="System Bold" size="14.0" />
+                           </font>
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </Label>
+                        <ListView fx:id="onlineListView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" stylesheets="@styles/ListViewColor.css">
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                           <styleClass>
+                              <String fx:value="list-cell" />
+                              <String fx:value="list-view" />
+                           </styleClass>
+                        </ListView>
+                     </children>
+                     <padding>
+                        <Insets top="10.0" />
+                     </padding>
+                  </VBox>
                </content>
             </Tab>
             <Tab text="All">
                <content>
-                  <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
+                  <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0">
+                     <children>
+                        <Separator focusTraversable="false" maxWidth="1.7976931348623157E308" opacity="0.4">
+                           <VBox.margin>
+                              <Insets />
+                           </VBox.margin>
+                        </Separator>
+                        <Label fx:id="allCount" textFill="WHITE">
+                           <font>
+                              <Font name="System Bold" size="14.0" />
+                           </font>
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </Label>
+                        <ListView fx:id="allListView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" stylesheets="@styles/ListViewColor.css">
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                           <styleClass>
+                              <String fx:value="list-cell" />
+                              <String fx:value="list-view" />
+                           </styleClass>
+                        </ListView>
+                     </children>
+                     <padding>
+                        <Insets top="10.0" />
+                     </padding>
+                  </VBox>
                </content>
             </Tab>
             <Tab text="Pending">
@@ -47,7 +98,7 @@
                               <Insets />
                            </VBox.margin>
                         </Separator>
-                        <Label text="Pending - " textFill="WHITE">
+                        <Label fx:id="pendingCount" textFill="WHITE">
                            <font>
                               <Font name="System Bold" size="14.0" />
                            </font>
@@ -55,7 +106,7 @@
                               <Insets left="10.0" />
                            </VBox.margin>
                         </Label>
-                        <ListView fx:id="friendRequestsListView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" stylesheets="@styles/ListViewColor.css">
+                        <ListView fx:id="pendingListView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" stylesheets="@styles/ListViewColor.css">
                            <VBox.margin>
                               <Insets left="10.0" />
                            </VBox.margin>
@@ -73,7 +124,35 @@
             </Tab>
             <Tab text="Blocked">
                <content>
-                  <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
+                  <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0">
+                     <children>
+                        <Separator focusTraversable="false" maxWidth="1.7976931348623157E308" opacity="0.4">
+                           <VBox.margin>
+                              <Insets />
+                           </VBox.margin>
+                        </Separator>
+                        <Label fx:id="blockedCount" textFill="WHITE">
+                           <font>
+                              <Font name="System Bold" size="14.0" />
+                           </font>
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                        </Label>
+                        <ListView fx:id="blockedListView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" stylesheets="@styles/ListViewColor.css">
+                           <VBox.margin>
+                              <Insets left="10.0" />
+                           </VBox.margin>
+                           <styleClass>
+                              <String fx:value="list-cell" />
+                              <String fx:value="list-view" />
+                           </styleClass>
+                        </ListView>
+                     </children>
+                     <padding>
+                        <Insets top="10.0" />
+                     </padding>
+                  </VBox>
                </content>
             </Tab>
             <Tab style="-fx-background-color: #3ca45c;" text="Add Friend">

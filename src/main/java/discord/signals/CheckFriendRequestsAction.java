@@ -1,27 +1,28 @@
 package discord.signals;
 
+import discord.mainServer.ClientHandler;
 import discord.mainServer.MainServer;
 import discord.client.Model;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
+import static discord.mainServer.ClientHandler.clientHandlers;
+
 public class CheckFriendRequestsAction implements Action {
-    private final String myUsername;
+    private final Integer myUID;
     private final int index;
     private final boolean accept;
 
-    public CheckFriendRequestsAction(String myUsername, int index, boolean accept) {
-        this.myUsername = myUsername;
+    public CheckFriendRequestsAction(Integer myUID, int index, boolean accept) {
+        this.myUID = myUID;
         this.index = index;
         this.accept = accept;
     }
 
     @Override
-    public Object act() {
-        int myUID = MainServer.getIDs().get(myUsername);
-        if (!MainServer.getUsers().containsKey(myUID)) {
-            return null;
-        }
+    public Object act() throws IOException {
+
         Model myUser = MainServer.getUsers().get(myUID);
 
         int requesterID = myUser.getFriendRequests().get(index);
@@ -49,7 +50,12 @@ public class CheckFriendRequestsAction implements Action {
         myUser.getFriendRequests().remove(index);
 
         DBConnect = DBConnect && MainServer.updateDatabase(myUser);
-
+//        for (ClientHandler ch : clientHandlers) {
+//            if (ch.getUser().getUID() == requesterID) {
+//                ch.getMySocket().write(new AcceptFriendRequestSignal(myUID));
+//            }
+//            break;
+//        }
         return DBConnect;
     }
 }
