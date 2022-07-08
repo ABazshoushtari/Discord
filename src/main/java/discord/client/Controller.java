@@ -94,7 +94,9 @@ public class Controller {
         return null;
     }
 
-    private void loadProfilePage(Event event) throws IOException {
+    private void loadProfilePage(Event event) throws IOException, ClassNotFoundException {
+        // updating user from MainServer
+        user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(user.getUID()));
         loadScene(event, "profilePage.fxml");
 
         if (user.getAvatarImage() != null) {
@@ -499,6 +501,9 @@ public class Controller {
 
     // main page methods:
     public void initializeMainPage() throws IOException, ClassNotFoundException {
+        // updating user from MainServer
+        user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(user.getUID()));
+
 
         blockedPeopleObservableList = FXCollections.observableArrayList();
         friendRequestsObservableList = FXCollections.observableArrayList();
@@ -733,6 +738,13 @@ public class Controller {
                             friendRequestsObservableList.remove(model);
                             user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(user.getUID()));
                             pendingCount.setText("Pending - " + user.getIncomingFriendRequests().size());
+                            allFriendsObservableList.add(model);
+                            if (model.getStatus() != Status.Invisible) {
+                                onlineFriendsObservableList.add(model);
+                                onlineCount.setText("Online - " + onlineFriendsObservableList.size());
+                            }
+                            directMessagesObservableList.add(model);
+                            allCount.setText("All - " + user.getFriends().size());
                         } catch (IOException | ClassNotFoundException e) {
                             e.printStackTrace();
                         }
@@ -839,11 +851,15 @@ public class Controller {
                     enterChatButton.setOnAction(actionEvent -> enterChat(model.getUID()));
 
                     removeButton.setOnAction(actionEvent -> {
+                        int index = user.getFriends().indexOf(model.getUID());  // NECESSARY AND IMPORTANT for removing from directMessagesObservableList. 6 lines later
+                                                                                // because now the model is different from the one saved in observableList
+                                                                                // finglish: in model mal hamun listView hastesh ke az tush remove ro zadim, be hamin khater doroste ama baraye un yeki listView ok nist
                         user.removeFriend(model.getUID());
                         allCount.setText("All - " + user.getFriends().size());
                         allFriendsObservableList.remove(model);
                         onlineFriendsObservableList.remove(model);
-                        directMessagesObservableList.remove(model);
+//                        directMessagesListView.getItems().remove(directMessagesObservableList.indexOf(model));
+                        directMessagesObservableList.remove(index);
                         try {
                             boolean DBConnect = mySocket.sendSignalAndGetResponse(new RemoveFriendAction(user.getUID(), model.getUID()));
                         } catch (IOException | ClassNotFoundException e) {
@@ -937,11 +953,14 @@ public class Controller {
                     enterChatButton.setOnAction(actionEvent -> enterChat(model.getUID()));
 
                     removeButton.setOnAction(actionEvent -> {
+                        int index = user.getFriends().indexOf(model.getUID());  // NECESSARY AND IMPORTANT for removing from directMessagesObservableList. 6 lines later
+                                                                                // because now the model is different from the one saved in observableList
                         user.removeFriend(model.getUID());
                         onlineCount.setText("Online - " + user.getIncomingFriendRequests().size());
                         onlineFriendsObservableList.remove(model);
                         allFriendsObservableList.remove(model);
-                        directMessagesObservableList.remove(model);
+//                        directMessagesListView.getItems().remove(directMessagesObservableList.indexOf(model));
+                        directMessagesObservableList.remove(index);
                         try {
                             boolean DBConnect = mySocket.sendSignalAndGetResponse(new RemoveFriendAction(user.getUID(), model.getUID()));
                         } catch (IOException | ClassNotFoundException e) {
@@ -1066,6 +1085,7 @@ public class Controller {
 
     @FXML
     void sendFriendRequest(ActionEvent event) throws IOException, ClassNotFoundException {
+        user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(user.getUID()));
         String receivedUsername = friendRequestTextField.getText().trim();
         Integer friendUID = mySocket.sendSignalAndGetResponse(new GetUIDbyUsernameAction(receivedUsername));
         successOrError.setStyle("-fx-text-fill: #E38082");
@@ -1120,7 +1140,7 @@ public class Controller {
     }
 
     @FXML
-    void enterSetting(MouseEvent event) throws IOException {
+    void enterSetting(MouseEvent event) throws IOException, ClassNotFoundException {
         loadProfilePage(event);
     }
 
