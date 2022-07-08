@@ -21,6 +21,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -56,6 +59,8 @@ public class Controller {
     @FXML
     private Label loginErrorMessage;
 
+    private Image avatarImage;
+
     // login methods:
     @FXML
     void login(Event event) throws IOException, ClassNotFoundException {
@@ -79,7 +84,6 @@ public class Controller {
         loadScene(event, "profilePage.fxml");
 
         if (user.getAvatarImage() != null) {
-            Image avatarImage;
             makeDirectory("Cache");
             makeDirectory("Cache" + File.separator + "User Profile Pictures");
             makeDirectory("Cache" + File.separator + "User Profile Pictures" + File.separator + user.getUID());
@@ -371,6 +375,7 @@ public class Controller {
             return;
         }
         Image selectedImage = new Image(selectedFile.getAbsolutePath());
+        avatarImage = selectedImage;
         avatar.setFill(new ImagePattern(selectedImage));
 
 //        BufferedImage image = ImageIO.read(selectedFile);
@@ -416,6 +421,18 @@ public class Controller {
 
     //////////////////////////////////////////////////////////// main page scene ->
     // main page fields:
+
+    @FXML
+    private Rectangle discordLogo;
+
+    @FXML
+    private Circle mainPageAvatar;
+
+    @FXML
+    private Rectangle setting;
+
+    @FXML
+    private Label usernameLabel;
 
     // send a friend request:
     @FXML
@@ -467,6 +484,12 @@ public class Controller {
 
     // main page methods:
     public void initializeMainPage() throws IOException, ClassNotFoundException {
+        //discord logo:
+        discordLogo.setFill(new ImagePattern(new Image("E:\\AUT University\\Term4\\Advanced Programming\\Projects\\AdvancedProgramming-FinalProject\\requirements\\discordLogo.jpg")));
+        setting.setFill(new ImagePattern(new Image("E:\\AUT University\\Term4\\Advanced Programming\\Projects\\AdvancedProgramming-FinalProject\\requirements\\user setting.jpg")));
+        mainPageAvatar.setFill(new ImagePattern(avatarImage));
+        usernameLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
+        usernameLabel.setText(user.getUsername());
 
         // blocked:
         blockedListView.setStyle("-fx-background-color:  #36393f");
@@ -718,6 +741,7 @@ public class Controller {
                                 friendRequests.remove(index);
 //                                pendingListView.getItems().remove(index);
                                 user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(user.getUID()));
+                                pendingCount.setText("Pending - " +  user.getFriendRequests().size());
                             } catch (IOException | ClassNotFoundException e) {
                                 e.printStackTrace();
                             }
@@ -972,12 +996,12 @@ public class Controller {
     void sendFriendRequest(ActionEvent event) throws IOException, ClassNotFoundException {
         String receivedUsername = friendRequestTextField.getText().trim();
         Integer friendUID = mySocket.sendSignalAndGetResponse(new GetUIDbyUsernameAction(receivedUsername));
+        successOrError.setStyle("-fx-text-fill: #E38082");
         if (friendUID == null) {
             successOrError.setText("A user by this username was not found!");
             return;
         }
         if (receivedUsername.length() > 0) {
-            successOrError.setStyle("-fx-text-fill: #E38082");
             if (user.getUsername().equals(receivedUsername)) {
                 successOrError.setText("You can't send a friend request to yourself!");
                 return;
@@ -1010,6 +1034,21 @@ public class Controller {
 
     @FXML
     void enterChat(Integer friendUID) {
+    
+    }
+    
+    void enterSetting(MouseEvent event) throws IOException {
+        loadProfilePage(event);
+    }
+
+    @FXML
+    void mouseEnteredSetting(MouseEvent event) {
+        setting.setFill(new ImagePattern(new Image("E:\\AUT University\\Term4\\Advanced Programming\\Projects\\AdvancedProgramming-FinalProject\\requirements\\user setting entered.jpg")));
+    }
+
+    @FXML
+    void mouseExitedSetting(MouseEvent event) {
+        setting.setFill(new ImagePattern(new Image("E:\\AUT University\\Term4\\Advanced Programming\\Projects\\AdvancedProgramming-FinalProject\\requirements\\user setting.jpg")));
 
     }
 
