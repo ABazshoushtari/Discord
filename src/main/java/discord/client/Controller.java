@@ -451,7 +451,7 @@ public class Controller {
     private ListView<Model> pendingListView;
     @FXML
     private Label pendingCount;
-    private ObservableList<Model> friendRequestsObservableList;
+    private ObservableList<Model> friendRequestsObservableList;  // outgoing friend requests -> pending
 
     // all friends:
     @FXML

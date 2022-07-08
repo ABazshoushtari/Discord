@@ -39,7 +39,7 @@
                      </VBox.margin>
                   </Rectangle>
                   <Separator opacity="0.4" prefWidth="200.0" />
-                  <ListView prefWidth="110.0" style="-fx-background-color: #202225;">
+                  <ListView fx:id="serversListView" prefWidth="110.0" style="-fx-background-color: #202225;" styleClass="list-cell" stylesheets="@styles/ListViewColor3.css">
                      <VBox.margin>
                         <Insets right="8.0" />
                      </VBox.margin>
@@ -48,9 +48,9 @@
             </VBox>
             <StackPane prefHeight="50.0" prefWidth="62.0" GridPane.rowIndex="1">
                <children>
-                  <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#36393f" height="50.0" stroke="#ffffff00" strokeType="INSIDE" style="-fx-arc-width: 200; -fx-arc-height: 200;" width="50.0" />
-                  <Line endX="35.292877197265625" endY="-0.03391063213348389" startX="18.0" stroke="#3ba55d" style="-fx-stroke-width: 2;" />
-                  <Line endY="17.0" stroke="#3ba55d" style="-fx-stroke-width: 2;" />
+                  <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#36393f" height="50.0" onMouseClicked="#createNewServer" stroke="#ffffff00" strokeType="INSIDE" style="-fx-arc-width: 200; -fx-arc-height: 200;" width="50.0" />
+                  <Line endX="35.292877197265625" endY="-0.03391063213348389" onMouseClicked="#createNewServer" startX="18.0" stroke="#3ba55d" style="-fx-stroke-width: 2;" />
+                  <Line endY="17.0" onMouseClicked="#createNewServer" stroke="#3ba55d" style="-fx-stroke-width: 2;" />
                </children>
                <GridPane.margin>
                   <Insets bottom="100.0" right="8.0" />
@@ -101,7 +101,11 @@
                               <Insets left="10.0" top="5.0" />
                            </padding>
                         </Label>
-                        <ListView maxHeight="1.7976931348623157E308" prefWidth="360.0" style="-fx-background-color: #2f3136;" />
+                        <ListView fx:id="directMessagesListView" maxHeight="1.7976931348623157E308" prefWidth="360.0" style="-fx-background-color: #2f3136;" stylesheets="@styles/ListViewColor2.css">
+                           <styleClass>
+                              <String fx:value="list-cell" />
+                              <String fx:value="list-view" />
+                           </styleClass></ListView>
                      </children>
                      <padding>
                         <Insets bottom="8.0" />
@@ -109,7 +113,7 @@
                   </VBox>
                </children>
                <padding>
-                  <Insets top="17.5" />
+                  <Insets top="10.0" />
                </padding>
             </StackPane>
             <GridPane hgap="3.0" style="-fx-background-color: #292b2f;" GridPane.rowIndex="1">
@@ -143,9 +147,9 @@
             <Insets top="8.0" />
          </padding>
       </GridPane>
-      <StackPane>
+      <StackPane maxWidth="1.7976931348623157E308" prefWidth="724.0" style="-fx-background-color: #36393F;">
          <children>
-            <TabPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #36393F;" stylesheets="@styles/TabPaneStyle.css" tabClosingPolicy="UNAVAILABLE" tabMinWidth="68.0">
+            <TabPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #36393F;" stylesheets="@styles/TabPaneStyle.css" tabClosingPolicy="UNAVAILABLE" tabMinWidth="68.0" visible="false">
                <tabs>
                   <Tab disable="true" text="Friends" />
                   <Tab text="Online">
@@ -285,7 +289,7 @@
                         <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0">
                            <children>
                               <Separator focusTraversable="false" maxWidth="1.7976931348623157E308" opacity="0.4" />
-                              <Label text="Add Friend" textFill="WHITE">
+                              <Label text="ADD FRIEND" textFill="WHITE">
                                  <padding>
                                     <Insets left="10.0" />
                                  </padding>
@@ -341,6 +345,56 @@
                   <String fx:value="tab-pane" />
                </styleClass>
             </TabPane>
+            <GridPane style="-fx-background-color: #36393F;" vgap="5.0">
+              <columnConstraints>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+              </columnConstraints>
+              <rowConstraints>
+                <RowConstraints maxHeight="-Infinity" vgrow="SOMETIMES" />
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                <RowConstraints maxHeight="-Infinity" vgrow="SOMETIMES" />
+              </rowConstraints>
+               <children>
+                  <HBox alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" spacing="10.0" style="-fx-background-color: #40444b; -fx-background-radius: 13;" GridPane.rowIndex="2">
+                     <children>
+                        <StackPane>
+                           <children>
+                              <Circle fill="#b9bbbe" radius="12.0" stroke="TRANSPARENT" strokeType="INSIDE" />
+                              <Line endX="10.0" stroke="#36393f" style="-fx-stroke-width: 2;" />
+                              <Line endY="10.0" stroke="#36393f" style="-fx-stroke-width: 2;" />
+                           </children>
+                        </StackPane>
+                        <TextField maxWidth="1.7976931348623157E308" prefHeight="30.0" prefWidth="639.0" promptText="Message" style="-fx-background-color: #40444b; -fx-text-fill: White;">
+                           <font>
+                              <Font size="14.0" />
+                           </font>
+                        </TextField>
+                     </children>
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                  </HBox>
+                  <ListView maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" styleClass="list-cell" stylesheets="@styles/ListViewColor.css" GridPane.rowIndex="1">
+                     <padding>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </padding>
+                     <GridPane.margin>
+                        <Insets top="10.0" />
+                     </GridPane.margin>
+                  </ListView>
+                  <Label text="Label" textFill="WHITE">
+                     <font>
+                        <Font name="System Bold" size="16.0" />
+                     </font>
+                     <padding>
+                        <Insets bottom="2.0" left="10.0" top="2.0" />
+                     </padding>
+                  </Label>
+               </children>
+               <padding>
+                  <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+               </padding>
+            </GridPane>
          </children>
          <padding>
             <Insets top="8.0" />
