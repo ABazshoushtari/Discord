@@ -1,13 +1,10 @@
 package discord.signals;
 
-import discord.mainServer.ClientHandler;
 import discord.mainServer.MainServer;
 import discord.client.Model;
 
 import java.io.IOException;
 import java.util.ArrayList;
-
-import static discord.mainServer.ClientHandler.clientHandlers;
 
 public class CheckFriendRequestsAction implements Action {
     private final Integer myUID;
@@ -25,7 +22,7 @@ public class CheckFriendRequestsAction implements Action {
 
         Model myUser = MainServer.getUsers().get(myUID);
 
-        int requesterID = myUser.getFriendRequests().get(index);
+        int requesterID = myUser.getIncomingFriendRequests().get(index);
         Model requester = MainServer.getUsers().get(requesterID);
 
         boolean DBConnect = true;
@@ -47,7 +44,7 @@ public class CheckFriendRequestsAction implements Action {
             DBConnect = MainServer.updateDatabase(requester);
         }
 
-        myUser.getFriendRequests().remove(index);
+        myUser.getIncomingFriendRequests().remove(index);
 
         DBConnect = DBConnect && MainServer.updateDatabase(myUser);
 //        for (ClientHandler ch : clientHandlers) {

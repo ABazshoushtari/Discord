@@ -25,7 +25,6 @@ public class LoginAction implements Action {
         } else {
             Model me = MainServer.getUsers().get(UID);
             me.setStatus(me.getPreviousSetStatus());
-            me.setPreviousSetStatus(null);
             MainServer.getUsers().replace(UID, me);
             boolean DBConnect = MainServer.updateDatabase(me);
             return me;

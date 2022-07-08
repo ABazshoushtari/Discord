@@ -16,7 +16,6 @@ public class LogoutAction implements Action {
 
     @Override
     public Object act() throws IOException {
-        me.setPreviousSetStatus(me.getStatus());
         me.setStatus(Status.Invisible);
         MainServer.getUsers().replace(me.getUID(), me);
         return MainServer.updateDatabase(me);

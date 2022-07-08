@@ -23,13 +23,13 @@ public class SendFriendRequestAction implements Action {
         } else {
             Model user = MainServer.getUsers().get(UID);
             int requesterID = MainServer.getIDs().get(requester);
-            if (user.getFriendRequests().contains(requesterID)) {
+            if (user.getIncomingFriendRequests().contains(requesterID)) {
                 return 1;
             }
             if (user.getBlockedList().contains(requesterID)) {
                 return 2;
             }
-            user.getFriendRequests().add(requesterID);
+            user.getIncomingFriendRequests().add(requesterID);
             if (!MainServer.updateDatabase(user)) {
                 return 3;
             }

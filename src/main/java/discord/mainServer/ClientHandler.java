@@ -39,12 +39,7 @@ public class ClientHandler implements Runnable {
                     action = mySocket.read();
                     if (action instanceof LoginAction || ((action instanceof SignUpOrChangeInfoAction && ((SignUpOrChangeInfoAction) action).getStage() == 5))) {
                         user = (Model) action.act();
-                        if (user != null) {
-                            if (user.getStatus() == null) {
-                                user.setStatus(Status.Online);
-                            }
-                        }
-                        // write back the Model of the logged in/ signed-up user
+                        // write back the Model of the logged in/signed-up user
                         mySocket.write(user);
                     } else {
                         // used for signing up stages before finalizing the registration (validating fields)
@@ -54,13 +49,19 @@ public class ClientHandler implements Runnable {
                 // the second while loop is for any other action after logging in or signing up
                 while (user != null) {
                     action = mySocket.read();
-                    mySocket.write(action.act());
-                    if (action instanceof LogoutAction) {
+                    if (action instanceof UpdateUserOnMainServerAction) {
+                        user = (Model) action.act();
+                    } else if (action instanceof LogoutAction) {
                         user = null;
+                    } else {
+                        mySocket.write(action.act());
                     }
                 }
             } catch (IOException | ClassNotFoundException e) {
                 clientHandlers.remove(this);
+                if (user != null) {
+                    handleForceQuit();
+                }
                 mySocket.closeEverything();
                 if (user != null) {
                     System.out.println("clientHandler of " + user.getUsername() + " got removed");
@@ -70,5 +71,11 @@ public class ClientHandler implements Runnable {
                 break;
             }
         }
+    }
+
+    private void handleForceQuit() {
+        user.setStatus(Status.Invisible);
+        MainServer.getUsers().replace(user.getUID(), user);
+        MainServer.updateDatabase(user);
     }
 }

@@ -27,6 +27,9 @@ public class UpdateUserOnMainServerAction implements Action {
             MainServer.getIDs().put(updatedMe.getUsername(), updatedMe.getUID());
         }
         MainServer.getUsers().replace(updatedMe.getUID(), updatedMe);
-        return MainServer.updateDatabase(updatedMe);
+        if (MainServer.updateDatabase(updatedMe)) {
+            return updatedMe;
+        }
+        return null;
     }
 }
