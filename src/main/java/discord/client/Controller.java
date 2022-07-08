@@ -8,12 +8,15 @@ import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.HPos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
@@ -421,83 +424,146 @@ public class Controller {
     @FXML
     private ListView<Model> friendRequestsListView;
 
-    private ArrayList<Button> acceptButtons = new ArrayList<>();
-    private ArrayList<Button> rejectButtons = new ArrayList<>();
-
     @FXML
     private Label successOrError;
+
     private final ObservableList<Model> friendRequests = FXCollections.observableArrayList();
+
     // main page methods:
-    private void acceptRequest(int index) throws IOException, ClassNotFoundException {
-        // index?????????????????????????????????
-        Boolean DBConnect = mySocket.sendSignalAndGetResponse(new CheckFriendRequestsAction(user.getUsername(), index, true));
-        friendRequests.remove(index);
-        user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(user.getUID()));
-        initializeMainPage();
-    }
-    private void rejectRequest(int index) throws IOException, ClassNotFoundException {
-        Boolean DBConnect = mySocket.sendSignalAndGetResponse(new CheckFriendRequestsAction(user.getUsername(), index, false));
-        friendRequests.remove(index);
-        user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(user.getUID()));
-        initializeMainPage();
-    }
     public void initializeMainPage() throws IOException, ClassNotFoundException {
         friendRequestsListView.setStyle("-fx-background-color:  #36393f");
         for (Integer UID : user.getFriendRequests()) {
             Model friend = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(UID));
             friendRequests.add(friend);
         }
-        System.out.println("friend requests by:");
-        for (Model o : friendRequests) {
-            System.out.println(o.getUsername());
-//            acceptButtons.add(new Button("accept"));
-//            rejectButtons.add(new Button("reject"));
-        }
+
         friendRequestsListView.setItems(friendRequests);
-        friendRequestsListView.setCellFactory(new Callback<ListView<Model>, ListCell<Model>>() {
+        friendRequestsListView.setCellFactory(frc -> new ListCell<Model>() {
             @Override
-            public ListCell<Model> call(ListView<Model> modelListView) {
-                acceptButtons.add(new Button("accept"));
-                rejectButtons.add(new Button("reject"));
-                return new FriendRequestCell(acceptButtons.get(acceptButtons.size() - 1), rejectButtons.get(rejectButtons.size() - 1));
+            protected void updateItem(Model model, boolean empty) {
+                super.updateItem(model, empty);
+
+                if (model == null || empty) {
+                    setGraphic(null);
+                } else {
+                    // Variables (Controls; GUI components):
+                    GridPane gridPane = new GridPane();
+                    Circle avatarPic = new Circle(20);
+                    Label username = new Label();
+                    Label status = new Label();
+                    Button acceptButton = new Button("Accept");
+                    Button rejectButton = new Button("Reject");
+                    // css styles
+                    acceptButton.setStyle("-fx-background-color:  #3ca45c");
+                    rejectButton.setStyle("-fx-background-color:  #d83c3e");
+
+                    username.setStyle("-fx-font-weight: bold");
+                    username.setStyle("-fx-font-size: 16");
+                    username.setStyle("-fx-text-fill: White");
+
+                    status.setStyle("-fx-font-size: 14");
+                    status.setStyle("-fx-text-fill: White");
+
+                    gridPane.setStyle("-fx-background-color:  #36393f");
+
+                    // javafx codes. creating gridPane for showing friend request
+                    ColumnConstraints col1 = new ColumnConstraints(USE_PREF_SIZE, USE_COMPUTED_SIZE, USE_PREF_SIZE);
+                    ColumnConstraints col2 = new ColumnConstraints(GridPane.USE_PREF_SIZE, 300, Double.MAX_VALUE);
+                    ColumnConstraints col3 = new ColumnConstraints(GridPane.USE_PREF_SIZE, GridPane.USE_COMPUTED_SIZE, GridPane.USE_PREF_SIZE);
+                    ColumnConstraints col4 = new ColumnConstraints(GridPane.USE_PREF_SIZE, GridPane.USE_COMPUTED_SIZE, GridPane.USE_PREF_SIZE);
+                    gridPane.getColumnConstraints().addAll(col1, col2, col3, col4);
+
+                    gridPane.add(avatarPic, 0, 0, 1, GridPane.REMAINING);
+                    gridPane.add(username, 1, 0, 1, 1);
+                    gridPane.add(status, 1, 1, 1, 1);
+                    gridPane.add(acceptButton, 2, 0, 1, GridPane.REMAINING);
+                    gridPane.add(rejectButton, 3, 0, 1, GridPane.REMAINING);
+//        GridPane.setConstraints(avatarPic, 0, 0);
+//        GridPane.setConstraints(username, 1, 0);
+//        GridPane.setConstraints(status, 1, 1);
+//        GridPane.setConstraints(acceptButton, 2, 0);
+//        GridPane.setConstraints(rejectButton, 3, 0);
+
+
+                    gridPane.setHgap(8);
+//        gridPane.setAlignment(Pos.CENTER);
+
+                    gridPane.setMinHeight(GridPane.USE_COMPUTED_SIZE);
+                    gridPane.setPrefHeight(GridPane.USE_COMPUTED_SIZE);
+                    gridPane.setMaxHeight(GridPane.USE_COMPUTED_SIZE);
+
+                    gridPane.setMinWidth(GridPane.USE_COMPUTED_SIZE);
+                    gridPane.setPrefWidth(GridPane.USE_COMPUTED_SIZE);
+                    gridPane.setMaxWidth(Double.MAX_VALUE);
+
+                    GridPane.setHalignment(avatarPic, HPos.LEFT);
+                    GridPane.setHalignment(username, HPos.LEFT);
+                    GridPane.setHalignment(acceptButton, HPos.RIGHT);
+                    GridPane.setHalignment(rejectButton, HPos.LEFT);
+
+//        gridPane.getChildren().addAll(avatarPic, username, acceptButton, rejectButton);
+
+                    // setting information using the model. (the actual part of updateItem)
+                    // setting avatar of the requester
+                    if (model.getAvatarImage() != null) {
+                        Image avatarImage = null;
+                        makeDirectory("Cache");
+                        makeDirectory("Cache" + File.separator + "User Profile Pictures");
+                        makeDirectory("Cache" + File.separator + "User Profile Pictures" + File.separator + model.getUID());
+                        String directory = "Cache" + File.separator + "User Profile Pictures" + File.separator + model.getUID();
+                        try (FileOutputStream fileOutputStream = new FileOutputStream(directory + File.separator + model.getUID() + "." + model.getAvatarContentType());
+                             FileInputStream fileInputStream = new FileInputStream(directory + File.separator + model.getUID() + "." + model.getAvatarContentType())) {
+                            fileOutputStream.write(model.getAvatarImage());
+                            avatarImage = new Image(fileInputStream);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        avatarPic.setFill(new ImagePattern(avatarImage));
+                    } else {
+                        avatarPic.setStyle("-fx-background-color: BLACK");
+                    }
+
+                    // setting username of the requester
+                    username.setText(model.getUsername());
+                    status.setText("incoming friend request");
+
+                    // setting acceptButton and rejectButton
+                    acceptButton.setOnAction(new EventHandler<ActionEvent>() {
+                        @Override
+                        public void handle(ActionEvent actionEvent) {
+                            int index = user.getFriendRequests().indexOf(model.getUID());
+                            try {
+                                Boolean DBConnect = mySocket.sendSignalAndGetResponse(new CheckFriendRequestsAction(user.getUsername(), index, true));
+                                friendRequests.remove(index);
+//                                friendRequestsListView.getItems().remove(index);
+                                user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(user.getUID()));
+                            } catch (IOException | ClassNotFoundException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+
+                    rejectButton.setOnAction(new EventHandler<ActionEvent>() {
+                        @Override
+                        public void handle(ActionEvent actionEvent) {
+                            int index = user.getFriendRequests().indexOf(model.getUID());
+                            try {
+                                Boolean DBConnect = mySocket.sendSignalAndGetResponse(new CheckFriendRequestsAction(user.getUsername(), index, false));
+                                friendRequests.remove(index);
+//                                friendRequestsListView.getItems().remove(index);
+                                user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(user.getUID()));
+                            } catch (IOException | ClassNotFoundException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+
+                    setGraphic(gridPane);
+                }
             }
         });
-        System.out.println("accept buttons size: " + acceptButtons.size());
-        System.out.println("reject buttons size: " + rejectButtons.size());
-        if (acceptButtons != null) {
-            for (Button button : acceptButtons) {
-                button.setOnAction(new EventHandler<ActionEvent>() {
-                    @Override
-                    public void handle(ActionEvent actionEvent) {
-                        int index = acceptButtons.indexOf((Button) actionEvent.getSource());
-                        System.out.println("index of accept button which was selected: " + index);
-                        try {
-                            acceptRequest(index);
-                        } catch (IOException | ClassNotFoundException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                });
-            }
-        }
-
-        if (rejectButtons != null) {
-            for (Button button : rejectButtons) {
-                button.setOnAction(new EventHandler<ActionEvent>() {
-                    @Override
-                    public void handle(ActionEvent actionEvent) {
-                        int index = rejectButtons.indexOf((Button) actionEvent.getSource());
-                        System.out.println("index of reject button which was selected: " + index);
-                        try {
-                            rejectRequest(index);
-                        } catch (IOException | ClassNotFoundException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                });
-            }
-        }
     }
+
     @FXML
     void sendFriendRequest(ActionEvent event) throws IOException, ClassNotFoundException {
         String receivedUsername = friendRequestTextField.getText().trim();
@@ -536,12 +602,13 @@ public class Controller {
             }
         }
     }
+
     // Other Methods:
     private void makeDirectory(String path) {
         File directory = new File(path);
         if (!directory.exists()) {
             if (!directory.mkdir()) {
-                //printer.printErrorMessage("Could not create the " + path + " directory!");
+                System.err.println("Could not create the " + path + " directory!");
                 throw new RuntimeException();
             }
         }
