@@ -53,7 +53,7 @@ public class Model implements Asset {
     }
 
     // Getters:
-    public int getUID() {
+    public Integer getUID() {
         return UID;
     }
 

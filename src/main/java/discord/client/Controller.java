@@ -445,28 +445,28 @@ public class Controller {
     private ListView<Model> blockedListView;
     @FXML
     private Label blockedCount;
-    private final ObservableList<Model> blockedPeople = FXCollections.observableArrayList();
+    private ObservableList<Model> blockedPeopleObservableList;
 
     // pending:
     @FXML
     private ListView<Model> pendingListView;
     @FXML
     private Label pendingCount;
-    private final ObservableList<Model> friendRequests = FXCollections.observableArrayList();
+    private ObservableList<Model> friendRequestsObservableList;
 
     // all friends:
     @FXML
     private ListView<Model> allListView;
     @FXML
     private Label allCount;
-    private final ObservableList<Model> allFriends = FXCollections.observableArrayList();
+    private ObservableList<Model> allFriendsObservableList;
 
     // online friends:
     @FXML
     private ListView<Model> onlineListView;
     @FXML
     private Label onlineCount;
-    private final ObservableList<Model> onlineFriends = FXCollections.observableArrayList();
+    private ObservableList<Model> onlineFriendsObservableList;
 
     private Image readProfileImage(Model model) throws IOException {
         makeDirectory("Cache");
@@ -484,6 +484,10 @@ public class Controller {
 
     // main page methods:
     public void initializeMainPage() throws IOException, ClassNotFoundException {
+        blockedPeopleObservableList = FXCollections.observableArrayList();
+        friendRequestsObservableList = FXCollections.observableArrayList();
+        allFriendsObservableList = FXCollections.observableArrayList();
+        onlineFriendsObservableList = FXCollections.observableArrayList();
         //discord logo:
         discordLogo.setFill(new ImagePattern(new Image("E:\\AUT University\\Term4\\Advanced Programming\\Projects\\AdvancedProgramming-FinalProject\\requirements\\discordLogo.jpg")));
         setting.setFill(new ImagePattern(new Image("E:\\AUT University\\Term4\\Advanced Programming\\Projects\\AdvancedProgramming-FinalProject\\requirements\\user setting.jpg")));
@@ -495,28 +499,28 @@ public class Controller {
         blockedListView.setStyle("-fx-background-color:  #36393f");
         for (Integer UID : user.getBlockedList()) {
             Model blockedUser = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(UID));
-            blockedPeople.add(blockedUser);
+            blockedPeopleObservableList.add(blockedUser);
         }
         blockedCount.setText("Blocked - " + user.getBlockedList().size());
-        blockedListView.setItems(blockedPeople);
+        blockedListView.setItems(blockedPeopleObservableList);
 
         // pending:
         pendingListView.setStyle("-fx-background-color:  #36393f");
         for (Integer UID : user.getIncomingFriendRequests()) {
             Model user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(UID));
-            friendRequests.add(user);
+            friendRequestsObservableList.add(user);
         }
         pendingCount.setText("Pending - " + user.getIncomingFriendRequests().size());
-        pendingListView.setItems(friendRequests);
+        pendingListView.setItems(friendRequestsObservableList);
 
         // all friends:
         allListView.setStyle("-fx-background-color:  #36393f");
         for (Integer UID : user.getFriends()) {
             Model friend = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(UID));
-            allFriends.add(friend);
+            allFriendsObservableList.add(friend);
         }
         allCount.setText("All - " + user.getFriends().size());
-        allListView.setItems(allFriends);
+        allListView.setItems(allFriendsObservableList);
 
         // online friends:
         onlineListView.setStyle("-fx-background-color:  #36393f");
@@ -524,12 +528,12 @@ public class Controller {
         for (Integer UID : user.getFriends()) {
             Model friend = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(UID));
             if (friend.getStatus() != Status.Invisible) {
-                onlineFriends.add(friend);
+                onlineFriendsObservableList.add(friend);
                 onlineFriendsCount++;
             }
         }
         this.onlineCount.setText("Online - " + onlineFriendsCount);
-        onlineListView.setItems(onlineFriends);
+        onlineListView.setItems(onlineFriendsObservableList);
 
         //construct blocked cells:
         blockedListView.setCellFactory(frc -> new ListCell<Model>() {
@@ -612,11 +616,11 @@ public class Controller {
                     unblockButton.setOnAction(new EventHandler<ActionEvent>() {
                         @Override
                         public void handle(ActionEvent actionEvent) {
-                            //int index = user.getBlockedList().indexOf(model.getUID());
+                            int index = user.getBlockedList().indexOf(model.getUID());
                             //user.getBlockedList().remove(index);
                             user.getBlockedList().remove(model.getUID());
-                            blockedCount.setText("Blocked - " + user.getIncomingFriendRequests().size());
-//                          pendingListView.getItems().remove(index);
+                            blockedCount.setText("Blocked - " + user.getBlockedList().size());
+                            blockedPeopleObservableList.remove(index);
                             try {
                                mySocket.write(new UpdateUserOnMainServerAction(user));
                             } catch (IOException e) {
@@ -722,7 +726,7 @@ public class Controller {
                             int index = user.getIncomingFriendRequests().indexOf(model.getUID());
                             try {
                                 Boolean DBConnect = mySocket.sendSignalAndGetResponse(new CheckFriendRequestsAction(user.getUID(), index, true));
-                                friendRequests.remove(index);
+                                friendRequestsObservableList.remove(index);
 //                                pendingListView.getItems().remove(index);
                                 user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(user.getUID()));
                                 pendingCount.setText("Pending - " + user.getIncomingFriendRequests().size());
@@ -738,10 +742,10 @@ public class Controller {
                             int index = user.getIncomingFriendRequests().indexOf(model.getUID());
                             try {
                                 Boolean DBConnect = mySocket.sendSignalAndGetResponse(new CheckFriendRequestsAction(user.getUID(), index, false));
-                                friendRequests.remove(index);
+                                friendRequestsObservableList.remove(index);
 //                                pendingListView.getItems().remove(index);
                                 user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(user.getUID()));
-                                pendingCount.setText("Pending - " +  user.getFriendRequests().size());
+                                pendingCount.setText("Pending - " +  user.getIncomingFriendRequests().size());
                             } catch (IOException | ClassNotFoundException e) {
                                 e.printStackTrace();
                             }
@@ -857,7 +861,11 @@ public class Controller {
                     removeButton.setOnAction(new EventHandler<ActionEvent>() {
                         @Override
                         public void handle(ActionEvent actionEvent) {
+                            int index = user.getFriends().indexOf(model.getUID());
+//                            user.getFriends().remove(index);
                             user.getFriends().remove(model.getUID());
+                            allFriendsObservableList.remove(index);
+                            onlineFriendsObservableList.remove(model);
                             allCount.setText("All - " + user.getFriends().size());
                             try {
                                 boolean DBConnect = mySocket.sendSignalAndGetResponse(new RemoveFriendAction(user.getUID(), model.getUID()));
@@ -975,7 +983,10 @@ public class Controller {
                     removeButton.setOnAction(new EventHandler<ActionEvent>() {
                         @Override
                         public void handle(ActionEvent actionEvent) {
+                            int index = user.getFriends().indexOf(model.getUID());
                             user.getFriends().remove(model.getUID());
+                            allFriendsObservableList.remove(index);
+                            onlineFriendsObservableList.remove(index);
                             onlineCount.setText("Online - " + user.getIncomingFriendRequests().size());
                             try {
                                 boolean DBConnect = mySocket.sendSignalAndGetResponse(new RemoveFriendAction(user.getUID(), model.getUID()));
@@ -1026,7 +1037,7 @@ public class Controller {
 
 //                    Model friend = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(receivedUsername));
 //                    System.out.println(friend.getUID());
-//                    friendRequests.add(friend);
+//                    friendRequestsObservableList.add(friend);
                 }
             }
         }
@@ -1036,7 +1047,8 @@ public class Controller {
     void enterChat(Integer friendUID) {
     
     }
-    
+
+    @FXML
     void enterSetting(MouseEvent event) throws IOException {
         loadProfilePage(event);
     }
@@ -1061,5 +1073,9 @@ public class Controller {
                 throw new RuntimeException();
             }
         }
+    }
+
+    private String getAbsolutePath(String relativePath) {
+        return new File("").getAbsolutePath() + File.separator + relativePath;
     }
 }
