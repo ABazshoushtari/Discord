@@ -676,6 +676,16 @@ public class Controller {
         loadProfilePage(event);
     }
 
+    @FXML
+    void mouseEnteredSetting(MouseEvent event) {
+        setting.setFill(new ImagePattern(new Image("E:\\AUT University\\Term4\\Advanced Programming\\Projects\\AdvancedProgramming-FinalProject\\requirements\\user setting entered.jpg")));
+    }
+
+    @FXML
+    void mouseExitedSetting(MouseEvent event) {
+        setting.setFill(new ImagePattern(new Image("E:\\AUT University\\Term4\\Advanced Programming\\Projects\\AdvancedProgramming-FinalProject\\requirements\\user setting.jpg")));
+    }
+
     // Other Methods:
     private void makeDirectory(String path) {
         File directory = new File(path);
