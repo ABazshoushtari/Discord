@@ -101,11 +101,7 @@
                               <Insets left="10.0" top="5.0" />
                            </padding>
                         </Label>
-                        <ListView fx:id="directMessagesListView" maxHeight="1.7976931348623157E308" prefWidth="360.0" style="-fx-background-color: #2f3136;" stylesheets="@styles/ListViewColor2.css">
-                           <styleClass>
-                              <String fx:value="list-cell" />
-                              <String fx:value="list-view" />
-                           </styleClass></ListView>
+                        <ListView fx:id="directMessagesListView" maxHeight="1.7976931348623157E308" prefWidth="360.0" style="-fx-background-color: #2f3136;" styleClass="list-cell" stylesheets="@styles/ListViewColor2.css" />
                      </children>
                      <padding>
                         <Insets bottom="8.0" />

@@ -9,6 +9,8 @@ public class Server implements Asset {
     // Fields:
     private final int unicode;
     private String serverName;
+    private byte[] avatarImage;
+    private String avatarContentType;  // type of avatarImage
     private HashMap<String, Role> serverRoles;      // maps the roles' names to their Role object
     private HashMap<Integer, HashSet<Role>> members;     // maps the members' IDs to their set of roles
     private ArrayList<TextChannel> textChannels;
@@ -42,9 +44,20 @@ public class Server implements Asset {
     public int getUnicode() {
         return unicode;
     }
+    public Integer getID() {
+        return unicode;
+    }
 
     public String getServerName() {
         return serverName;
+    }
+
+    public byte[] getAvatarImage() {
+        return avatarImage;
+    }
+
+    public String getAvatarContentType() {
+        return avatarContentType;
     }
 
     public HashMap<Integer, HashSet<Role>> getMembers() {
@@ -53,6 +66,16 @@ public class Server implements Asset {
 
     public ArrayList<TextChannel> getTextChannels() {
         return textChannels;
+    }
+
+
+    // Setters:
+    public void setAvatarImage(byte[] avatarImage) {
+        this.avatarImage = avatarImage;
+    }
+
+    public void setAvatarContentType(String avatarContentType) {
+        this.avatarContentType = avatarContentType;
     }
 
     // Other Methods:
@@ -117,7 +140,7 @@ public class Server implements Asset {
         outer:
         while (true) {
             //clientController.getPrinter().printServerChangeInfoMenu();
-           // int command = clientController.getMyScanner().getInt(1, 4);
+            // int command = clientController.getMyScanner().getInt(1, 4);
 //            switch (command) {
 //                case 1 -> {
 //                    if (getAllAbilities(myUsername).contains(Ability.ChangeServerName)) {

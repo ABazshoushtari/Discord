@@ -56,6 +56,9 @@ public class Model implements Asset {
     public Integer getUID() {
         return UID;
     }
+    public Integer getID() {
+        return UID;
+    }
 
     public byte[] getAvatarImage() {
         return avatarImage;
@@ -155,6 +158,13 @@ public class Model implements Asset {
     }
 
     // Other Methods:
+    public void removeFriend(Integer UID) {
+        friends.remove(UID);
+        isInChat.remove(UID);
+        privateChats.remove(UID);
+        urlsOfPrivateChat.remove(UID);
+        filesOfPrivateChat.remove(UID);
+    }
     public String toString() {
         return username + " " + password + " " + email + " " + phoneNumber;
     }
