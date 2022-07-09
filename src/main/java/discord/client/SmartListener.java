@@ -22,9 +22,10 @@ public class SmartListener implements Runnable {
             try {
                 Object mainServerResponse = controller.getMySocket().read();
                 if (mainServerResponse != null) {
+                    String classSimpleName = mainServerResponse.getClass().getSimpleName();
                     if (!(mainServerResponse instanceof Signal)) {
                         synchronized (controller) {
-                            switch (mainServerResponse.getClass().getSimpleName()) {
+                            switch (classSimpleName) {
                                 case "Model" -> receivedUser = (Model) mainServerResponse;
                                 case "Boolean" -> receivedBoolean = (Boolean) mainServerResponse;
                                 case "Server" -> receivedServer = (Server) mainServerResponse;
@@ -33,10 +34,10 @@ public class SmartListener implements Runnable {
                             controller.notify();
                         }
                     } else {
-                        switch (mainServerResponse.getClass().getSimpleName()) {
+                        switch (classSimpleName) {
                             case "FriendRequestSignal" -> {
-                                FriendRequestSignal fs = (FriendRequestSignal) mainServerResponse;
-                                controller.getUser().getIncomingFriendRequests().add(fs.requesterUID());
+                                FriendRequestSignal frs = (FriendRequestSignal) mainServerResponse;
+                                controller.getUser().getIncomingFriendRequests().add(frs.requesterUID());
                                 Platform.runLater(() -> {
                                     try {
                                         controller.refreshPending();

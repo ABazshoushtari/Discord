@@ -27,8 +27,6 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class Controller {
 
@@ -36,18 +34,18 @@ public class Controller {
     private Model user;
     private final MySocket mySocket;
     private final SmartListener smartListener;
-    private final ExecutorService executorService;
+    private Image avatarImage;
 
     // the constructor:
     public Controller(MySocket mySocket) {
         this.user = null;
         this.mySocket = mySocket;
         smartListener = new SmartListener(this);
-        executorService = Executors.newCachedThreadPool();
-        executorService.execute(smartListener);
+        Thread smartListenerThread = new Thread(smartListener);
+        smartListenerThread.start();
     }
 
-    // getters and setters:
+    // getters:
     public Model getUser() {
         return user;
     }
@@ -56,7 +54,7 @@ public class Controller {
         return mySocket;
     }
 
-    // useful universal methods:
+    // some useful universal methods:
     private void waiting() {
         synchronized (this) {
             try {
@@ -67,6 +65,58 @@ public class Controller {
         }
     }
 
+    private void loadScene(Event event, String sceneName) {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource(sceneName));
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        try {
+            loader.setController(this);
+            Scene scene = new Scene(loader.load());
+            stage.setScene(scene);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void makeDirectory(String path) {
+        File directory = new File(path);
+        if (!directory.exists()) {
+            if (!directory.mkdir()) {
+                System.err.println("Could not create the " + path + " directory!");
+                throw new RuntimeException();
+            }
+        }
+    }
+
+    private String getAbsolutePath(String relativePath) {
+        return new File("").getAbsolutePath() + File.separator + relativePath;
+    }
+
+    private String getAvatarImageCachePath(Asset asset) {
+        makeDirectory("cache");
+        if (asset instanceof Model model) {
+
+            makeDirectory("cache" + File.separator + "User Profile Pictures");
+            makeDirectory("cache" + File.separator + "User Profile Pictures" + File.separator + model.getUID());
+            return "cache" + File.separator + "User Profile Pictures" + File.separator + model.getUID();
+        } else if (asset instanceof Server server) {
+            makeDirectory("cache" + File.separator + "server Profile Pictures");
+            makeDirectory("cache" + File.separator + "server Profile Pictures" + File.separator + server.getUnicode());
+            return "cache" + File.separator + "server Profile Pictures" + File.separator + server.getUnicode();
+        }
+        return null;
+    }
+
+    private Image readProfileImage(Asset asset) throws IOException {
+        String directory = getAvatarImageCachePath(asset);
+        FileOutputStream fos = new FileOutputStream(directory + File.separator + asset.getID() + "." + asset.getAvatarContentType());
+        FileInputStream fis = new FileInputStream(directory + File.separator + asset.getID() + "." + asset.getAvatarContentType());
+        fos.write(asset.getAvatarImage());
+        Image avatarImage = new Image(fis);
+        fos.close();
+        fis.close();
+        return avatarImage;
+    }
+
     //////////////////////////////////////////////////////////// login scene ->
     // login fields:
     @FXML
@@ -75,8 +125,6 @@ public class Controller {
     private TextField passwordOnLoginMenu;
     @FXML
     private Label loginErrorMessage;
-
-    private Image avatarImage;
 
     // login methods:
     @FXML
@@ -97,21 +145,6 @@ public class Controller {
         } else {
             loginErrorMessage.setText("You have empty fields!");
         }
-    }
-
-    private String getAvatarImageCachePath(Asset asset) {
-        makeDirectory("cache");
-        if (asset instanceof Model model) {
-
-            makeDirectory("cache" + File.separator + "User Profile Pictures");
-            makeDirectory("cache" + File.separator + "User Profile Pictures" + File.separator + model.getUID());
-            return "cache" + File.separator + "User Profile Pictures" + File.separator + model.getUID();
-        } else if (asset instanceof Server server) {
-            makeDirectory("cache" + File.separator + "server Profile Pictures");
-            makeDirectory("cache" + File.separator + "server Profile Pictures" + File.separator + server.getUnicode());
-            return "cache" + File.separator + "server Profile Pictures" + File.separator + server.getUnicode();
-        }
-        return null;
     }
 
     private void loadProfilePage(Event event) throws IOException {
@@ -150,18 +183,6 @@ public class Controller {
         }
     }
 
-    private void loadScene(Event event, String sceneName) {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource(sceneName));
-        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        try {
-            loader.setController(this);
-            Scene scene = new Scene(loader.load());
-            stage.setScene(scene);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     @FXML
     void loadSignupMenu(Event event) {
         loadScene(event, "signupMenu.fxml");
@@ -181,7 +202,6 @@ public class Controller {
     Label conditionMessage1;
     @FXML
     Label conditionMessage2;
-
 
     // signup methods
     @FXML
@@ -454,7 +474,7 @@ public class Controller {
 
     @FXML
     void removeAvatar() throws IOException {
-        avatar.setFill(null);
+        avatar.setFill(new Color(0, 0, 0, 1));
         user.setAvatarImage(null);
         mySocket.write(new UpdateUserOnMainServerAction(user));
     }
@@ -467,14 +487,13 @@ public class Controller {
 
     @FXML
     void logout(Event event) throws IOException {
-        getMySocket().write(new LogoutAction());
+        mySocket.write(new LogoutAction());
         user = null;
         loadLoginMenu(event);
     }
 
     //////////////////////////////////////////////////////////// main page scene ->
     // main page fields:
-
     @FXML
     private Rectangle discordLogo;
 
@@ -498,55 +517,38 @@ public class Controller {
     private ListView<Model> blockedListView;
     @FXML
     private Label blockedCount;
-    private ObservableList<Model> blockedPeopleObservableList;
 
     // pending:
     @FXML
     private ListView<Model> pendingListView;
     @FXML
     private Label pendingCount;
-    private ObservableList<Model> friendRequestsObservableList;  // outgoing friend requests -> pending
 
     // all friends:
     @FXML
     private ListView<Model> allListView;
     @FXML
     private Label allCount;
-    private ObservableList<Model> allFriendsObservableList;
 
     // online friends:
     @FXML
     private ListView<Model> onlineListView;
     @FXML
     private Label onlineCount;
-    private ObservableList<Model> onlineFriendsObservableList;
 
     // direct messages
     @FXML
     private ListView<Model> directMessagesListView;
-    private ObservableList<Model> directMessagesObservableList;
 
     // servers:
     @FXML
     private ListView<Server> serversListView;
-    private ObservableList<Server> serversObservableList;
 
-    private Image readProfileImage(Asset asset) throws IOException {
-        String directory = getAvatarImageCachePath(asset);
-        FileOutputStream fos = new FileOutputStream(directory + File.separator + asset.getID() + "." + asset.getAvatarContentType());
-        FileInputStream fis = new FileInputStream(directory + File.separator + asset.getID() + "." + asset.getAvatarContentType());
-        fos.write(asset.getAvatarImage());
-        Image avatarImage = new Image(fis);
-        fos.close();
-        fis.close();
-        return avatarImage;
-    }
-
+    // main page methods:
     public void refreshBlockedPeople() throws IOException {
-        blockedPeopleObservableList = FXCollections.observableArrayList();
+        ObservableList<Model> blockedPeopleObservableList = FXCollections.observableArrayList();
         blockedListView.setStyle("-fx-background-color: #36393f");
         for (Integer UID : user.getBlockedList()) {
-            //Model blockedUser = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(UID));
             mySocket.write(new GetUserFromMainServerAction(UID));
             waiting();
             Model blockedUser = smartListener.getReceivedUser();
@@ -557,10 +559,10 @@ public class Controller {
     }
 
     public void refreshPending() throws IOException {
-        friendRequestsObservableList = FXCollections.observableArrayList();
+        // outgoing friend requests -> pending
+        ObservableList<Model> friendRequestsObservableList = FXCollections.observableArrayList();
         pendingListView.setStyle("-fx-background-color: #36393f");
         for (Integer UID : user.getIncomingFriendRequests()) {
-            //Model user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(UID));
             mySocket.write(new GetUserFromMainServerAction(UID));
             waiting();
             Model user = smartListener.getReceivedUser();
@@ -571,10 +573,9 @@ public class Controller {
     }
 
     public void refreshAll() throws IOException {
-        allFriendsObservableList = FXCollections.observableArrayList();
+        ObservableList<Model> allFriendsObservableList = FXCollections.observableArrayList();
         allListView.setStyle("-fx-background-color: #36393f");
         for (Integer UID : user.getFriends()) {
-            //Model friend = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(UID));
             mySocket.write(new GetUserFromMainServerAction(UID));
             waiting();
             Model friend = smartListener.getReceivedUser();
@@ -585,11 +586,10 @@ public class Controller {
     }
 
     public void refreshOnline() throws IOException {
-        onlineFriendsObservableList = FXCollections.observableArrayList();
+        ObservableList<Model> onlineFriendsObservableList = FXCollections.observableArrayList();
         onlineListView.setStyle("-fx-background-color: #36393f");
         int onlineFriendsCount = 0;
         for (Integer UID : user.getFriends()) {
-            //Model friend = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(UID));
             mySocket.write(new GetUserFromMainServerAction(UID));
             waiting();
             Model friend = smartListener.getReceivedUser();
@@ -603,10 +603,9 @@ public class Controller {
     }
 
     public void refreshDirectMessages() throws IOException {
-        directMessagesObservableList = FXCollections.observableArrayList();
+        ObservableList<Model> directMessagesObservableList = FXCollections.observableArrayList();
         directMessagesListView.setStyle("-fx-background-color: #2f3136");
         for (Integer UID : user.getFriends()) {
-            //Model friend = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(UID));
             mySocket.write(new GetUserFromMainServerAction(UID));
             waiting();
             Model friend = smartListener.getReceivedUser();
@@ -622,10 +621,9 @@ public class Controller {
     }
 
     public void refreshServers() throws IOException {
-        serversObservableList = FXCollections.observableArrayList();
+        ObservableList<Server> serversObservableList = FXCollections.observableArrayList();
         serversListView.setStyle("-fx-background-color: #202225");
         for (Integer unicode : user.getServers()) {
-            //Server server = mySocket.sendSignalAndGetResponse(new GetServerFromMainServerAction(unicode));
             mySocket.write(new GetServerFromMainServerAction(unicode));
             waiting();
             Server server = smartListener.getReceivedServer();
@@ -644,7 +642,30 @@ public class Controller {
         refreshServers();
     }
 
-    // main page methods:
+    /*private GridPane getTabGridPane(int col2Width) {
+
+        GridPane gridPane = new GridPane();
+
+        gridPane.setStyle("-fx-background-color:  #36393f");
+
+        ColumnConstraints col1 = new ColumnConstraints(USE_PREF_SIZE, USE_COMPUTED_SIZE, USE_PREF_SIZE);
+        ColumnConstraints col2 = new ColumnConstraints(GridPane.USE_PREF_SIZE, col2Width, Double.MAX_VALUE);
+        ColumnConstraints col3 = new ColumnConstraints(GridPane.USE_PREF_SIZE, GridPane.USE_COMPUTED_SIZE, GridPane.USE_PREF_SIZE);
+        ColumnConstraints col4 = new ColumnConstraints(GridPane.USE_PREF_SIZE, GridPane.USE_COMPUTED_SIZE, GridPane.USE_PREF_SIZE);
+        gridPane.getColumnConstraints().addAll(col1, col2, col3, col4);
+        gridPane.setHgap(8);
+
+        gridPane.setMinHeight(GridPane.USE_COMPUTED_SIZE);
+        gridPane.setPrefHeight(GridPane.USE_COMPUTED_SIZE);
+        gridPane.setMaxHeight(GridPane.USE_COMPUTED_SIZE);
+
+        gridPane.setMinWidth(GridPane.USE_COMPUTED_SIZE);
+        gridPane.setPrefWidth(GridPane.USE_COMPUTED_SIZE);
+        gridPane.setMaxWidth(Double.MAX_VALUE);
+
+        return gridPane;
+    }*/
+
     public void initializeMainPage() throws IOException {
 
         setUpdatedValuesForObservableLists();
@@ -660,17 +681,19 @@ public class Controller {
         blockedListView.setCellFactory(blc -> new ListCell<>() {
             @Override
             protected void updateItem(Model model, boolean empty) {
-                super.updateItem(model, empty);
 
+                super.updateItem(model, empty);
                 if (model == null || empty) {
                     setGraphic(null);
                 } else {
+
                     // Variables (Controls; GUI components):
                     GridPane gridPane = new GridPane();
                     Circle avatarPic = new Circle(20);
                     Label username = new Label();
                     Label label = new Label("Blocked");
                     Button unblockButton = new Button("Unblock");
+
                     // css styles
                     unblockButton.setStyle("-fx-background-color:  #d83c3e");
 
@@ -740,11 +763,12 @@ public class Controller {
         pendingListView.setCellFactory(frc -> new ListCell<>() {
             @Override
             protected void updateItem(Model model, boolean empty) {
-                super.updateItem(model, empty);
 
+                super.updateItem(model, empty);
                 if (model == null || empty) {
                     setGraphic(null);
                 } else {
+
                     // Variables (Controls; GUI components):
                     GridPane gridPane = new GridPane();
                     Circle avatarPic = new Circle(20);
@@ -752,6 +776,7 @@ public class Controller {
                     Label label = new Label();
                     Button acceptButton = new Button("Accept");
                     Button rejectButton = new Button("Reject");
+
                     // css styles
                     acceptButton.setStyle("-fx-background-color:  #3ca45c");
                     rejectButton.setStyle("-fx-background-color:  #d83c3e");
@@ -841,11 +866,12 @@ public class Controller {
         allListView.setCellFactory(fc -> new ListCell<>() {
             @Override
             protected void updateItem(Model model, boolean empty) {
-                super.updateItem(model, empty);
 
+                super.updateItem(model, empty);
                 if (model == null || empty) {
                     setGraphic(null);
                 } else {
+
                     // Variables (Controls; GUI components):
                     GridPane gridPane = new GridPane();
                     Circle avatarPic = new Circle(20);
@@ -853,6 +879,7 @@ public class Controller {
                     Label label = new Label();
                     Button enterChatButton = new Button("Messages");
                     Button removeButton = new Button("Remove");
+
                     // css styles
                     enterChatButton.setStyle("-fx-background-color:  #3ca45c");
                     removeButton.setStyle("-fx-background-color:  #d83c3e");
@@ -893,7 +920,6 @@ public class Controller {
                     GridPane.setHalignment(username, HPos.LEFT);
                     GridPane.setHalignment(enterChatButton, HPos.RIGHT);
                     GridPane.setHalignment(removeButton, HPos.LEFT);
-
 
                     if (model.getAvatarImage() != null) {
                         Image avatarImage;
@@ -936,15 +962,16 @@ public class Controller {
             }
         });
 
-        // construct online friends cell
+        // construct online friends cells:
         onlineListView.setCellFactory(ofc -> new ListCell<>() {
             @Override
             protected void updateItem(Model model, boolean empty) {
-                super.updateItem(model, empty);
 
+                super.updateItem(model, empty);
                 if (model == null || empty) {
                     setGraphic(null);
                 } else {
+
                     // Variables (Controls; GUI components):
                     GridPane gridPane = new GridPane();
                     Circle avatarPic = new Circle(20);
@@ -952,6 +979,7 @@ public class Controller {
                     Label label = new Label();
                     Button enterChatButton = new Button("Messages");
                     Button removeButton = new Button("Remove");
+
                     // css styles
                     enterChatButton.setStyle("-fx-background-color:  #3ca45c");
                     removeButton.setStyle("-fx-background-color:  #d83c3e");
@@ -1036,11 +1064,12 @@ public class Controller {
         directMessagesListView.setCellFactory(dmc -> new ListCell<>() {
             @Override
             protected void updateItem(Model model, boolean empty) {
-                super.updateItem(model, empty);
 
+                super.updateItem(model, empty);
                 if (model == null || empty) {
                     setGraphic(null);
                 } else {
+
                     // Variables (Controls; GUI components):
                     GridPane gridPane = new GridPane();
                     Circle avatarPic = new Circle(20);
@@ -1114,6 +1143,7 @@ public class Controller {
                 if (server == null || empty) {
                     setGraphic(null);
                 } else {
+
                     // Variables (Controls; GUI components):
                     Rectangle avatarPic = new Rectangle(50, 50);
 
@@ -1177,10 +1207,6 @@ public class Controller {
                 case 4 -> {
                     successOrError.setStyle("-fx-text-fill: #46C46E");
                     successOrError.setText("The request was sent successfully");
-
-//                    Model friend = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(receivedUsername));
-//                    System.out.println(friend.getUID());
-//                    friendRequestsObservableList.add(friend);
                 }
             }
 //            mySocket.write(new GetUserFromMainServerAction(user.getUID()));
@@ -1218,20 +1244,5 @@ public class Controller {
     @FXML
     void mouseExitedSetting(MouseEvent event) {
         setting.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\user setting.jpg"))));
-    }
-
-    // some useful universal methods:
-    private void makeDirectory(String path) {
-        File directory = new File(path);
-        if (!directory.exists()) {
-            if (!directory.mkdir()) {
-                System.err.println("Could not create the " + path + " directory!");
-                throw new RuntimeException();
-            }
-        }
-    }
-
-    private String getAbsolutePath(String relativePath) {
-        return new File("").getAbsolutePath() + File.separator + relativePath;
     }
 }
