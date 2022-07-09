@@ -111,7 +111,7 @@ public class Controller {
         return null;
     }
 
-    private Image readProfileImage(Asset asset) throws IOException {
+    private Image readAvatarImage(Asset asset) throws IOException {
         String directory = getAvatarImageCachePath(asset);
         FileOutputStream fos = new FileOutputStream(directory + File.separator + asset.getID() + "." + asset.getAvatarContentType());
         FileInputStream fis = new FileInputStream(directory + File.separator + asset.getID() + "." + asset.getAvatarContentType());
@@ -152,23 +152,23 @@ public class Controller {
         }
     }
 
-    private void loadProfilePage(Event event) throws IOException {
+    private void loadProfilePage(Event event) {
         loadScene(event, "ProfilePage.fxml");
+//        if (user.getAvatarImage() != null) {
+//            String directory = getAvatarImageCachePath(user);
+//            try (FileOutputStream fileOutputStream = new FileOutputStream(directory + File.separator + user.getUID() + "." + user.getAvatarContentType());
+//                 FileInputStream fileInputStream = new FileInputStream(directory + File.separator + user.getUID() + "." + user.getAvatarContentType())) {
+//                fileOutputStream.write(user.getAvatarImage());
+//                avatarImage = new Image(fileInputStream);
+//            }
+////            ByteArrayInputStream inStreambj = new ByteArrayInputStream(user.getAvatarImage());
+////            Image newImage = ImageIO.read();
+////            Image image = newImage();
+////            avatar.setImage(newImage);
+//            avatar.setFill(new ImagePattern(avatarImage));
+//        }
 
-        if (user.getAvatarImage() != null) {
-            String directory = getAvatarImageCachePath(user);
-            try (FileOutputStream fileOutputStream = new FileOutputStream(directory + File.separator + user.getUID() + "." + user.getAvatarContentType());
-                 FileInputStream fileInputStream = new FileInputStream(directory + File.separator + user.getUID() + "." + user.getAvatarContentType())) {
-                fileOutputStream.write(user.getAvatarImage());
-                avatarImage = new Image(fileInputStream);
-            }
-//            ByteArrayInputStream inStreambj = new ByteArrayInputStream(user.getAvatarImage());
-//            Image newImage = ImageIO.read();
-//            Image image = newImage();
-//            avatar.setImage(newImage);
-            avatar.setFill(new ImagePattern(avatarImage));
-        }
-
+        avatar.setFill(new ImagePattern(avatarImage));
         profileUsername.setText(user.getUsername());
         profileEmail.setText(user.getEmail());
         setStatusColor(user.getPreviousSetStatus());
@@ -458,9 +458,9 @@ public class Controller {
         if (selectedFile == null) {
             return;
         }
-        Image selectedImage = new Image(selectedFile.getAbsolutePath());
-        avatarImage = selectedImage;
-        avatar.setFill(new ImagePattern(selectedImage));
+
+        avatarImage = new Image(selectedFile.getAbsolutePath());
+        avatar.setFill(new ImagePattern(avatarImage));
 
 //        BufferedImage image = ImageIO.read(selectedFile);
 //        user.setAvatarImage(((DataBufferByte) image.getRaster().getDataBuffer()).getData());
@@ -684,7 +684,7 @@ public class Controller {
         setting.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\user setting.jpg"))));
 
         if (user.getAvatarImage() != null) {
-            avatarImage = readProfileImage(user);
+            avatarImage = readAvatarImage(user);
             mainPageAvatar.setFill(new ImagePattern(avatarImage));
         } else {
             mainPageAvatar.setFill(new Color(0.125, 0.13, 0, 0.145));
@@ -748,7 +748,7 @@ public class Controller {
                     if (model.getAvatarImage() != null) {
                         Image avatarImage;
                         try {
-                            avatarImage = readProfileImage(model);
+                            avatarImage = readAvatarImage(model);
                             avatarPic.setFill(new ImagePattern(avatarImage));
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -837,7 +837,7 @@ public class Controller {
                     if (model.getAvatarImage() != null) {
                         Image avatarImage;
                         try {
-                            avatarImage = readProfileImage(model);
+                            avatarImage = readAvatarImage(model);
                             avatarPic.setFill(new ImagePattern(avatarImage));
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -942,7 +942,7 @@ public class Controller {
                     if (model.getAvatarImage() != null) {
                         Image avatarImage;
                         try {
-                            avatarImage = readProfileImage(model);
+                            avatarImage = readAvatarImage(model);
                             avatarPic.setFill(new ImagePattern(avatarImage));
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -1041,7 +1041,7 @@ public class Controller {
                     if (model.getAvatarImage() != null) {
                         Image avatarImage;
                         try {
-                            avatarImage = readProfileImage(model);
+                            avatarImage = readAvatarImage(model);
                             avatarPic.setFill(new ImagePattern(avatarImage));
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -1126,7 +1126,7 @@ public class Controller {
                     if (model.getAvatarImage() != null) {
                         Image avatarImage;
                         try {
-                            avatarImage = readProfileImage(model);
+                            avatarImage = readAvatarImage(model);
                             avatarPic.setFill(new ImagePattern(avatarImage));
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -1171,7 +1171,7 @@ public class Controller {
                     if (server.getAvatarImage() != null) {
                         Image avatarImage;
                         try {
-                            avatarImage = readProfileImage(server);
+                            avatarImage = readAvatarImage(server);
                             avatarPic.setFill(new ImagePattern(avatarImage));
                         } catch (IOException e) {
                             e.printStackTrace();
