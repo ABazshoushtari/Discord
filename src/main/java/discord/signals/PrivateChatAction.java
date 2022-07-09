@@ -114,10 +114,8 @@ public class PrivateChatAction implements Action {
             senderUser.getPrivateChats().get(receiverID).add(message);
             receiverUser.getPrivateChats().get(senderID).add(message);
 
-            boolean DBConnect = MainServer.updateDatabase(senderUser) && MainServer.updateDatabase(receiverUser);
-            if (!DBConnect) {
-                return new DBConnectFailSignal();
-            }
+            MainServer.updateDatabase(senderUser);
+            MainServer.updateDatabase(receiverUser);
 
             // sending message from socket if the receiver is online and in the private chat
             for (ClientHandler c : clientHandlers) {

@@ -132,13 +132,13 @@ public class MainServer {
         }
     }
 
-    public static boolean signUpUser(Model newUser) {
+    public static void signUpUser(Model newUser) {
         IDs.put(newUser.getUsername(), newUser.getUID());
         users.put(newUser.getUID(), newUser);
-        return updateDatabase(newUser);
+        updateDatabase(newUser);
     }
 
-    public static <Type extends Asset> boolean updateDatabase(Type asset) {
+    public static <Type extends Asset> void updateDatabase(Type asset) {
         FileOutputStream fileOut = null;
         ObjectOutputStream out = null;
         try {
@@ -158,17 +158,9 @@ public class MainServer {
                 path = path.concat("servers");
                 //imagePath = imagePath.concat("server profile pictures" + File.separator);
             }
-            // writing .bin file
             fileOut = new FileOutputStream(path + File.separator + identification.concat(".bin"));
             out = new ObjectOutputStream(fileOut);
             out.writeObject(asset);
-
-            // writing image
-//            if (((Model) asset).getAvatarImage() != null) {
-//                fileOut = new FileOutputStream(imagePath + identification + "." + avatarContentType);
-//                fileOut.write(((Model) asset).getAvatarImage());
-//            }
-            return true;
         } catch (FileNotFoundException e) {
             System.err.println("Could not find this file!");
             e.printStackTrace();
@@ -181,7 +173,6 @@ public class MainServer {
                 System.err.println("(output)");
             }
         }
-        return false;
     }
 
     /*private static void handleClosingOutputs(FileOutputStream fileOut, ObjectOutputStream out) {

@@ -18,9 +18,11 @@ public class SmartListener implements Runnable {
 
     @Override
     public void run() {
-        while (controller.getMySocket().isConnected()) {
+
+        MySocket mySocket = controller.getMySocket();
+        while (mySocket.isConnected()) {
             try {
-                Object mainServerResponse = controller.getMySocket().read();
+                Object mainServerResponse = mySocket.read();
                 if (mainServerResponse != null) {
                     String classSimpleName = mainServerResponse.getClass().getSimpleName();
                     if (!(mainServerResponse instanceof Signal)) {
@@ -69,7 +71,7 @@ public class SmartListener implements Runnable {
                                     }
                                 });
                             }
-                            case "FriendChangedStatusSignal" -> Platform.runLater(() -> {
+                            case "FriendChangedSignal" -> Platform.runLater(() -> {
                                 try {
                                     controller.refreshFriends();
                                 } catch (IOException e) {

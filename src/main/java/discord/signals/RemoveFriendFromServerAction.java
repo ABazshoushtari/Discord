@@ -18,6 +18,7 @@ public class RemoveFriendFromServerAction implements Action {
     public Object act() throws IOException {
         int beingRemovedMemberID = MainServer.getIDs().get(beingRemovedMember);
         MainServer.getServers().get(serverUnicode).getMembers().remove(beingRemovedMemberID);
-        return MainServer.updateDatabase(MainServer.getServers().get(serverUnicode));
+        MainServer.updateDatabase(MainServer.getServers().get(serverUnicode));
+        return null;
     }
 }

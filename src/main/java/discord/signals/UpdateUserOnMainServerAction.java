@@ -27,22 +27,23 @@ public class UpdateUserOnMainServerAction implements Action {
 
     @Override
     public Object act() throws IOException {
+
         if (usernameIsChanged) {
             MainServer.getIDs().remove(oldUsername);
             MainServer.getIDs().put(updatedMe.getUsername(), updatedMe.getUID());
         }
-        Status oldStatus = MainServer.getUsers().get(updatedMe.getUID()).getStatus();
-        MainServer.getUsers().replace(updatedMe.getUID(), updatedMe);
-        if (MainServer.updateDatabase(updatedMe)) {
-            if (!updatedMe.getStatus().equals(oldStatus)) {
-                for (ClientHandler ch : clientHandlers) {
-                    if (updatedMe.getFriends().contains(ch.getUser().getUID())) {
-                        ch.getMySocket().write(new FriendChangedStatusSignal());
-                    }
+
+        for (ClientHandler ch : clientHandlers) {
+            if (ch.getUser() != null) {
+                if (updatedMe.getFriends().contains(ch.getUser().getUID())) {
+                    ch.getMySocket().write(new FriendChangedSignal());
                 }
             }
-            return updatedMe;
         }
-        return null;
+
+        MainServer.getUsers().replace(updatedMe.getUID(), updatedMe);
+        MainServer.updateDatabase(updatedMe);
+
+        return updatedMe;
     }
 }

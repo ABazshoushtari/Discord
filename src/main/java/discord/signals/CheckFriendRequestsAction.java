@@ -28,7 +28,6 @@ public class CheckFriendRequestsAction implements Action {
         int requesterID = myUser.getIncomingFriendRequests().get(index);
         Model requester = MainServer.getUsers().get(requesterID);
 
-        boolean DBConnect = true;
         if (accept) {
 
             myUser.getFriends().add(requesterID);
@@ -52,12 +51,12 @@ public class CheckFriendRequestsAction implements Action {
                     }
                 }
             }
-            DBConnect = MainServer.updateDatabase(requester);
+            MainServer.updateDatabase(requester);
         }
 
         myUser.getIncomingFriendRequests().remove(index);
+        MainServer.updateDatabase(myUser);
 
-        DBConnect = DBConnect && MainServer.updateDatabase(myUser);
-        return DBConnect;
+        return myUser;
     }
 }

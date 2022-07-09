@@ -52,19 +52,20 @@ public class ClientHandler implements Runnable {
                     if (action instanceof UpdateUserOnMainServerAction) {
                         user = (Model) action.act();
                     } else if (action instanceof LogoutAction) {
-                        user.setStatus(Status.Invisible);
-                        MainServer.getUsers().replace(user.getUID(), user);
-                        boolean DBConnect = MainServer.updateDatabase(user);
-                        user = null;
+                        handleQuit();
                     } else {
-                        mySocket.write(action.act());
+                        Object writeBack = action.act();
+                        if (writeBack instanceof Model model && !(action instanceof GetUserFromMainServerAction)) {
+                            user = model;
+                        }
+                        mySocket.write(writeBack);
                     }
                 }
             } catch (IOException | ClassNotFoundException e) {
                 clientHandlers.remove(this);
                 if (user != null) {
                     try {
-                        handleForceQuit();
+                        handleQuit();
                     } catch (IOException ex) {
                        ex.printStackTrace();
                     }
@@ -80,11 +81,11 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    private void handleForceQuit() throws IOException {
+    private void handleQuit() throws IOException {
         user.setStatus(Status.Invisible);
         for (ClientHandler ch : clientHandlers) {
             if (user.getFriends().contains(ch.getUser().getUID())) {
-                ch.mySocket.write(new FriendChangedStatusSignal());
+                ch.mySocket.write(new FriendChangedSignal());
             }
         }
         MainServer.getUsers().replace(user.getUID(), user);

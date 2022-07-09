@@ -1,9 +1,13 @@
 package discord.signals;
 
+import discord.mainServer.ClientHandler;
 import discord.mainServer.MainServer;
 import discord.client.Model;
 
+import java.io.IOException;
 import java.util.regex.Pattern;
+
+import static discord.mainServer.ClientHandler.clientHandlers;
 
 public class SignUpOrChangeInfoAction implements Action {
     // Fields:
@@ -79,7 +83,7 @@ public class SignUpOrChangeInfoAction implements Action {
     }
 
     @Override
-    public Object act() {
+    public Object act() throws IOException {
         switch (stage) {
             // case 1-5: signing up processes
             case 1 -> {
@@ -112,9 +116,8 @@ public class SignUpOrChangeInfoAction implements Action {
                     UID++;
                 }
                 Model newUser = new Model(UID, username, password, email, phoneNumber);
-                if (MainServer.signUpUser(newUser)) {
-                    return newUser;
-                }
+                MainServer.signUpUser(newUser);
+                return newUser;
             }
             // when trying to change one of the fields see if the new value is acceptable
             case -1 -> {
