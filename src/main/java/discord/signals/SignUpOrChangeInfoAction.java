@@ -8,7 +8,6 @@ import java.util.regex.Pattern;
 public class SignUpOrChangeInfoAction implements Action {
     // Fields:
     private String username;
-    private String oldUsername; // used when changing username
     private String password;
     private String email;
     private String phoneNumber;
@@ -40,12 +39,10 @@ public class SignUpOrChangeInfoAction implements Action {
     }
 
     public void setUsername(String newUsername) {
+        this.username = newUsername;
         if (stage != -1) {
-            this.username = newUsername;
             stage = 1;
         } else {
-            oldUsername = this.username;
-            this.username = newUsername;
             subStage = 1;
         }
         regex = "^\\w{6,}$";
@@ -123,7 +120,10 @@ public class SignUpOrChangeInfoAction implements Action {
             case -1 -> {
                 switch (subStage) {
                     case 1 -> {
-                        return oldUsername.equals(username) || (isMatched(username) && !MainServer.getIDs().containsKey(username));
+                        if (MainServer.getIDs().containsKey(username)) {
+                            return null;
+                        }
+                        return isMatched(username);
                     }
                     case 2 -> {
                         return isMatched(password);

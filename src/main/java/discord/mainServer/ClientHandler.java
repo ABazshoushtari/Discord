@@ -63,7 +63,11 @@ public class ClientHandler implements Runnable {
             } catch (IOException | ClassNotFoundException e) {
                 clientHandlers.remove(this);
                 if (user != null) {
-                    handleForceQuit();
+                    try {
+                        handleForceQuit();
+                    } catch (IOException ex) {
+                       ex.printStackTrace();
+                    }
                 }
                 mySocket.closeEverything();
                 if (user != null) {
@@ -76,8 +80,13 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    private void handleForceQuit() {
+    private void handleForceQuit() throws IOException {
         user.setStatus(Status.Invisible);
+        for (ClientHandler ch : clientHandlers) {
+            if (user.getFriends().contains(ch.getUser().getUID())) {
+                ch.mySocket.write(new FriendChangedStatusSignal());
+            }
+        }
         MainServer.getUsers().replace(user.getUID(), user);
         MainServer.updateDatabase(user);
     }

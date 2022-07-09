@@ -1,9 +1,12 @@
 package discord.signals;
 
 import discord.client.Model;
+import discord.mainServer.ClientHandler;
 import discord.mainServer.MainServer;
 
 import java.io.IOException;
+
+import static discord.mainServer.ClientHandler.clientHandlers;
 
 public class RemoveFriendAction implements Action {
 
@@ -21,6 +24,14 @@ public class RemoveFriendAction implements Action {
         Model beingRemoved = MainServer.getUsers().get(beingRemovedUID);
         remover.getFriends().remove(beingRemovedUID);
         beingRemoved.getFriends().remove(removerUID);
+        for (ClientHandler ch : clientHandlers) {
+            if (ch.getUser() != null) {
+                if (ch.getUser().getUID().equals(beingRemovedUID)) {
+                    ch.getMySocket().write(new LostAFriendSignal(removerUID));
+                    break;
+                }
+            }
+        }
         return MainServer.updateDatabase(remover) && MainServer.updateDatabase(beingRemoved);
     }
 }

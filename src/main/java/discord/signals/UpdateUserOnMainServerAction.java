@@ -1,7 +1,13 @@
 package discord.signals;
 
+import discord.client.Status;
+import discord.mainServer.ClientHandler;
 import discord.mainServer.MainServer;
 import discord.client.Model;
+
+import java.io.IOException;
+
+import static discord.mainServer.ClientHandler.clientHandlers;
 
 public class UpdateUserOnMainServerAction implements Action {
     private final Model updatedMe;
@@ -20,13 +26,21 @@ public class UpdateUserOnMainServerAction implements Action {
     }
 
     @Override
-    public Object act() {
+    public Object act() throws IOException {
         if (usernameIsChanged) {
             MainServer.getIDs().remove(oldUsername);
             MainServer.getIDs().put(updatedMe.getUsername(), updatedMe.getUID());
         }
+        Status oldStatus = MainServer.getUsers().get(updatedMe.getUID()).getStatus();
         MainServer.getUsers().replace(updatedMe.getUID(), updatedMe);
         if (MainServer.updateDatabase(updatedMe)) {
+            if (!updatedMe.getStatus().equals(oldStatus)) {
+                for (ClientHandler ch : clientHandlers) {
+                    if (updatedMe.getFriends().contains(ch.getUser().getUID())) {
+                        ch.getMySocket().write(new FriendChangedStatusSignal());
+                    }
+                }
+            }
             return updatedMe;
         }
         return null;

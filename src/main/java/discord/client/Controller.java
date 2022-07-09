@@ -33,11 +33,16 @@ public class Controller {
     // backend fields:
     private Model user;
     private final MySocket mySocket;
+    private final SmartListener smartListener;
+    private Image avatarImage;
 
     // the constructor:
-    public Controller(Model user, MySocket mySocket) {
-        this.user = user;
+    public Controller(MySocket mySocket) {
+        this.user = null;
         this.mySocket = mySocket;
+        smartListener = new SmartListener(this);
+        Thread smartListenerThread = new Thread(smartListener);
+        smartListenerThread.start();
     }
 
     // getters:
@@ -49,34 +54,41 @@ public class Controller {
         return mySocket;
     }
 
-    //////////////////////////////////////////////////////////// login scene ->
-    // login fields:
-    @FXML
-    private TextField usernameOnLoginMenu;
-    @FXML
-    private TextField passwordOnLoginMenu;
-    @FXML
-    private Label loginErrorMessage;
-
-    private Image avatarImage;
-
-    // login methods:
-    @FXML
-    void login(Event event) throws IOException, ClassNotFoundException {
-        loginErrorMessage.setText("");
-        String usernameField = usernameOnLoginMenu.getText();
-        String passwordField = passwordOnLoginMenu.getText();
-        if (!"".equals(usernameField.trim()) && !"".equals(passwordField.trim())) {
-            Model user = mySocket.sendSignalAndGetResponse(new LoginAction(usernameField, passwordField));
-            if (user == null) {
-                loginErrorMessage.setText("A username by this password could not be found!");
-            } else {
-                this.user = user;
-                loadProfilePage(event);
+    // some useful universal methods:
+    private void waiting() {
+        synchronized (this) {
+            try {
+                this.wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-        } else {
-            loginErrorMessage.setText("You have empty fields!");
         }
+    }
+
+    private void loadScene(Event event, String sceneName) {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource(sceneName));
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        try {
+            loader.setController(this);
+            Scene scene = new Scene(loader.load());
+            stage.setScene(scene);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void makeDirectory(String path) {
+        File directory = new File(path);
+        if (!directory.exists()) {
+            if (!directory.mkdir()) {
+                System.err.println("Could not create the " + path + " directory!");
+                throw new RuntimeException();
+            }
+        }
+    }
+
+    private String getAbsolutePath(String relativePath) {
+        return new File("").getAbsolutePath() + File.separator + relativePath;
     }
 
     private String getAvatarImageCachePath(Asset asset) {
@@ -94,9 +106,48 @@ public class Controller {
         return null;
     }
 
-    private void loadProfilePage(Event event) throws IOException, ClassNotFoundException {
-        // updating user from MainServer
-        user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(user.getUID()));
+    private Image readProfileImage(Asset asset) throws IOException {
+        String directory = getAvatarImageCachePath(asset);
+        FileOutputStream fos = new FileOutputStream(directory + File.separator + asset.getID() + "." + asset.getAvatarContentType());
+        FileInputStream fis = new FileInputStream(directory + File.separator + asset.getID() + "." + asset.getAvatarContentType());
+        fos.write(asset.getAvatarImage());
+        Image avatarImage = new Image(fis);
+        fos.close();
+        fis.close();
+        return avatarImage;
+    }
+
+    //////////////////////////////////////////////////////////// login scene ->
+    // login fields:
+    @FXML
+    private TextField usernameOnLoginMenu;
+    @FXML
+    private TextField passwordOnLoginMenu;
+    @FXML
+    private Label loginErrorMessage;
+
+    // login methods:
+    @FXML
+    void login(Event event) throws IOException {
+        loginErrorMessage.setText("");
+        String usernameField = usernameOnLoginMenu.getText();
+        String passwordField = passwordOnLoginMenu.getText();
+        if (!"".equals(usernameField.trim()) && !"".equals(passwordField.trim())) {
+            mySocket.write(new LoginAction(usernameField, passwordField));
+            waiting();
+            user = smartListener.getReceivedUser();
+            if (user == null) {
+                loginErrorMessage.setText("A username by this password could not be found!");
+            } else {
+                //this.user = user;
+                loadProfilePage(event);
+            }
+        } else {
+            loginErrorMessage.setText("You have empty fields!");
+        }
+    }
+
+    private void loadProfilePage(Event event) throws IOException {
         loadScene(event, "profilePage.fxml");
 
         if (user.getAvatarImage() != null) {
@@ -132,18 +183,6 @@ public class Controller {
         }
     }
 
-    private void loadScene(Event event, String sceneName) {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource(sceneName));
-        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        try {
-            loader.setController(this);
-            Scene scene = new Scene(loader.load());
-            stage.setScene(scene);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     @FXML
     void loadSignupMenu(Event event) {
         loadScene(event, "signupMenu.fxml");
@@ -164,10 +203,9 @@ public class Controller {
     @FXML
     Label conditionMessage2;
 
-
     // signup methods
     @FXML
-    void signup(Event event) throws IOException, ClassNotFoundException {
+    void signup(Event event) throws IOException {
 
         signupErrorMessage.setText("");
         conditionMessage1.setText("");
@@ -183,12 +221,13 @@ public class Controller {
 
             // validating username
             signupAction.setUsername(usernameOnSignupMenu.getText());
-            Boolean valid = mySocket.sendSignalAndGetResponse(signupAction);
-            if (valid == null) {
+            mySocket.write(signupAction);
+            waiting();
+            if (smartListener.getReceivedBoolean() == null) {
                 signupErrorMessage.setText("This username is already taken!");
                 return;
             }
-            if (!valid) {
+            if (!smartListener.getReceivedBoolean()) {
                 signupErrorMessage.setText("Invalid username format!");
                 conditionMessage1.setText("A username should consist of only English letters/numbers and be of a minimal length of 6");
                 return;
@@ -196,8 +235,9 @@ public class Controller {
 
             // validating password
             signupAction.setPassword(passwordField);
-            valid = mySocket.sendSignalAndGetResponse(signupAction);
-            if (!valid) {
+            mySocket.write(signupAction);
+            waiting();
+            if (!smartListener.getReceivedBoolean()) {
                 signupErrorMessage.setText("Invalid password format!");
                 conditionMessage1.setText("A password should consist of only English letters/numbers and be of a minimal length of 8");
                 conditionMessage2.setText("It should also at least have 1 small and 1 capital letter and 1 number");
@@ -206,18 +246,22 @@ public class Controller {
 
             // validating email
             signupAction.setEmail(emailField);
-            valid = mySocket.sendSignalAndGetResponse(signupAction);
-            if (!valid) {
+            mySocket.write(signupAction);
+            waiting();
+            if (!smartListener.getReceivedBoolean()) {
                 signupErrorMessage.setText("Invalid email format!");
                 return;
             }
 
             // no phone number is taken from the user at first
             signupAction.setPhoneNumber("");
-            mySocket.sendSignalAndGetResponse(signupAction); // always returns true and gets ignored
+            mySocket.write(signupAction);
+            waiting();
 
             signupAction.finalizeStage();
-            user = mySocket.sendSignalAndGetResponse(signupAction);  // we can get the signed-up user here but ignore for now
+            mySocket.write(signupAction);
+            waiting();
+            user = smartListener.getReceivedUser();     // we can get the signed-up user here but ignore for now
             //loadLoginMenu(event);
             loadProfilePage(event);
         }
@@ -269,7 +313,7 @@ public class Controller {
     }
 
     @FXML
-    void editEnabledOrDone() throws IOException, ClassNotFoundException {
+    void editEnabledOrDone() throws IOException {
         switch (editButton.getText()) {
             case "Edit" -> {
                 profileUsername.setEditable(true);
@@ -282,15 +326,32 @@ public class Controller {
                 SignUpOrChangeInfoAction changeInfoAction = new SignUpOrChangeInfoAction(user.getUsername());
 
                 changeInfoAction.setUsername(profileUsername.getText());
-                boolean validUsername = mySocket.sendSignalAndGetResponse(changeInfoAction);
+
+                boolean validUsername;
+                if (!user.getUsername().equals(profilePhoneNumber.getText())) {
+                    mySocket.write(changeInfoAction);
+                    waiting();
+                    if (smartListener.getReceivedBoolean() == null) {
+                        editErrorMessage.setText("This username is taken!");
+                        return;
+                    } else {
+                        validUsername = smartListener.getReceivedBoolean();
+                    }
+                } else {
+                    validUsername = true;
+                }
 
                 changeInfoAction.setEmail(profileEmail.getText());
-                boolean validEmail = mySocket.sendSignalAndGetResponse(changeInfoAction);
+                mySocket.write(changeInfoAction);
+                waiting();
+                boolean validEmail = smartListener.getReceivedBoolean();
 
                 changeInfoAction.setUsername(profilePhoneNumber.getText());
                 String emptyMessage = "You haven't added a phone number yet.";
                 boolean empty = profilePhoneNumber.getText().equals(emptyMessage) || profilePhoneNumber.getText().trim().equals("");
-                boolean validPhoneNumber = (boolean) mySocket.sendSignalAndGetResponse(changeInfoAction) || empty;
+                mySocket.write(changeInfoAction);
+                waiting();
+                boolean validPhoneNumber = smartListener.getReceivedBoolean() || empty;
 
                 if (!validUsername) {
                     editErrorMessage.setText("Invalid username!");
@@ -343,11 +404,13 @@ public class Controller {
     }
 
     @FXML
-    void doneChangingPassword(ActionEvent event) throws IOException, ClassNotFoundException {
+    void doneChangingPassword(ActionEvent event) throws IOException {
         String newPassword = newPasswordTextField.getText().trim();
         SignUpOrChangeInfoAction changeInfoAction = new SignUpOrChangeInfoAction(user.getUsername());
         changeInfoAction.setPassword(newPassword);
-        if (mySocket.sendSignalAndGetResponse(changeInfoAction)) {
+        mySocket.write(changeInfoAction);
+        waiting();
+        if (smartListener.getReceivedBoolean()) {
             doneWithPasswordChange();
             user.setPassword(newPassword);
             mySocket.write(new UpdateUserOnMainServerAction(user));
@@ -411,27 +474,26 @@ public class Controller {
 
     @FXML
     void removeAvatar() throws IOException {
-        avatar.setFill(null);
+        avatar.setFill(new Color(0, 0, 0, 1));
         user.setAvatarImage(null);
         mySocket.write(new UpdateUserOnMainServerAction(user));
     }
 
     @FXML
-    void enter(Event event) throws IOException, ClassNotFoundException {
+    void enter(Event event) throws IOException {
         loadScene(event, "MainPage.fxml");
         initializeMainPage();
     }
 
     @FXML
     void logout(Event event) throws IOException {
-        getMySocket().write(new LogoutAction());
+        mySocket.write(new LogoutAction());
         user = null;
         loadLoginMenu(event);
     }
 
     //////////////////////////////////////////////////////////// main page scene ->
     // main page fields:
-
     @FXML
     private Rectangle discordLogo;
 
@@ -455,63 +517,158 @@ public class Controller {
     private ListView<Model> blockedListView;
     @FXML
     private Label blockedCount;
-    private ObservableList<Model> blockedPeopleObservableList;
 
     // pending:
     @FXML
     private ListView<Model> pendingListView;
     @FXML
     private Label pendingCount;
-    private ObservableList<Model> friendRequestsObservableList;  // outgoing friend requests -> pending
 
     // all friends:
     @FXML
     private ListView<Model> allListView;
     @FXML
     private Label allCount;
-    private ObservableList<Model> allFriendsObservableList;
 
     // online friends:
     @FXML
     private ListView<Model> onlineListView;
     @FXML
     private Label onlineCount;
-    private ObservableList<Model> onlineFriendsObservableList;
 
     // direct messages
     @FXML
     private ListView<Model> directMessagesListView;
-    private ObservableList<Model> directMessagesObservableList;
 
     // servers:
     @FXML
     private ListView<Server> serversListView;
-    private ObservableList<Server> serversObservableList;
-
-    private Image readProfileImage(Asset asset) throws IOException {
-        String directory = getAvatarImageCachePath(asset);
-        FileOutputStream fos = new FileOutputStream(directory + File.separator + asset.getID() + "." + asset.getAvatarContentType());
-        FileInputStream fis = new FileInputStream(directory + File.separator + asset.getID() + "." + asset.getAvatarContentType());
-        fos.write(asset.getAvatarImage());
-        Image avatarImage = new Image(fis);
-        fos.close();
-        fis.close();
-        return avatarImage;
-    }
 
     // main page methods:
-    public void initializeMainPage() throws IOException, ClassNotFoundException {
-        // updating user from MainServer
-        user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(user.getUID()));
+    public void refreshBlockedPeople() throws IOException {
+        ObservableList<Model> blockedPeopleObservableList = FXCollections.observableArrayList();
+        blockedListView.setStyle("-fx-background-color: #36393f");
+        for (Integer UID : user.getBlockedList()) {
+            mySocket.write(new GetUserFromMainServerAction(UID));
+            waiting();
+            Model blockedUser = smartListener.getReceivedUser();
+            blockedPeopleObservableList.add(blockedUser);
+        }
+        blockedCount.setText("Blocked - " + user.getBlockedList().size());
+        blockedListView.setItems(blockedPeopleObservableList);
+    }
 
+    public void refreshPending() throws IOException {
+        // outgoing friend requests -> pending
+        ObservableList<Model> friendRequestsObservableList = FXCollections.observableArrayList();
+        pendingListView.setStyle("-fx-background-color: #36393f");
+        for (Integer UID : user.getIncomingFriendRequests()) {
+            mySocket.write(new GetUserFromMainServerAction(UID));
+            waiting();
+            Model user = smartListener.getReceivedUser();
+            friendRequestsObservableList.add(user);
+        }
+        pendingCount.setText("Pending - " + user.getIncomingFriendRequests().size());
+        pendingListView.setItems(friendRequestsObservableList);
+    }
 
-        blockedPeopleObservableList = FXCollections.observableArrayList();
-        friendRequestsObservableList = FXCollections.observableArrayList();
-        allFriendsObservableList = FXCollections.observableArrayList();
-        onlineFriendsObservableList = FXCollections.observableArrayList();
-        serversObservableList = FXCollections.observableArrayList();
+    public void refreshAll() throws IOException {
+        ObservableList<Model> allFriendsObservableList = FXCollections.observableArrayList();
+        allListView.setStyle("-fx-background-color: #36393f");
+        for (Integer UID : user.getFriends()) {
+            mySocket.write(new GetUserFromMainServerAction(UID));
+            waiting();
+            Model friend = smartListener.getReceivedUser();
+            allFriendsObservableList.add(friend);
+        }
+        allCount.setText("All - " + user.getFriends().size());
+        allListView.setItems(allFriendsObservableList);
+    }
 
-        directMessagesObservableList = FXCollections.observableArrayList();
+    public void refreshOnline() throws IOException {
+        ObservableList<Model> onlineFriendsObservableList = FXCollections.observableArrayList();
+        onlineListView.setStyle("-fx-background-color: #36393f");
+        int onlineFriendsCount = 0;
+        for (Integer UID : user.getFriends()) {
+            mySocket.write(new GetUserFromMainServerAction(UID));
+            waiting();
+            Model friend = smartListener.getReceivedUser();
+            if (friend.getStatus() != Status.Invisible) {
+                onlineFriendsObservableList.add(friend);
+                onlineFriendsCount++;
+            }
+        }
+        this.onlineCount.setText("Online - " + onlineFriendsCount);
+        onlineListView.setItems(onlineFriendsObservableList);
+    }
+
+    public void refreshDirectMessages() throws IOException {
+        ObservableList<Model> directMessagesObservableList = FXCollections.observableArrayList();
+        directMessagesListView.setStyle("-fx-background-color: #2f3136");
+        for (Integer UID : user.getFriends()) {
+            mySocket.write(new GetUserFromMainServerAction(UID));
+            waiting();
+            Model friend = smartListener.getReceivedUser();
+            directMessagesObservableList.add(friend);
+        }
+        directMessagesListView.setItems(directMessagesObservableList);
+    }
+
+    public void refreshFriends() throws IOException {
+        refreshAll();
+        refreshOnline();
+        refreshDirectMessages();
+    }
+
+    public void refreshServers() throws IOException {
+        ObservableList<Server> serversObservableList = FXCollections.observableArrayList();
+        serversListView.setStyle("-fx-background-color: #202225");
+        for (Integer unicode : user.getServers()) {
+            mySocket.write(new GetServerFromMainServerAction(unicode));
+            waiting();
+            Server server = smartListener.getReceivedServer();
+            serversObservableList.add(server);
+        }
+        serversListView.setItems(serversObservableList);
+    }
+
+    private void setUpdatedValuesForObservableLists() throws IOException {
+        mySocket.write(new GetUserFromMainServerAction(user.getUID()));
+        waiting();
+        user = smartListener.getReceivedUser();
+        refreshPending();
+        refreshBlockedPeople();
+        refreshFriends();
+        refreshServers();
+    }
+
+    /*private GridPane getTabGridPane(int col2Width) {
+
+        GridPane gridPane = new GridPane();
+
+        gridPane.setStyle("-fx-background-color:  #36393f");
+
+        ColumnConstraints col1 = new ColumnConstraints(USE_PREF_SIZE, USE_COMPUTED_SIZE, USE_PREF_SIZE);
+        ColumnConstraints col2 = new ColumnConstraints(GridPane.USE_PREF_SIZE, col2Width, Double.MAX_VALUE);
+        ColumnConstraints col3 = new ColumnConstraints(GridPane.USE_PREF_SIZE, GridPane.USE_COMPUTED_SIZE, GridPane.USE_PREF_SIZE);
+        ColumnConstraints col4 = new ColumnConstraints(GridPane.USE_PREF_SIZE, GridPane.USE_COMPUTED_SIZE, GridPane.USE_PREF_SIZE);
+        gridPane.getColumnConstraints().addAll(col1, col2, col3, col4);
+        gridPane.setHgap(8);
+
+        gridPane.setMinHeight(GridPane.USE_COMPUTED_SIZE);
+        gridPane.setPrefHeight(GridPane.USE_COMPUTED_SIZE);
+        gridPane.setMaxHeight(GridPane.USE_COMPUTED_SIZE);
+
+        gridPane.setMinWidth(GridPane.USE_COMPUTED_SIZE);
+        gridPane.setPrefWidth(GridPane.USE_COMPUTED_SIZE);
+        gridPane.setMaxWidth(Double.MAX_VALUE);
+
+        return gridPane;
+    }*/
+
+    public void initializeMainPage() throws IOException {
+
+        setUpdatedValuesForObservableLists();
 
         //discord logo:
         discordLogo.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\discordLogo.jpg"))));
@@ -520,78 +677,23 @@ public class Controller {
         usernameLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
         usernameLabel.setText(user.getUsername());
 
-        // blocked:
-        blockedListView.setStyle("-fx-background-color: #36393f");
-        for (Integer UID : user.getBlockedList()) {
-            Model blockedUser = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(UID));
-            blockedPeopleObservableList.add(blockedUser);
-        }
-        blockedCount.setText("Blocked - " + user.getBlockedList().size());
-        blockedListView.setItems(blockedPeopleObservableList);
-
-        // pending:
-        pendingListView.setStyle("-fx-background-color: #36393f");
-        for (Integer UID : user.getIncomingFriendRequests()) {
-            Model user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(UID));
-            friendRequestsObservableList.add(user);
-        }
-        pendingCount.setText("Pending - " + user.getIncomingFriendRequests().size());
-        pendingListView.setItems(friendRequestsObservableList);
-
-        // all friends:
-        allListView.setStyle("-fx-background-color: #36393f");
-        for (Integer UID : user.getFriends()) {
-            Model friend = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(UID));
-            allFriendsObservableList.add(friend);
-        }
-        allCount.setText("All - " + user.getFriends().size());
-        allListView.setItems(allFriendsObservableList);
-
-        // online friends:
-        onlineListView.setStyle("-fx-background-color: #36393f");
-        int onlineFriendsCount = 0;
-        for (Integer UID : user.getFriends()) {
-            Model friend = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(UID));
-            if (friend.getStatus() != Status.Invisible) {
-                onlineFriendsObservableList.add(friend);
-                onlineFriendsCount++;
-            }
-        }
-        this.onlineCount.setText("Online - " + onlineFriendsCount);
-        onlineListView.setItems(onlineFriendsObservableList);
-
-
-        // direct messages:
-        directMessagesListView.setStyle("-fx-background-color: #2f3136");
-        for (Integer UID : user.getFriends()) {
-            Model friend = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(UID));
-            directMessagesObservableList.add(friend);
-        }
-        directMessagesListView.setItems(directMessagesObservableList);
-
-        // servers:
-        serversListView.setStyle("-fx-background-color: #202225");
-        for (Integer unicode : user.getServers()) {
-            Server server = mySocket.sendSignalAndGetResponse(new GetServerFromMainServerAction(unicode));
-            serversObservableList.add(server);
-        }
-        serversListView.setItems(serversObservableList);
-
         //construct blocked cells:
         blockedListView.setCellFactory(blc -> new ListCell<>() {
             @Override
             protected void updateItem(Model model, boolean empty) {
-                super.updateItem(model, empty);
 
+                super.updateItem(model, empty);
                 if (model == null || empty) {
                     setGraphic(null);
                 } else {
+
                     // Variables (Controls; GUI components):
                     GridPane gridPane = new GridPane();
                     Circle avatarPic = new Circle(20);
                     Label username = new Label();
                     Label label = new Label("Blocked");
                     Button unblockButton = new Button("Unblock");
+
                     // css styles
                     unblockButton.setStyle("-fx-background-color:  #d83c3e");
 
@@ -644,10 +746,9 @@ public class Controller {
 
                     unblockButton.setOnAction(actionEvent -> {
                         user.getBlockedList().remove(model.getUID());
-                        blockedPeopleObservableList.remove(model);
-                        blockedCount.setText("Blocked - " + user.getIncomingFriendRequests().size());
                         try {
                             mySocket.write(new UpdateUserOnMainServerAction(user));
+                            setUpdatedValuesForObservableLists();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -662,11 +763,12 @@ public class Controller {
         pendingListView.setCellFactory(frc -> new ListCell<>() {
             @Override
             protected void updateItem(Model model, boolean empty) {
-                super.updateItem(model, empty);
 
+                super.updateItem(model, empty);
                 if (model == null || empty) {
                     setGraphic(null);
                 } else {
+
                     // Variables (Controls; GUI components):
                     GridPane gridPane = new GridPane();
                     Circle avatarPic = new Circle(20);
@@ -674,6 +776,7 @@ public class Controller {
                     Label label = new Label();
                     Button acceptButton = new Button("Accept");
                     Button rejectButton = new Button("Reject");
+
                     // css styles
                     acceptButton.setStyle("-fx-background-color:  #3ca45c");
                     rejectButton.setStyle("-fx-background-color:  #d83c3e");
@@ -732,20 +835,13 @@ public class Controller {
                     label.setText("incoming friend request");
 
                     acceptButton.setOnAction(actionEvent -> {
-                        int index = user.getIncomingFriendRequests().indexOf(model.getUID());
+                        Integer UID = model.getUID();
+                        int index = user.getIncomingFriendRequests().indexOf(UID);
                         try {
-                            Boolean DBConnect = mySocket.sendSignalAndGetResponse(new CheckFriendRequestsAction(user.getUID(), index, true));
-                            friendRequestsObservableList.remove(model);
-                            user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(user.getUID()));
-                            pendingCount.setText("Pending - " + user.getIncomingFriendRequests().size());
-                            allFriendsObservableList.add(model);
-                            if (model.getStatus() != Status.Invisible) {
-                                onlineFriendsObservableList.add(model);
-                                onlineCount.setText("Online - " + onlineFriendsObservableList.size());
-                            }
-                            directMessagesObservableList.add(model);
-                            allCount.setText("All - " + user.getFriends().size());
-                        } catch (IOException | ClassNotFoundException e) {
+                            mySocket.write(new CheckFriendRequestsAction(user.getUID(), index, true));
+                            waiting();
+                            setUpdatedValuesForObservableLists();
+                        } catch (IOException e) {
                             e.printStackTrace();
                         }
                     });
@@ -753,11 +849,10 @@ public class Controller {
                     rejectButton.setOnAction(actionEvent -> {
                         int index = user.getIncomingFriendRequests().indexOf(model.getUID());
                         try {
-                            Boolean DBConnect = mySocket.sendSignalAndGetResponse(new CheckFriendRequestsAction(user.getUID(), index, false));
-                            friendRequestsObservableList.remove(model);
-                            user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(user.getUID()));
-                            pendingCount.setText("Pending - " + user.getIncomingFriendRequests().size());
-                        } catch (IOException | ClassNotFoundException e) {
+                            mySocket.write(new CheckFriendRequestsAction(user.getUID(), index, false));
+                            waiting();
+                            setUpdatedValuesForObservableLists();
+                        } catch (IOException e) {
                             e.printStackTrace();
                         }
                     });
@@ -771,11 +866,12 @@ public class Controller {
         allListView.setCellFactory(fc -> new ListCell<>() {
             @Override
             protected void updateItem(Model model, boolean empty) {
-                super.updateItem(model, empty);
 
+                super.updateItem(model, empty);
                 if (model == null || empty) {
                     setGraphic(null);
                 } else {
+
                     // Variables (Controls; GUI components):
                     GridPane gridPane = new GridPane();
                     Circle avatarPic = new Circle(20);
@@ -783,9 +879,10 @@ public class Controller {
                     Label label = new Label();
                     Button enterChatButton = new Button("Messages");
                     Button removeButton = new Button("Remove");
+
                     // css styles
-                    //enterChatButton.setStyle("-fx-background-color:  #2F3136");
-                    //removeButton.setStyle("-fx-background-color:  #2F3136");
+                    enterChatButton.setStyle("-fx-background-color:  #3ca45c");
+                    removeButton.setStyle("-fx-background-color:  #d83c3e");
 
                     username.setStyle("-fx-font-weight: bold");
                     username.setStyle("-fx-font-size: 16");
@@ -824,7 +921,6 @@ public class Controller {
                     GridPane.setHalignment(enterChatButton, HPos.RIGHT);
                     GridPane.setHalignment(removeButton, HPos.LEFT);
 
-
                     if (model.getAvatarImage() != null) {
                         Image avatarImage;
                         try {
@@ -855,14 +951,11 @@ public class Controller {
                                                                                 // because now the model is different from the one saved in observableList
                                                                                 // finglish: in model mal hamun listView hastesh ke az tush remove ro zadim, be hamin khater doroste ama baraye un yeki listView ok nist
                         user.removeFriend(model.getUID());
-                        allCount.setText("All - " + user.getFriends().size());
-                        allFriendsObservableList.remove(model);
-                        onlineFriendsObservableList.remove(model);
-//                        directMessagesListView.getItems().remove(directMessagesObservableList.indexOf(model));
-                        directMessagesObservableList.remove(index);
                         try {
-                            boolean DBConnect = mySocket.sendSignalAndGetResponse(new RemoveFriendAction(user.getUID(), model.getUID()));
-                        } catch (IOException | ClassNotFoundException e) {
+                            mySocket.write(new RemoveFriendAction(user.getUID(), model.getUID()));
+                            waiting();
+                            setUpdatedValuesForObservableLists();
+                        } catch (IOException e) {
                             e.printStackTrace();
                         }
                     });
@@ -872,15 +965,16 @@ public class Controller {
             }
         });
 
-        // construct online friends cell
+        // construct online friends cells:
         onlineListView.setCellFactory(ofc -> new ListCell<>() {
             @Override
             protected void updateItem(Model model, boolean empty) {
-                super.updateItem(model, empty);
 
+                super.updateItem(model, empty);
                 if (model == null || empty) {
                     setGraphic(null);
                 } else {
+
                     // Variables (Controls; GUI components):
                     GridPane gridPane = new GridPane();
                     Circle avatarPic = new Circle(20);
@@ -888,9 +982,10 @@ public class Controller {
                     Label label = new Label();
                     Button enterChatButton = new Button("Messages");
                     Button removeButton = new Button("Remove");
+
                     // css styles
-                    //enterChatButton.setStyle("-fx-background-color:  #2F3136");
-                    //removeButton.setStyle("-fx-background-color:  #2F3136");
+                    enterChatButton.setStyle("-fx-background-color:  #3ca45c");
+                    removeButton.setStyle("-fx-background-color:  #d83c3e");
 
                     username.setStyle("-fx-font-weight: bold");
                     username.setStyle("-fx-font-size: 16");
@@ -956,14 +1051,11 @@ public class Controller {
                         int index = user.getFriends().indexOf(model.getUID());  // NECESSARY AND IMPORTANT for removing from directMessagesObservableList. 6 lines later
                                                                                 // because now the model is different from the one saved in observableList
                         user.removeFriend(model.getUID());
-                        onlineCount.setText("Online - " + user.getIncomingFriendRequests().size());
-                        onlineFriendsObservableList.remove(model);
-                        allFriendsObservableList.remove(model);
-//                        directMessagesListView.getItems().remove(directMessagesObservableList.indexOf(model));
-                        directMessagesObservableList.remove(index);
                         try {
-                            boolean DBConnect = mySocket.sendSignalAndGetResponse(new RemoveFriendAction(user.getUID(), model.getUID()));
-                        } catch (IOException | ClassNotFoundException e) {
+                            mySocket.write(new RemoveFriendAction(user.getUID(), model.getUID()));
+                            waiting();
+                            setUpdatedValuesForObservableLists();
+                        } catch (IOException e) {
                             e.printStackTrace();
                         }
                     });
@@ -977,11 +1069,12 @@ public class Controller {
         directMessagesListView.setCellFactory(dmc -> new ListCell<>() {
             @Override
             protected void updateItem(Model model, boolean empty) {
-                super.updateItem(model, empty);
 
+                super.updateItem(model, empty);
                 if (model == null || empty) {
                     setGraphic(null);
                 } else {
+
                     // Variables (Controls; GUI components):
                     GridPane gridPane = new GridPane();
                     Circle avatarPic = new Circle(20);
@@ -1055,6 +1148,7 @@ public class Controller {
                 if (server == null || empty) {
                     setGraphic(null);
                 } else {
+
                     // Variables (Controls; GUI components):
                     Rectangle avatarPic = new Rectangle(50, 50);
 
@@ -1084,10 +1178,11 @@ public class Controller {
     }
 
     @FXML
-    void sendFriendRequest(ActionEvent event) throws IOException, ClassNotFoundException {
-        user = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(user.getUID()));
+    void sendFriendRequest(ActionEvent event) throws IOException {
         String receivedUsername = friendRequestTextField.getText().trim();
-        Integer friendUID = mySocket.sendSignalAndGetResponse(new GetUIDbyUsernameAction(receivedUsername));
+        mySocket.write(new GetUIDbyUsernameAction(receivedUsername));
+        waiting();
+        Integer friendUID = smartListener.getReceivedInteger();
         successOrError.setStyle("-fx-text-fill: #E38082");
         if (friendUID == null) {
             successOrError.setText("A user by this username was not found!");
@@ -1106,7 +1201,9 @@ public class Controller {
                 successOrError.setText("Check your pending friend requests! :)");
                 return;
             }
-            int scenario = mySocket.sendSignalAndGetResponse(new SendFriendRequestAction(user.getUsername(), receivedUsername));
+            mySocket.write(new SendFriendRequestAction(user.getUsername(), receivedUsername));
+            waiting();
+            int scenario = smartListener.getReceivedInteger();
             switch (scenario) {
                 case 0 -> successOrError.setText("A user by this username was not found!");
                 case 1 -> successOrError.setText("You have already sent a friend request to this user!");
@@ -1115,12 +1212,12 @@ public class Controller {
                 case 4 -> {
                     successOrError.setStyle("-fx-text-fill: #46C46E");
                     successOrError.setText("The request was sent successfully");
-
-//                    Model friend = mySocket.sendSignalAndGetResponse(new GetUserFromMainServerAction(receivedUsername));
-//                    System.out.println(friend.getUID());
-//                    friendRequestsObservableList.add(friend);
                 }
             }
+//            mySocket.write(new GetUserFromMainServerAction(user.getUID()));
+//            waiting();
+//            user = smartListener.getReceivedUser();
+//            System.out.println(user.getIncomingFriendRequests().size());
         }
     }
 
@@ -1152,20 +1249,5 @@ public class Controller {
     @FXML
     void mouseExitedSetting(MouseEvent event) {
         setting.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\user setting.jpg"))));
-    }
-
-    // some useful universal methods:
-    private void makeDirectory(String path) {
-        File directory = new File(path);
-        if (!directory.exists()) {
-            if (!directory.mkdir()) {
-                System.err.println("Could not create the " + path + " directory!");
-                throw new RuntimeException();
-            }
-        }
-    }
-
-    private String getAbsolutePath(String relativePath) {
-        return new File("").getAbsolutePath() + File.separator + relativePath;
     }
 }

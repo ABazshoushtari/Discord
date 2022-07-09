@@ -1,7 +1,12 @@
 package discord.signals;
 
+import discord.mainServer.ClientHandler;
 import discord.mainServer.MainServer;
 import discord.client.Model;
+
+import java.io.IOException;
+
+import static discord.mainServer.ClientHandler.clientHandlers;
 
 public class SendFriendRequestAction implements Action {
     private final String requester;
@@ -13,25 +18,33 @@ public class SendFriendRequestAction implements Action {
     }
 
     @Override
-    public Object act() {
-        Integer UID = MainServer.getIDs().getOrDefault(username, null);
-        if (UID == null) {
+    public Object act() throws IOException {
+        Integer receiverUID = MainServer.getIDs().getOrDefault(username, null);
+        if (receiverUID == null) {
             return 0;
         }
-        if (!MainServer.getUsers().containsKey(UID)) {
+        if (!MainServer.getUsers().containsKey(receiverUID)) {
             return 0;
         } else {
-            Model user = MainServer.getUsers().get(UID);
-            int requesterID = MainServer.getIDs().get(requester);
-            if (user.getIncomingFriendRequests().contains(requesterID)) {
+            Model user = MainServer.getUsers().get(receiverUID);
+            int requesterUID = MainServer.getIDs().get(requester);
+            if (user.getIncomingFriendRequests().contains(requesterUID)) {
                 return 1;
             }
-            if (user.getBlockedList().contains(requesterID)) {
+            if (user.getBlockedList().contains(requesterUID)) {
                 return 2;
             }
-            user.getIncomingFriendRequests().add(requesterID);
+            user.getIncomingFriendRequests().add(requesterUID);
             if (!MainServer.updateDatabase(user)) {
                 return 3;
+            }
+            for (ClientHandler ch : clientHandlers) {
+                if (ch.getUser() != null) {
+                    if (ch.getUser().getUID().equals(receiverUID)) {
+                        ch.getMySocket().write(new FriendRequestSignal(requesterUID));
+                        break;
+                    }
+                }
             }
             return 4;
         }

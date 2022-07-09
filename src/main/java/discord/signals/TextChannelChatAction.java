@@ -156,7 +156,7 @@ public class TextChannelChatAction implements Action {
                     MainServer.getServers().get(serverUnicode).getTextChannels().get(textChannelIndex).getTextChannelMessages().add(textChannelMessage);
                 }
                 boolean DBConnect = MainServer.updateDatabase(MainServer.getServers().get(serverUnicode));
-                if (!DBConnect) return null;        // for debug
+                //if (!DBConnect) return null;        // for debug
             }
             TextChannel updatedTextChannelFromMainServer = MainServer.getServers().get(serverUnicode).getTextChannels().get(textChannelIndex);
 
