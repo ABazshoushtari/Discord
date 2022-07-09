@@ -46,7 +46,7 @@ public class CheckFriendRequestsAction implements Action {
             for (ClientHandler ch : clientHandlers) {
                 if (ch.getUser() != null) {
                     if (ch.getUser().getUID().equals(requesterID)) {
-                        ch.getMySocket().write(new AcceptFriendRequestSignal(myUID));
+                        ch.getMySocket().write(new AcceptFriendRequestModelUpdaterSignal(myUID));
                         break;
                     }
                 }

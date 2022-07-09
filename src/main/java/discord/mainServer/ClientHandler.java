@@ -85,7 +85,7 @@ public class ClientHandler implements Runnable {
         user.setStatus(Status.Invisible);
         for (ClientHandler ch : clientHandlers) {
             if (user.getFriends().contains(ch.getUser().getUID())) {
-                ch.mySocket.write(new FriendChangedSignal());
+                ch.mySocket.write(new FriendChangedModelUpdaterSignal());
             }
         }
         MainServer.getUsers().replace(user.getUID(), user);

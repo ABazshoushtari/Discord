@@ -24,10 +24,25 @@ public class SmartListener implements Runnable {
             try {
                 Object mainServerResponse = mySocket.read();
                 if (mainServerResponse != null) {
-                    String classSimpleName = mainServerResponse.getClass().getSimpleName();
-                    if (!(mainServerResponse instanceof Signal)) {
+
+                    if (mainServerResponse instanceof ModelUpdaterSignal mus) {
+
+                        if (!(mus instanceof FriendChangedModelUpdaterSignal)) {
+                            mus.setBeingUpdatedModel(controller.getUser());
+                            controller.setUser(mus.getUpdatedModel());
+                        }
+
+                        Platform.runLater(() -> {
+                            try {
+                                controller.setUpdatedValuesForObservableLists();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    }
+                    else {
                         synchronized (controller) {
-                            switch (classSimpleName) {
+                            switch (mainServerResponse.getClass().getSimpleName()) {
                                 case "Model" -> receivedUser = (Model) mainServerResponse;
                                 case "Boolean" -> receivedBoolean = (Boolean) mainServerResponse;
                                 case "Server" -> receivedServer = (Server) mainServerResponse;
@@ -35,7 +50,8 @@ public class SmartListener implements Runnable {
                             }
                             controller.notify();
                         }
-                    } else {
+                    }
+                        /*
                         switch (classSimpleName) {
                             case "FriendRequestSignal" -> {
                                 FriendRequestSignal frs = (FriendRequestSignal) mainServerResponse;
@@ -79,7 +95,7 @@ public class SmartListener implements Runnable {
                                 }
                             });
                         }
-                    }
+                    }*/
                 } else {
                     synchronized (controller) {
                         receiveNull();

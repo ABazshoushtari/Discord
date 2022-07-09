@@ -36,7 +36,7 @@ public class LoginAction implements Action {
             for (ClientHandler ch : clientHandlers) {
                 if (ch.getUser() != null) {
                     if (ch.getUser().getFriends().contains(me.getUID())) {
-                        ch.getMySocket().write(new FriendChangedSignal());
+                        ch.getMySocket().write(new FriendChangedModelUpdaterSignal());
                     }
                 }
             }

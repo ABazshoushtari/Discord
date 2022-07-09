@@ -46,9 +46,13 @@ public class Controller {
         smartListenerThread.start();
     }
 
-    // getters:
+    // getters and setters:
     public Model getUser() {
         return user;
+    }
+
+    public void setUser(Model user) {
+        this.user = user;
     }
 
     public MySocket getMySocket() {
@@ -640,7 +644,7 @@ public class Controller {
         serversListView.setItems(serversObservableList);
     }
 
-    private void setUpdatedValuesForObservableLists() throws IOException {
+    public void setUpdatedValuesForObservableLists() throws IOException {
         refreshPending();
         refreshBlockedPeople();
         refreshFriends();
@@ -679,7 +683,8 @@ public class Controller {
         discordLogo.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\discordLogo.jpg"))));
         setting.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\user setting.jpg"))));
 
-        if (avatarImage != null) {
+        if (user.getAvatarImage() != null) {
+            avatarImage = readProfileImage(user);
             mainPageAvatar.setFill(new ImagePattern(avatarImage));
         } else {
             mainPageAvatar.setFill(new Color(0.125, 0.13, 0, 0.145));

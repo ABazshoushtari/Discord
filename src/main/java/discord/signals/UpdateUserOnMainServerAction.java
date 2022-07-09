@@ -1,6 +1,5 @@
 package discord.signals;
 
-import discord.client.Status;
 import discord.mainServer.ClientHandler;
 import discord.mainServer.MainServer;
 import discord.client.Model;
@@ -36,7 +35,7 @@ public class UpdateUserOnMainServerAction implements Action {
         for (ClientHandler ch : clientHandlers) {
             if (ch.getUser() != null) {
                 if (updatedMe.getFriends().contains(ch.getUser().getUID())) {
-                    ch.getMySocket().write(new FriendChangedSignal());
+                    ch.getMySocket().write(new FriendChangedModelUpdaterSignal());
                 }
             }
         }
