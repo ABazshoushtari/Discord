@@ -112,6 +112,9 @@ public class Controller {
     }
 
     private Image readAvatarImage(Asset asset) throws IOException {
+        if (asset.getAvatarImage() == null) {
+            return new Image(getAbsolutePath("requirements" + File.separator + "emojipng.com-11701703.png"));
+        }
         String directory = getAvatarImageCachePath(asset);
         FileOutputStream fos = new FileOutputStream(directory + File.separator + asset.getID() + "." + asset.getAvatarContentType());
         FileInputStream fis = new FileInputStream(directory + File.separator + asset.getID() + "." + asset.getAvatarContentType());
@@ -152,7 +155,7 @@ public class Controller {
         }
     }
 
-    private void loadProfilePage(Event event) {
+    private void loadProfilePage(Event event) throws IOException {
         loadScene(event, "ProfilePage.fxml");
 //        if (user.getAvatarImage() != null) {
 //            String directory = getAvatarImageCachePath(user);
@@ -168,6 +171,7 @@ public class Controller {
 //            avatar.setFill(new ImagePattern(avatarImage));
 //        }
 
+        avatarImage = readAvatarImage(user);
         avatar.setFill(new ImagePattern(avatarImage));
         profileUsername.setText(user.getUsername());
         profileEmail.setText(user.getEmail());
@@ -683,12 +687,8 @@ public class Controller {
         discordLogo.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\discordLogo.jpg"))));
         setting.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\user setting.jpg"))));
 
-        if (user.getAvatarImage() != null) {
-            avatarImage = readAvatarImage(user);
-            mainPageAvatar.setFill(new ImagePattern(avatarImage));
-        } else {
-            mainPageAvatar.setFill(new Color(0.125, 0.13, 0, 0.145));
-        }
+        avatarImage = readAvatarImage(user);
+        mainPageAvatar.setFill(new ImagePattern(avatarImage));
 
         usernameLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
         usernameLabel.setText(user.getUsername());
