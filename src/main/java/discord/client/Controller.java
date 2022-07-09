@@ -42,6 +42,7 @@ public class Controller {
         this.mySocket = mySocket;
         smartListener = new SmartListener(this);
         Thread smartListenerThread = new Thread(smartListener);
+        smartListenerThread.setDaemon(true);
         smartListenerThread.start();
     }
 
@@ -223,11 +224,12 @@ public class Controller {
             signupAction.setUsername(usernameOnSignupMenu.getText());
             mySocket.write(signupAction);
             waiting();
-            if (smartListener.getReceivedBoolean() == null) {
+            Boolean success = smartListener.getReceivedBoolean();
+            if (success == null) {
                 signupErrorMessage.setText("This username is already taken!");
                 return;
             }
-            if (!smartListener.getReceivedBoolean()) {
+            if (!success) {
                 signupErrorMessage.setText("Invalid username format!");
                 conditionMessage1.setText("A username should consist of only English letters/numbers and be of a minimal length of 6");
                 return;
@@ -257,6 +259,7 @@ public class Controller {
             signupAction.setPhoneNumber("");
             mySocket.write(signupAction);
             waiting();
+            // a true is stored in receivedBoolean of the smart listener
 
             signupAction.finalizeStage();
             mySocket.write(signupAction);
@@ -328,7 +331,7 @@ public class Controller {
                 changeInfoAction.setUsername(profileUsername.getText());
 
                 boolean validUsername;
-                if (!user.getUsername().equals(profilePhoneNumber.getText())) {
+                if (!user.getUsername().equals(profileUsername.getText())) {
                     mySocket.write(changeInfoAction);
                     waiting();
                     if (smartListener.getReceivedBoolean() == null) {
@@ -474,7 +477,7 @@ public class Controller {
 
     @FXML
     void removeAvatar() throws IOException {
-        avatar.setFill(new Color(0, 0, 0, 1));
+        avatar.setFill(new Color(0.125, 0.13, 0, 0.145));
         user.setAvatarImage(null);
         mySocket.write(new UpdateUserOnMainServerAction(user));
     }
@@ -546,6 +549,7 @@ public class Controller {
 
     // main page methods:
     public void refreshBlockedPeople() throws IOException {
+        if (blockedListView == null) return;
         ObservableList<Model> blockedPeopleObservableList = FXCollections.observableArrayList();
         blockedListView.setStyle("-fx-background-color: #36393f");
         for (Integer UID : user.getBlockedList()) {
@@ -560,6 +564,7 @@ public class Controller {
 
     public void refreshPending() throws IOException {
         // outgoing friend requests -> pending
+        if (pendingListView == null) return;
         ObservableList<Model> friendRequestsObservableList = FXCollections.observableArrayList();
         pendingListView.setStyle("-fx-background-color: #36393f");
         for (Integer UID : user.getIncomingFriendRequests()) {
@@ -615,12 +620,14 @@ public class Controller {
     }
 
     public void refreshFriends() throws IOException {
+        if (allListView == null) return;
         refreshAll();
         refreshOnline();
         refreshDirectMessages();
     }
 
     public void refreshServers() throws IOException {
+        if (serversListView == null) return;
         ObservableList<Server> serversObservableList = FXCollections.observableArrayList();
         serversListView.setStyle("-fx-background-color: #202225");
         for (Integer unicode : user.getServers()) {
@@ -633,9 +640,9 @@ public class Controller {
     }
 
     private void setUpdatedValuesForObservableLists() throws IOException {
-        mySocket.write(new GetUserFromMainServerAction(user.getUID()));
-        waiting();
-        user = smartListener.getReceivedUser();
+//        mySocket.write(new GetUserFromMainServerAction(user.getUID()));
+//        waiting();
+//        user = smartListener.getReceivedUser();
         refreshPending();
         refreshBlockedPeople();
         refreshFriends();
@@ -840,6 +847,7 @@ public class Controller {
                         try {
                             mySocket.write(new CheckFriendRequestsAction(user.getUID(), index, true));
                             waiting();
+                            user = smartListener.getReceivedUser();
                             setUpdatedValuesForObservableLists();
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -851,6 +859,7 @@ public class Controller {
                         try {
                             mySocket.write(new CheckFriendRequestsAction(user.getUID(), index, false));
                             waiting();
+                            user = smartListener.getReceivedUser();
                             setUpdatedValuesForObservableLists();
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -953,7 +962,7 @@ public class Controller {
                         user.removeFriend(model.getUID());
                         try {
                             mySocket.write(new RemoveFriendAction(user.getUID(), model.getUID()));
-                            waiting();
+                            //waiting();
                             setUpdatedValuesForObservableLists();
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -1053,7 +1062,7 @@ public class Controller {
                         user.removeFriend(model.getUID());
                         try {
                             mySocket.write(new RemoveFriendAction(user.getUID(), model.getUID()));
-                            waiting();
+                            //waiting();
                             setUpdatedValuesForObservableLists();
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -1208,8 +1217,7 @@ public class Controller {
                 case 0 -> successOrError.setText("A user by this username was not found!");
                 case 1 -> successOrError.setText("You have already sent a friend request to this user!");
                 case 2 -> successOrError.setText("This user has blocked you! You can't send them a friend request");
-                case 3 -> successOrError.setText("Could not connect to the database!");
-                case 4 -> {
+                case 3 -> {
                     successOrError.setStyle("-fx-text-fill: #46C46E");
                     successOrError.setText("The request was sent successfully");
                 }

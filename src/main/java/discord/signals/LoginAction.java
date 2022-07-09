@@ -1,7 +1,12 @@
 package discord.signals;
 
 import discord.client.Model;
+import discord.mainServer.ClientHandler;
 import discord.mainServer.MainServer;
+
+import java.io.IOException;
+
+import static discord.mainServer.ClientHandler.clientHandlers;
 
 public class LoginAction implements Action {
     private final String username;
@@ -13,7 +18,7 @@ public class LoginAction implements Action {
     }
 
     @Override
-    public Object act() {
+    public Object act() throws IOException {
         Integer UID = MainServer.getIDs().get(username);
         if (UID == null) {
             return null;
@@ -26,7 +31,16 @@ public class LoginAction implements Action {
             Model me = MainServer.getUsers().get(UID);
             me.setStatus(me.getPreviousSetStatus());
             MainServer.getUsers().replace(UID, me);
-            boolean DBConnect = MainServer.updateDatabase(me);
+            MainServer.updateDatabase(me);
+
+            for (ClientHandler ch : clientHandlers) {
+                if (ch.getUser() != null) {
+                    if (ch.getUser().getFriends().contains(me.getUID())) {
+                        ch.getMySocket().write(new FriendChangedSignal());
+                    }
+                }
+            }
+
             return me;
         }
     }

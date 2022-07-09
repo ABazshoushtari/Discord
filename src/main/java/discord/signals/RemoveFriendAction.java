@@ -32,6 +32,8 @@ public class RemoveFriendAction implements Action {
                 }
             }
         }
-        return MainServer.updateDatabase(remover) && MainServer.updateDatabase(beingRemoved);
+        MainServer.updateDatabase(remover);
+        MainServer.updateDatabase(beingRemoved);
+        return null;
     }
 }

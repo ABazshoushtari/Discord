@@ -4,34 +4,29 @@ import discord.client.Model;
 import discord.mainServer.MainServer;
 
 public class BlockAction implements Action {
-    private final String blockerUsername;
-    private final String beingBlockedUsername;
+    private final Integer blockerUID;
+    private final Integer beingBlockedUID;
 
-    public BlockAction(String blockerUsername, String beingBlockedUsername) {
-        this.blockerUsername = blockerUsername;
-        this.beingBlockedUsername = beingBlockedUsername;
+    public BlockAction(Integer blockerUID, Integer beingBlockedUID) {
+        this.blockerUID = blockerUID;
+        this.beingBlockedUID = beingBlockedUID;
     }
 
     @Override
     public Object act() {
 
-        int beingBlockedID = MainServer.getIDs().get(beingBlockedUsername);
+        Model blockerUser = MainServer.getUsers().get(blockerUID);
+        blockerUser.getIncomingFriendRequests().remove(beingBlockedUID);
+        blockerUser.getFriends().remove(beingBlockedUID);
+        blockerUser.getBlockedList().add(beingBlockedUID);
 
-        if (!MainServer.getUsers().containsKey(beingBlockedID)) {
-            return null;
-        } else {
+        Model beingBlockerUser = MainServer.getUsers().get(beingBlockedUID);
+        beingBlockerUser.getIncomingFriendRequests().remove(beingBlockedUID);
+        beingBlockerUser.getFriends().remove(beingBlockedUID);
 
-            int blockerID = MainServer.getIDs().get(blockerUsername);
-            Model blockerUser = MainServer.getUsers().get(blockerID);
-            blockerUser.getIncomingFriendRequests().remove(beingBlockedID);
-            blockerUser.getFriends().remove(beingBlockedID);
-            blockerUser.getBlockedList().add(beingBlockedID);
+        MainServer.updateDatabase(blockerUser);
+        MainServer.updateDatabase(beingBlockerUser);
 
-            Model beingBlockerUser = MainServer.getUsers().get(beingBlockedID);
-            beingBlockerUser.getIncomingFriendRequests().remove(beingBlockedID);
-            beingBlockerUser.getFriends().remove(beingBlockedID);
-
-            return MainServer.updateDatabase(blockerUser) && MainServer.updateDatabase(beingBlockerUser);
-        }
+        return null;
     }
 }

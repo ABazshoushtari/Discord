@@ -35,9 +35,7 @@ public class SendFriendRequestAction implements Action {
                 return 2;
             }
             user.getIncomingFriendRequests().add(requesterUID);
-            if (!MainServer.updateDatabase(user)) {
-                return 3;
-            }
+            MainServer.updateDatabase(user);
             for (ClientHandler ch : clientHandlers) {
                 if (ch.getUser() != null) {
                     if (ch.getUser().getUID().equals(receiverUID)) {
@@ -46,7 +44,7 @@ public class SendFriendRequestAction implements Action {
                     }
                 }
             }
-            return 4;
+            return 3;
         }
     }
 }

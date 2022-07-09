@@ -155,8 +155,7 @@ public class TextChannelChatAction implements Action {
                     textChannelMessage.setMessage((MainServer.getServers().get(serverUnicode).getTextChannels().get(textChannelIndex).getMessages().size() + 1) + "- " + sender + ": " + textChannelMessage.getMessage());
                     MainServer.getServers().get(serverUnicode).getTextChannels().get(textChannelIndex).getTextChannelMessages().add(textChannelMessage);
                 }
-                boolean DBConnect = MainServer.updateDatabase(MainServer.getServers().get(serverUnicode));
-                //if (!DBConnect) return null;        // for debug
+                MainServer.updateDatabase(MainServer.getServers().get(serverUnicode));
             }
             TextChannel updatedTextChannelFromMainServer = MainServer.getServers().get(serverUnicode).getTextChannels().get(textChannelIndex);
 

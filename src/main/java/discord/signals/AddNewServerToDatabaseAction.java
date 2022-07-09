@@ -13,6 +13,7 @@ public class AddNewServerToDatabaseAction implements Action {
     @Override
     public Object act() {
         MainServer.getServers().put(newServer.getUnicode(), newServer);
-        return MainServer.updateDatabase(newServer);
+        MainServer.updateDatabase(newServer);
+        return null;
     }
 }
