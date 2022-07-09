@@ -140,8 +140,8 @@ public class Controller {
             if (user == null) {
                 loginErrorMessage.setText("A username by this password could not be found!");
             } else {
-                //this.user = user;
-                loadProfilePage(event);
+                //loadProfilePage(event);
+                loadMainPage(event);
             }
         } else {
             loginErrorMessage.setText("You have empty fields!");
@@ -149,7 +149,7 @@ public class Controller {
     }
 
     private void loadProfilePage(Event event) throws IOException {
-        loadScene(event, "profilePage.fxml");
+        loadScene(event, "ProfilePage.fxml");
 
         if (user.getAvatarImage() != null) {
             String directory = getAvatarImageCachePath(user);
@@ -186,7 +186,7 @@ public class Controller {
 
     @FXML
     void loadSignupMenu(Event event) {
-        loadScene(event, "signupMenu.fxml");
+        loadScene(event, "SignupMenu.fxml");
     }
 
     //////////////////////////////////////////////////////////// signup scene ->
@@ -263,16 +263,17 @@ public class Controller {
 
             signupAction.finalizeStage();
             mySocket.write(signupAction);
-            waiting();
-            user = smartListener.getReceivedUser();     // we can get the signed-up user here but ignore for now
-            //loadLoginMenu(event);
-            loadProfilePage(event);
+            //waiting();
+            //user = smartListener.getReceivedUser();     // we can get the signed-up user here but ignore for now
+            loadLoginMenu(event);
+            //loadProfilePage(event);
+            //loadMainPage();
         }
     }
 
     @FXML
     void loadLoginMenu(Event event) {
-        loadScene(event, "loginMenu.fxml");
+        loadScene(event, "LoginMenu.fxml");
     }
 
     //////////////////////////////////////////////////////////// profile page scene ->
@@ -483,7 +484,7 @@ public class Controller {
     }
 
     @FXML
-    void enter(Event event) throws IOException {
+    void loadMainPage(Event event) throws IOException {
         loadScene(event, "MainPage.fxml");
         initializeMainPage();
     }
@@ -549,7 +550,7 @@ public class Controller {
 
     // main page methods:
     public void refreshBlockedPeople() throws IOException {
-        if (blockedListView == null) return;
+        //if (blockedListView == null) return;
         ObservableList<Model> blockedPeopleObservableList = FXCollections.observableArrayList();
         blockedListView.setStyle("-fx-background-color: #36393f");
         for (Integer UID : user.getBlockedList()) {
@@ -564,7 +565,7 @@ public class Controller {
 
     public void refreshPending() throws IOException {
         // outgoing friend requests -> pending
-        if (pendingListView == null) return;
+        //if (pendingListView == null) return;
         ObservableList<Model> friendRequestsObservableList = FXCollections.observableArrayList();
         pendingListView.setStyle("-fx-background-color: #36393f");
         for (Integer UID : user.getIncomingFriendRequests()) {
@@ -620,14 +621,14 @@ public class Controller {
     }
 
     public void refreshFriends() throws IOException {
-        if (allListView == null) return;
+        //if (allListView == null) return;
         refreshAll();
         refreshOnline();
         refreshDirectMessages();
     }
 
     public void refreshServers() throws IOException {
-        if (serversListView == null) return;
+        //if (serversListView == null) return;
         ObservableList<Server> serversObservableList = FXCollections.observableArrayList();
         serversListView.setStyle("-fx-background-color: #202225");
         for (Integer unicode : user.getServers()) {
@@ -640,9 +641,6 @@ public class Controller {
     }
 
     private void setUpdatedValuesForObservableLists() throws IOException {
-//        mySocket.write(new GetUserFromMainServerAction(user.getUID()));
-//        waiting();
-//        user = smartListener.getReceivedUser();
         refreshPending();
         refreshBlockedPeople();
         refreshFriends();
@@ -680,7 +678,13 @@ public class Controller {
         //discord logo:
         discordLogo.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\discordLogo.jpg"))));
         setting.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\user setting.jpg"))));
-        mainPageAvatar.setFill(new ImagePattern(avatarImage));
+
+        if (avatarImage != null) {
+            mainPageAvatar.setFill(new ImagePattern(avatarImage));
+        } else {
+            mainPageAvatar.setFill(new Color(0.125, 0.13, 0, 0.145));
+        }
+
         usernameLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
         usernameLabel.setText(user.getUsername());
 
