@@ -36,14 +36,16 @@ public class SendFriendRequestAction implements Action {
             }
             user.getIncomingFriendRequests().add(requesterUID);
             MainServer.updateDatabase(user);
+
             for (ClientHandler ch : clientHandlers) {
                 if (ch.getUser() != null) {
                     if (ch.getUser().getUID().equals(receiverUID)) {
-                        ch.getMySocket().write(new FriendRequestSignal(requesterUID));
+                        ch.getMySocket().write(new FriendRequestModelUpdaterSignal(requesterUID));
                         break;
                     }
                 }
             }
+
             return 3;
         }
     }

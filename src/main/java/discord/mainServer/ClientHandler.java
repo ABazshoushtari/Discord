@@ -67,7 +67,7 @@ public class ClientHandler implements Runnable {
                     try {
                         handleQuit();
                     } catch (IOException ex) {
-                       ex.printStackTrace();
+                        ex.printStackTrace();
                     }
                 }
                 mySocket.closeEverything();
@@ -84,8 +84,10 @@ public class ClientHandler implements Runnable {
     private void handleQuit() throws IOException {
         user.setStatus(Status.Invisible);
         for (ClientHandler ch : clientHandlers) {
-            if (user.getFriends().contains(ch.getUser().getUID())) {
-                ch.mySocket.write(new FriendChangedSignal());
+            if (ch.user != null) {
+                if (user.getFriends().contains(ch.getUser().getUID())) {
+                    ch.mySocket.write(new FriendChangedModelUpdaterSignal());
+                }
             }
         }
         MainServer.getUsers().replace(user.getUID(), user);

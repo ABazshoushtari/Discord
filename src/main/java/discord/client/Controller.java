@@ -34,7 +34,6 @@ public class Controller {
     private Model user;
     private final MySocket mySocket;
     private final SmartListener smartListener;
-    private Image avatarImage;
 
     // the constructor:
     public Controller(MySocket mySocket) {
@@ -46,9 +45,13 @@ public class Controller {
         smartListenerThread.start();
     }
 
-    // getters:
+    // getters and setters:
     public Model getUser() {
         return user;
+    }
+
+    public void setUser(Model user) {
+        this.user = user;
     }
 
     public MySocket getMySocket() {
@@ -107,7 +110,10 @@ public class Controller {
         return null;
     }
 
-    private Image readProfileImage(Asset asset) throws IOException {
+    private Image readAvatarImage(Asset asset) throws IOException {
+        if (asset.getAvatarImage() == null) {
+            return new Image(getAbsolutePath("requirements" + File.separator + "emojipng.com-11701703.png"));
+        }
         String directory = getAvatarImageCachePath(asset);
         FileOutputStream fos = new FileOutputStream(directory + File.separator + asset.getID() + "." + asset.getAvatarContentType());
         FileInputStream fis = new FileInputStream(directory + File.separator + asset.getID() + "." + asset.getAvatarContentType());
@@ -150,21 +156,21 @@ public class Controller {
 
     private void loadProfilePage(Event event) throws IOException {
         loadScene(event, "ProfilePage.fxml");
+//        if (user.getAvatarImage() != null) {
+//            String directory = getAvatarImageCachePath(user);
+//            try (FileOutputStream fileOutputStream = new FileOutputStream(directory + File.separator + user.getUID() + "." + user.getAvatarContentType());
+//                 FileInputStream fileInputStream = new FileInputStream(directory + File.separator + user.getUID() + "." + user.getAvatarContentType())) {
+//                fileOutputStream.write(user.getAvatarImage());
+//                avatarImage = new Image(fileInputStream);
+//            }
+////            ByteArrayInputStream inStreambj = new ByteArrayInputStream(user.getAvatarImage());
+////            Image newImage = ImageIO.read();
+////            Image image = newImage();
+////            avatar.setImage(newImage);
+//            avatar.setFill(new ImagePattern(avatarImage));
+//        }
 
-        if (user.getAvatarImage() != null) {
-            String directory = getAvatarImageCachePath(user);
-            try (FileOutputStream fileOutputStream = new FileOutputStream(directory + File.separator + user.getUID() + "." + user.getAvatarContentType());
-                 FileInputStream fileInputStream = new FileInputStream(directory + File.separator + user.getUID() + "." + user.getAvatarContentType())) {
-                fileOutputStream.write(user.getAvatarImage());
-                avatarImage = new Image(fileInputStream);
-            }
-//            ByteArrayInputStream inStreambj = new ByteArrayInputStream(user.getAvatarImage());
-//            Image newImage = ImageIO.read();
-//            Image image = newImage();
-//            avatar.setImage(newImage);
-            avatar.setFill(new ImagePattern(avatarImage));
-        }
-
+        avatar.setFill(new ImagePattern(readAvatarImage(user)));
         profileUsername.setText(user.getUsername());
         profileEmail.setText(user.getEmail());
         setStatusColor(user.getPreviousSetStatus());
@@ -454,9 +460,8 @@ public class Controller {
         if (selectedFile == null) {
             return;
         }
-        Image selectedImage = new Image(selectedFile.getAbsolutePath());
-        avatarImage = selectedImage;
-        avatar.setFill(new ImagePattern(selectedImage));
+
+        avatar.setFill(new ImagePattern(new Image(selectedFile.getAbsolutePath())));
 
 //        BufferedImage image = ImageIO.read(selectedFile);
 //        user.setAvatarImage(((DataBufferByte) image.getRaster().getDataBuffer()).getData());
@@ -640,7 +645,7 @@ public class Controller {
         serversListView.setItems(serversObservableList);
     }
 
-    private void setUpdatedValuesForObservableLists() throws IOException {
+    public void setUpdatedValuesForObservableLists() throws IOException {
         refreshPending();
         refreshBlockedPeople();
         refreshFriends();
@@ -679,11 +684,7 @@ public class Controller {
         discordLogo.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\discordLogo.jpg"))));
         setting.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\user setting.jpg"))));
 
-        if (avatarImage != null) {
-            mainPageAvatar.setFill(new ImagePattern(avatarImage));
-        } else {
-            mainPageAvatar.setFill(new Color(0.125, 0.13, 0, 0.145));
-        }
+        mainPageAvatar.setFill(new ImagePattern(readAvatarImage(user)));
 
         usernameLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
         usernameLabel.setText(user.getUsername());
@@ -740,17 +741,11 @@ public class Controller {
                     GridPane.setHalignment(username, HPos.LEFT);
                     GridPane.setHalignment(unblockButton, HPos.LEFT);
 
-                    if (model.getAvatarImage() != null) {
-                        Image avatarImage;
-                        try {
-                            avatarImage = readProfileImage(model);
-                            avatarPic.setFill(new ImagePattern(avatarImage));
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            avatarPic.setStyle("-fx-background-color: BLACK");
-                        }
-                    } else {
-                        avatarPic.setStyle("-fx-background-color: BLACK");
+                    try {
+                        avatarPic.setFill(new ImagePattern(readAvatarImage(model)));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        avatarPic.setFill(new ImagePattern(new Image(getAbsolutePath("requirements" + File.separator + "emojipng.com-11701703.png"))));
                     }
 
                     username.setText(model.getUsername());
@@ -829,17 +824,11 @@ public class Controller {
                     GridPane.setHalignment(acceptButton, HPos.RIGHT);
                     GridPane.setHalignment(rejectButton, HPos.LEFT);
 
-                    if (model.getAvatarImage() != null) {
-                        Image avatarImage;
-                        try {
-                            avatarImage = readProfileImage(model);
-                            avatarPic.setFill(new ImagePattern(avatarImage));
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            avatarPic.setStyle("-fx-background-color: BLACK");
-                        }
-                    } else {
-                        avatarPic.setStyle("-fx-background-color: BLACK");
+                    try {
+                        avatarPic.setFill(new ImagePattern(readAvatarImage(model)));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        avatarPic.setFill(new ImagePattern(new Image(getAbsolutePath("requirements" + File.separator + "emojipng.com-11701703.png"))));
                     }
 
                     username.setText(model.getUsername());
@@ -934,17 +923,11 @@ public class Controller {
                     GridPane.setHalignment(enterChatButton, HPos.RIGHT);
                     GridPane.setHalignment(removeButton, HPos.LEFT);
 
-                    if (model.getAvatarImage() != null) {
-                        Image avatarImage;
-                        try {
-                            avatarImage = readProfileImage(model);
-                            avatarPic.setFill(new ImagePattern(avatarImage));
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            avatarPic.setStyle("-fx-background-color: BLACK");
-                        }
-                    } else {
-                        avatarPic.setStyle("-fx-background-color: BLACK");
+                    try {
+                        avatarPic.setFill(new ImagePattern(readAvatarImage(model)));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        avatarPic.setFill(new ImagePattern(new Image(getAbsolutePath("requirements" + File.separator + "emojipng.com-11701703.png"))));
                     }
 
                     username.setText(model.getUsername());
@@ -1036,17 +1019,11 @@ public class Controller {
                     GridPane.setHalignment(enterChatButton, HPos.RIGHT);
                     GridPane.setHalignment(removeButton, HPos.LEFT);
 
-                    if (model.getAvatarImage() != null) {
-                        Image avatarImage;
-                        try {
-                            avatarImage = readProfileImage(model);
-                            avatarPic.setFill(new ImagePattern(avatarImage));
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            avatarPic.setStyle("-fx-background-color: BLACK");
-                        }
-                    } else {
-                        avatarPic.setStyle("-fx-background-color: BLACK");
+                    try {
+                        avatarPic.setFill(new ImagePattern(readAvatarImage(model)));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        avatarPic.setFill(new ImagePattern(new Image(getAbsolutePath("requirements" + File.separator + "emojipng.com-11701703.png"))));
                     }
 
                     username.setText(model.getUsername());
@@ -1123,17 +1100,11 @@ public class Controller {
                     GridPane.setHalignment(avatarPic, HPos.LEFT);
                     GridPane.setHalignment(username, HPos.LEFT);
 
-                    if (model.getAvatarImage() != null) {
-                        Image avatarImage;
-                        try {
-                            avatarImage = readProfileImage(model);
-                            avatarPic.setFill(new ImagePattern(avatarImage));
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            avatarPic.setStyle("-fx-background-color: BLACK");
-                        }
-                    } else {
-                        avatarPic.setStyle("-fx-background-color: BLACK");
+                    try {
+                        avatarPic.setFill(new ImagePattern(readAvatarImage(model)));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        avatarPic.setFill(new ImagePattern(new Image(getAbsolutePath("requirements" + File.separator + "emojipng.com-11701703.png"))));
                     }
 
                     username.setText(model.getUsername());
@@ -1168,17 +1139,11 @@ public class Controller {
                     avatarPic.setStyle("-fx-arc-width: 200");
                     avatarPic.setStyle("-fx-arc-height: 200");
 
-                    if (server.getAvatarImage() != null) {
-                        Image avatarImage;
-                        try {
-                            avatarImage = readProfileImage(server);
-                            avatarPic.setFill(new ImagePattern(avatarImage));
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            avatarPic.setStyle("-fx-background-color: BLACK");
-                        }
-                    } else {
-                        avatarPic.setStyle("-fx-background-color: BLACK");
+                    try {
+                        avatarPic.setFill(new ImagePattern(readAvatarImage(server)));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        avatarPic.setFill(new ImagePattern(new Image(getAbsolutePath("requirements" + File.separator + "emojipng.com-11701703.png"))));
                     }
 
                     avatarPic.setOnMouseClicked(mouseClickEvent -> enterServer(server.getUnicode()));
