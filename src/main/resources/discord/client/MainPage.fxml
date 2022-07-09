@@ -145,7 +145,7 @@
       </GridPane>
       <StackPane maxWidth="1.7976931348623157E308" prefWidth="724.0" style="-fx-background-color: #36393F;">
          <children>
-            <TabPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #36393F;" stylesheets="@styles/TabPaneStyle.css" tabClosingPolicy="UNAVAILABLE" tabMinWidth="68.0" visible="false">
+            <TabPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #36393F;" stylesheets="@styles/TabPaneStyle.css" tabClosingPolicy="UNAVAILABLE" tabMinWidth="68.0">
                <tabs>
                   <Tab disable="true" text="Friends" />
                   <Tab text="Online">
@@ -341,7 +341,7 @@
                   <String fx:value="tab-pane" />
                </styleClass>
             </TabPane>
-            <GridPane style="-fx-background-color: #36393F;" vgap="5.0">
+            <GridPane style="-fx-background-color: #36393F;" vgap="5.0" visible="false">
               <columnConstraints>
                 <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
               </columnConstraints>

@@ -18,7 +18,7 @@ public class App extends Application {
     public void start(Stage stage) throws IOException {
         App.stage = stage;
         FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource("loginMenu.fxml"));
-        Controller controller = new Controller(null, new MySocket(new Socket("127.0.0.1", 6000)));
+        Controller controller = new Controller(new MySocket(new Socket("127.0.0.1", 6000)));
         fxmlLoader.setController(controller);
         Scene scene = new Scene(fxmlLoader.load());
         stage.setTitle("Discord");

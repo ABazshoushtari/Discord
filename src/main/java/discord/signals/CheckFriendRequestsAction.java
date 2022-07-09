@@ -1,10 +1,13 @@
 package discord.signals;
 
+import discord.mainServer.ClientHandler;
 import discord.mainServer.MainServer;
 import discord.client.Model;
 
 import java.io.IOException;
 import java.util.ArrayList;
+
+import static discord.mainServer.ClientHandler.clientHandlers;
 
 public class CheckFriendRequestsAction implements Action {
     private final Integer myUID;
@@ -41,18 +44,20 @@ public class CheckFriendRequestsAction implements Action {
             requester.getUrlsOfPrivateChat().put(myUID, new ArrayList<>());
             requester.getFilesOfPrivateChat().put(myUID, new ArrayList<>());
 
+            for (ClientHandler ch : clientHandlers) {
+                if (ch.getUser() != null) {
+                    if (ch.getUser().getUID().equals(requesterID)) {
+                        ch.getMySocket().write(new AcceptFriendRequestSignal(myUID));
+                        break;
+                    }
+                }
+            }
             DBConnect = MainServer.updateDatabase(requester);
         }
 
         myUser.getIncomingFriendRequests().remove(index);
 
         DBConnect = DBConnect && MainServer.updateDatabase(myUser);
-//        for (ClientHandler ch : clientHandlers) {
-//            if (ch.getUser().getUID() == requesterID) {
-//                ch.getMySocket().write(new AcceptFriendRequestSignal(myUID));
-//            }
-//            break;
-//        }
         return DBConnect;
     }
 }
