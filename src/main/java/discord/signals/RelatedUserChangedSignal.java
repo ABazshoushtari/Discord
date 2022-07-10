@@ -2,7 +2,7 @@ package discord.signals;
 
 import discord.client.Model;
 
-public class FriendChangedModelUpdaterSignal extends ModelUpdaterSignal {
+public class RelatedUserChangedSignal extends ModelUpdaterSignal {
 
     @Override
     public Model getUpdatedModel() {

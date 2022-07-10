@@ -20,7 +20,7 @@ public class UpdateTextChannelOfServerOnMainServer implements Action {
     public Object act() throws IOException {
         synchronized (MainServer.getServers().get(serverUnicode).getTextChannels().get(textChannelIndex)) {
             MainServer.getServers().get(serverUnicode).getTextChannels().set(textChannelIndex, updatedTextChannel);
-            MainServer.updateDatabase(MainServer.getServers().get(serverUnicode));
+            MainServer.updateDatabaseAndMainServer(MainServer.getServers().get(serverUnicode));
             return null;
         }
     }

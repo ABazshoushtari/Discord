@@ -5,7 +5,6 @@ import discord.mainServer.MainServer;
 import discord.client.Model;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 import static discord.mainServer.ClientHandler.clientHandlers;
 
@@ -29,23 +28,24 @@ public class CheckFriendRequestsAction implements Action {
         Model requester = MainServer.getUsers().get(requesterID);
 
         if (accept) {
-
             myUser.addFriend(requesterID);
             requester.addFriend(myUID);
-
-            for (ClientHandler ch : clientHandlers) {
-                if (ch.getUser() != null) {
-                    if (ch.getUser().getUID().equals(requesterID)) {
-                        ch.getMySocket().write(new AcceptFriendRequestModelUpdaterSignal(myUID));
-                        break;
-                    }
-                }
-            }
-            MainServer.updateDatabase(requester);
         }
 
+        for (ClientHandler ch : clientHandlers) {
+            if (ch.getUser() != null) {
+                if (ch.getUser().getUID().equals(requesterID)) {
+                    ch.getMySocket().write(new RespondFriendRequestModelUpdaterSignal(myUID, accept));
+                    break;
+                }
+            }
+        }
+
+        requester.getSentFriendRequests().remove(myUID);
         myUser.getIncomingFriendRequests().remove(index);
-        MainServer.updateDatabase(myUser);
+
+        MainServer.updateDatabaseAndMainServer(myUser);
+        MainServer.updateDatabaseAndMainServer(requester);
 
         return myUser;
     }

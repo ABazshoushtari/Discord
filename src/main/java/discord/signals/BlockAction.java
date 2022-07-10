@@ -24,8 +24,8 @@ public class BlockAction implements Action {
         beingBlockerUser.getIncomingFriendRequests().remove(beingBlockedUID);
         beingBlockerUser.getFriends().remove(beingBlockedUID);
 
-        MainServer.updateDatabase(blockerUser);
-        MainServer.updateDatabase(beingBlockerUser);
+        MainServer.updateDatabaseAndMainServer(blockerUser);
+        MainServer.updateDatabaseAndMainServer(beingBlockerUser);
 
         return null;
     }

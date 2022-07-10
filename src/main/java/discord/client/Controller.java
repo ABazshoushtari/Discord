@@ -33,6 +33,8 @@ public class Controller {
 
     // backend fields:
     private Model user;
+    private Server currentServer;
+    private TextChannel currentTextChannel;
     private final MySocket mySocket;
     private final SmartListener smartListener;
 
@@ -157,20 +159,6 @@ public class Controller {
 
     private void loadProfilePage(Event event) throws IOException {
         loadScene(event, "ProfilePage.fxml");
-//        if (user.getAvatarImage() != null) {
-//            String directory = getAvatarImageCachePath(user);
-//            try (FileOutputStream fileOutputStream = new FileOutputStream(directory + File.separator + user.getUID() + "." + user.getAvatarContentType());
-//                 FileInputStream fileInputStream = new FileInputStream(directory + File.separator + user.getUID() + "." + user.getAvatarContentType())) {
-//                fileOutputStream.write(user.getAvatarImage());
-//                avatarImage = new Image(fileInputStream);
-//            }
-////            ByteArrayInputStream inStreambj = new ByteArrayInputStream(user.getAvatarImage());
-////            Image newImage = ImageIO.read();
-////            Image image = newImage();
-////            avatar.setImage(newImage);
-//            avatar.setFill(new ImagePattern(avatarImage));
-//        }
-
         avatar.setFill(new ImagePattern(readAvatarImage(user)));
         profileUsername.setText(user.getUsername());
         profileEmail.setText(user.getEmail());
@@ -567,7 +555,7 @@ public class Controller {
 
     // main page methods:
     public void refreshBlockedPeople() throws IOException {
-        //if (blockedListView == null) return;
+
         ObservableList<Model> blockedPeopleObservableList = FXCollections.observableArrayList();
         blockedListView.setStyle("-fx-background-color: #36393f");
         for (Integer UID : user.getBlockedList()) {
@@ -581,18 +569,28 @@ public class Controller {
     }
 
     public void refreshPending() throws IOException {
-        // outgoing friend requests -> pending
-        //if (pendingListView == null) return;
-        ObservableList<Model> friendRequestsObservableList = FXCollections.observableArrayList();
+
+        ObservableList<Model> pendingObservableList = FXCollections.observableArrayList();
+
         pendingListView.setStyle("-fx-background-color: #36393f");
+
+        // sent requests
+        for (Integer UID : user.getSentFriendRequests()) {
+            mySocket.write(new GetUserFromMainServerAction(UID));
+            waiting();
+            Model user = smartListener.getReceivedUser();
+            pendingObservableList.add((user));
+        }
+
+        // incoming requests
         for (Integer UID : user.getIncomingFriendRequests()) {
             mySocket.write(new GetUserFromMainServerAction(UID));
             waiting();
             Model user = smartListener.getReceivedUser();
-            friendRequestsObservableList.add(user);
+            pendingObservableList.add(user);
         }
-        pendingCount.setText("Pending - " + user.getIncomingFriendRequests().size());
-        pendingListView.setItems(friendRequestsObservableList);
+        pendingCount.setText("Pending - " + (user.getSentFriendRequests().size() + user.getIncomingFriendRequests().size()));
+        pendingListView.setItems(pendingObservableList);
     }
 
     public void refreshAll() throws IOException {
@@ -638,7 +636,6 @@ public class Controller {
     }
 
     public void refreshFriends() throws IOException {
-        //if (allListView == null || onlineListView == null || directMessagesListView == null) return;
         refreshAll();
         refreshOnline();
         refreshDirectMessages();
@@ -696,8 +693,8 @@ public class Controller {
 
         constructBlockedCells();
         constructPendingCells();
-        constructAllFriendsCells();
-        constructOnlineFriendsCells();
+        constructOnlineOrAllCells(allListView);
+        constructOnlineOrAllCells(onlineListView);
         constructDirectMessagesCells();
         constructServersCells();
         constructChatMessagesCells();
@@ -711,6 +708,21 @@ public class Controller {
 
         usernameLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
         usernameLabel.setText(user.getUsername());
+    }
+
+    private void setUpGridPaneSizes(GridPane gridPane) {
+
+        gridPane.setHgap(8);
+
+        gridPane.setMinHeight(GridPane.USE_COMPUTED_SIZE);
+        gridPane.setPrefHeight(GridPane.USE_COMPUTED_SIZE);
+        gridPane.setMaxHeight(GridPane.USE_COMPUTED_SIZE);
+
+        gridPane.setMinWidth(GridPane.USE_COMPUTED_SIZE);
+        gridPane.setPrefWidth(GridPane.USE_COMPUTED_SIZE);
+        gridPane.setMaxWidth(Double.MAX_VALUE);
+
+        //return gridPane;
     }
 
     private void constructBlockedCells() {
@@ -751,15 +763,7 @@ public class Controller {
                     gridPane.add(label, 1, 1, 1, 1);
                     gridPane.add(unblockButton, 2, 0, 1, GridPane.REMAINING);
 
-                    gridPane.setHgap(8);
-
-                    gridPane.setMinHeight(GridPane.USE_COMPUTED_SIZE);
-                    gridPane.setPrefHeight(GridPane.USE_COMPUTED_SIZE);
-                    gridPane.setMaxHeight(GridPane.USE_COMPUTED_SIZE);
-
-                    gridPane.setMinWidth(GridPane.USE_COMPUTED_SIZE);
-                    gridPane.setPrefWidth(GridPane.USE_COMPUTED_SIZE);
-                    gridPane.setMaxWidth(Double.MAX_VALUE);
+                    setUpGridPaneSizes(gridPane);
 
                     GridPane.setHalignment(avatarPic, HPos.LEFT);
                     GridPane.setHalignment(username, HPos.LEFT);
@@ -800,17 +804,25 @@ public class Controller {
                     setGraphic(null);
                 } else {
 
+                    boolean outgoing = user.getSentFriendRequests().contains(model.getUID());
+
                     // Variables (Controls; GUI components):
                     GridPane gridPane = new GridPane();
                     Circle avatarPic = new Circle(20);
                     Label username = new Label();
                     Label label = new Label();
                     Button acceptButton = new Button("Accept");
-                    Button rejectButton = new Button("Reject");
+                    Button ignoreOrCancelButton = new Button();
+
+                    if (outgoing) {
+                        ignoreOrCancelButton.setText("Cancel");
+                    } else {
+                        ignoreOrCancelButton.setText("Ignore");
+                    }
 
                     // css styles
                     acceptButton.setStyle("-fx-background-color:  #3ca45c");
-                    rejectButton.setStyle("-fx-background-color:  #d83c3e");
+                    ignoreOrCancelButton.setStyle("-fx-background-color:  #d83c3e");
 
                     username.setStyle("-fx-font-weight: bold");
                     username.setStyle("-fx-font-size: 16");
@@ -831,23 +843,19 @@ public class Controller {
                     gridPane.add(avatarPic, 0, 0, 1, GridPane.REMAINING);
                     gridPane.add(username, 1, 0, 1, 1);
                     gridPane.add(label, 1, 1, 1, 1);
-                    gridPane.add(acceptButton, 2, 0, 1, GridPane.REMAINING);
-                    gridPane.add(rejectButton, 3, 0, 1, GridPane.REMAINING);
+                    if (!outgoing) {
+                        gridPane.add(acceptButton, 2, 0, 1, GridPane.REMAINING);
+                    }
+                    gridPane.add(ignoreOrCancelButton, 3, 0, 1, GridPane.REMAINING);
 
-                    gridPane.setHgap(8);
-
-                    gridPane.setMinHeight(GridPane.USE_COMPUTED_SIZE);
-                    gridPane.setPrefHeight(GridPane.USE_COMPUTED_SIZE);
-                    gridPane.setMaxHeight(GridPane.USE_COMPUTED_SIZE);
-
-                    gridPane.setMinWidth(GridPane.USE_COMPUTED_SIZE);
-                    gridPane.setPrefWidth(GridPane.USE_COMPUTED_SIZE);
-                    gridPane.setMaxWidth(Double.MAX_VALUE);
+                    setUpGridPaneSizes(gridPane);
 
                     GridPane.setHalignment(avatarPic, HPos.LEFT);
                     GridPane.setHalignment(username, HPos.LEFT);
-                    GridPane.setHalignment(acceptButton, HPos.RIGHT);
-                    GridPane.setHalignment(rejectButton, HPos.LEFT);
+                    if (!outgoing) {
+                        GridPane.setHalignment(acceptButton, HPos.RIGHT);
+                    }
+                    GridPane.setHalignment(ignoreOrCancelButton, HPos.LEFT);
 
                     try {
                         avatarPic.setFill(new ImagePattern(readAvatarImage(model)));
@@ -857,7 +865,11 @@ public class Controller {
                     }
 
                     username.setText(model.getUsername());
-                    label.setText("incoming friend request");
+                    if (outgoing) {
+                        label.setText("Outgoing Friend Request");
+                    } else {
+                        label.setText("incoming friend request");
+                    }
 
                     acceptButton.setOnAction(actionEvent -> {
                         Integer UID = model.getUID();
@@ -872,17 +884,29 @@ public class Controller {
                         }
                     });
 
-                    rejectButton.setOnAction(actionEvent -> {
-                        int index = user.getIncomingFriendRequests().indexOf(model.getUID());
-                        try {
-                            mySocket.write(new CheckFriendRequestsAction(user.getUID(), index, false));
-                            waiting();
-                            user = smartListener.getReceivedUser();
-                            setUpdatedValuesForObservableLists();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    });
+                    if (!outgoing) {    // ignore (reject) incoming request
+                        ignoreOrCancelButton.setOnAction(actionEvent -> {
+                            int index = user.getIncomingFriendRequests().indexOf(model.getUID());
+                            try {
+                                mySocket.write(new CheckFriendRequestsAction(user.getUID(), index, false));
+                                waiting();
+                                user = smartListener.getReceivedUser();
+                                setUpdatedValuesForObservableLists();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    } else {    // cancel sent request
+                        ignoreOrCancelButton.setOnAction(actionEvent -> {
+                            try {
+                                user.getSentFriendRequests().remove(model.getUID());
+                                mySocket.write(new CancelSentFriendRequestAction(user.getUID(), model.getUID()));
+                                setUpdatedValuesForObservableLists();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        });
+                    }
 
                     setGraphic(gridPane);
                 }
@@ -890,106 +914,8 @@ public class Controller {
         });
     }
 
-    private void constructAllFriendsCells() {
-        allListView.setCellFactory(fc -> new ListCell<>() {
-            @Override
-            protected void updateItem(Model model, boolean empty) {
-
-                super.updateItem(model, empty);
-                if (model == null || empty) {
-                    setGraphic(null);
-                } else {
-
-                    // Variables (Controls; GUI components):
-                    GridPane gridPane = new GridPane();
-                    Circle avatarPic = new Circle(20);
-                    Label username = new Label();
-                    Label label = new Label();
-                    Button enterChatButton = new Button("Messages");
-                    Button removeButton = new Button("Remove");
-
-                    // css styles
-                    enterChatButton.setStyle("-fx-background-color:  #3ca45c");
-                    removeButton.setStyle("-fx-background-color:  #d83c3e");
-
-                    username.setStyle("-fx-font-weight: bold");
-                    username.setStyle("-fx-font-size: 16");
-                    username.setStyle("-fx-text-fill: White");
-
-                    label.setStyle("-fx-font-size: 14");
-                    label.setStyle("-fx-text-fill: White");
-
-                    gridPane.setStyle("-fx-background-color:  #36393f");
-
-                    // javafx codes. creating gridPane for showing friend request
-                    ColumnConstraints col1 = new ColumnConstraints(USE_PREF_SIZE, USE_COMPUTED_SIZE, USE_PREF_SIZE);
-                    ColumnConstraints col2 = new ColumnConstraints(GridPane.USE_PREF_SIZE, 250, Double.MAX_VALUE);
-                    ColumnConstraints col3 = new ColumnConstraints(GridPane.USE_PREF_SIZE, GridPane.USE_COMPUTED_SIZE, GridPane.USE_PREF_SIZE);
-                    ColumnConstraints col4 = new ColumnConstraints(GridPane.USE_PREF_SIZE, GridPane.USE_COMPUTED_SIZE, GridPane.USE_PREF_SIZE);
-                    gridPane.getColumnConstraints().addAll(col1, col2, col3, col4);
-
-                    gridPane.add(avatarPic, 0, 0, 1, GridPane.REMAINING);
-                    gridPane.add(username, 1, 0, 1, 1);
-                    gridPane.add(label, 1, 1, 1, 1);
-                    gridPane.add(enterChatButton, 2, 0, 1, GridPane.REMAINING);
-                    gridPane.add(removeButton, 3, 0, 1, GridPane.REMAINING);
-
-                    gridPane.setHgap(8);
-
-                    gridPane.setMinHeight(GridPane.USE_COMPUTED_SIZE);
-                    gridPane.setPrefHeight(GridPane.USE_COMPUTED_SIZE);
-                    gridPane.setMaxHeight(GridPane.USE_COMPUTED_SIZE);
-
-                    gridPane.setMinWidth(GridPane.USE_COMPUTED_SIZE);
-                    gridPane.setPrefWidth(GridPane.USE_COMPUTED_SIZE);
-                    gridPane.setMaxWidth(Double.MAX_VALUE);
-
-                    GridPane.setHalignment(avatarPic, HPos.LEFT);
-                    GridPane.setHalignment(username, HPos.LEFT);
-                    GridPane.setHalignment(enterChatButton, HPos.RIGHT);
-                    GridPane.setHalignment(removeButton, HPos.LEFT);
-
-                    try {
-                        avatarPic.setFill(new ImagePattern(readAvatarImage(model)));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        avatarPic.setFill(new ImagePattern(new Image(getAbsolutePath("requirements" + File.separator + "emojipng.com-11701703.png"))));
-                    }
-
-                    username.setText(model.getUsername());
-
-                    label.setText(model.getStatus().toString());
-                    switch (model.getStatus()) {
-                        case Online -> label.setTextFill(new Color(0.24, 0.64, 0.36, 1));
-                        case Idle -> label.setTextFill(new Color(0.98, 0.66, 0.1, 1));
-                        case DoNotDisturb -> label.setTextFill(new Color(0.85, 0.24, 0.24, 1));
-                        case Invisible -> label.setTextFill(new Color(0.4549, 0.498, 0.553, 1));
-                    }
-
-                    enterChatButton.setOnAction(actionEvent -> enterChat(model.getUID()));
-
-                    removeButton.setOnAction(actionEvent -> {
-                        int index = user.getFriends().indexOf(model.getUID());  // NECESSARY AND IMPORTANT for removing from directMessagesObservableList. 6 lines later
-                                                                                // because now the model is different from the one saved in observableList
-                                                                                // finglish: in model mal hamun listView hastesh ke az tush remove ro zadim, be hamin khater doroste ama baraye un yeki listView ok nist
-                        user.removeFriend(model.getUID());
-                        try {
-                            mySocket.write(new RemoveFriendAction(user.getUID(), model.getUID()));
-                            //waiting();
-                            setUpdatedValuesForObservableLists();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    });
-
-                    setGraphic(gridPane);
-                }
-            }
-        });
-    }
-
-    private void constructOnlineFriendsCells() {
-        onlineListView.setCellFactory(ofc -> new ListCell<>() {
+    private void constructOnlineOrAllCells(ListView<Model> modelListView) {
+        modelListView.setCellFactory(ofc -> new ListCell<>() {
             @Override
             protected void updateItem(Model model, boolean empty) {
 
@@ -1031,15 +957,7 @@ public class Controller {
                     gridPane.add(enterChatButton, 2, 0, 1, GridPane.REMAINING);
                     gridPane.add(removeButton, 3, 0, 1, GridPane.REMAINING);
 
-                    gridPane.setHgap(8);
-
-                    gridPane.setMinHeight(GridPane.USE_COMPUTED_SIZE);
-                    gridPane.setPrefHeight(GridPane.USE_COMPUTED_SIZE);
-                    gridPane.setMaxHeight(GridPane.USE_COMPUTED_SIZE);
-
-                    gridPane.setMinWidth(GridPane.USE_COMPUTED_SIZE);
-                    gridPane.setPrefWidth(GridPane.USE_COMPUTED_SIZE);
-                    gridPane.setMaxWidth(Double.MAX_VALUE);
+                    setUpGridPaneSizes(gridPane);
 
                     GridPane.setHalignment(avatarPic, HPos.LEFT);
                     GridPane.setHalignment(username, HPos.LEFT);
@@ -1062,11 +980,12 @@ public class Controller {
                         case Invisible -> label.setTextFill(new Color(0.4549, 0.498, 0.553, 1));
                     }
 
-                    enterChatButton.setOnAction(actionEvent -> enterChat(model.getUID()));
+                    enterChatButton.setOnAction(actionEvent -> enterChat(model.getUID(), model.getUsername()));
 
                     removeButton.setOnAction(actionEvent -> {
-                        int index = user.getFriends().indexOf(model.getUID());  // NECESSARY AND IMPORTANT for removing from directMessagesObservableList. 6 lines later
-                                                                                // because now the model is different from the one saved in observableList
+                        //int index = user.getFriends().indexOf(model.getUID());  // NECESSARY AND IMPORTANT for removing from directMessagesObservableList. 6 lines later
+                        // because now the model is different from the one saved in observableList
+                        // finglish: in model mal hamun listView hastesh ke az tush remove ro zadim, be hamin khater doroste ama baraye un yeki listView ok nist
                         user.removeFriend(model.getUID());
                         try {
                             mySocket.write(new RemoveFriendAction(user.getUID(), model.getUID()));
@@ -1093,56 +1012,9 @@ public class Controller {
                     setGraphic(null);
                 } else {
 
-                    // Variables (Controls; GUI components):
-                    GridPane gridPane = new GridPane();
-                    Circle avatarPic = new Circle(20);
-                    Label username = new Label();
-                    Label status = new Label();
+                    GridPane gridPane = getUserGridPane(model);
 
-                    username.setStyle("-fx-font-weight: bold");
-                    username.setStyle("-fx-font-size: 18");
-                    username.setStyle("-fx-text-fill: White");
-
-                    gridPane.setStyle("-fx-background-color: #2f3136");
-
-                    ColumnConstraints col1 = new ColumnConstraints(USE_PREF_SIZE, USE_COMPUTED_SIZE, USE_PREF_SIZE);
-                    ColumnConstraints col2 = new ColumnConstraints(GridPane.USE_PREF_SIZE, 105, Double.MAX_VALUE);
-                    gridPane.getColumnConstraints().addAll(col1, col2);
-
-                    gridPane.add(avatarPic, 0, 0, 1, GridPane.REMAINING);
-                    gridPane.add(username, 1, 0, 1, 1);
-                    gridPane.add(status, 1, 1, 1, 1);
-
-                    gridPane.setHgap(8);
-
-                    gridPane.setMinHeight(GridPane.USE_COMPUTED_SIZE);
-                    gridPane.setPrefHeight(GridPane.USE_COMPUTED_SIZE);
-                    gridPane.setMaxHeight(GridPane.USE_COMPUTED_SIZE);
-
-                    gridPane.setMinWidth(GridPane.USE_COMPUTED_SIZE);
-                    gridPane.setPrefWidth(GridPane.USE_COMPUTED_SIZE);
-                    gridPane.setMaxWidth(Double.MAX_VALUE);
-
-                    GridPane.setHalignment(avatarPic, HPos.LEFT);
-                    GridPane.setHalignment(username, HPos.LEFT);
-
-                    try {
-                        avatarPic.setFill(new ImagePattern(readAvatarImage(model)));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        avatarPic.setFill(new ImagePattern(new Image(getAbsolutePath("requirements" + File.separator + "emojipng.com-11701703.png"))));
-                    }
-
-                    username.setText(model.getUsername());
-                    status.setText(model.getStatus().toString());
-                    switch (model.getStatus()) {
-                        case Online -> status.setTextFill(new Color(0.24, 0.64, 0.36, 1));
-                        case Idle -> status.setTextFill(new Color(0.98, 0.66, 0.1, 1));
-                        case DoNotDisturb -> status.setTextFill(new Color(0.85, 0.24, 0.24, 1));
-                        case Invisible -> status.setTextFill(new Color(0.4549, 0.498, 0.553, 1));
-                    }
-
-                    gridPane.setOnMouseClicked(mouseClickEvent -> enterChat(model.getUID()));
+                    gridPane.setOnMouseClicked(mouseClickEvent -> enterChat(model.getUID(), model.getUsername()));
 
                     setGraphic(gridPane);
                 }
@@ -1175,7 +1047,8 @@ public class Controller {
 
                     avatarPic.setOnMouseClicked(mouseClickEvent -> {
                         try {
-                            loadServer(server);
+                            currentServer = server;
+                            loadServer();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -1361,20 +1234,20 @@ public class Controller {
             }
             mySocket.write(new SendFriendRequestAction(user.getUsername(), receivedUsername));
             waiting();
-            int scenario = smartListener.getReceivedInteger();
+            Integer scenario = smartListener.getReceivedInteger();
             switch (scenario) {
-                case 0 -> successOrError.setText("A user by this username was not found!");
-                case 1 -> successOrError.setText("You have already sent a friend request to this user!");
-                case 2 -> successOrError.setText("This user has blocked you! You can't send them a friend request");
-                case 3 -> {
+                case -1 -> successOrError.setText("A user by this username was not found!");
+                case -2 -> successOrError.setText("You have already sent a friend request to this user!");
+                case -3 -> successOrError.setText("This user has blocked you! You can't send them a friend request");
+                default -> {    // the UID of the receiver user is sent back
                     successOrError.setStyle("-fx-text-fill: #46C46E");
                     successOrError.setText("The request was sent successfully");
+                    user.getSentFriendRequests().add(scenario);
+                    mySocket.write(new UpdateUserOnMainServerAction(user));
                 }
             }
-//            mySocket.write(new GetUserFromMainServerAction(user.getUID()));
-//            waiting();
-//            user = smartListener.getReceivedUser();
-//            System.out.println(user.getIncomingFriendRequests().size());
+            refreshPending();
+            constructPendingCells();
         }
     }
 
@@ -1390,7 +1263,10 @@ public class Controller {
     }
 
     @FXML
-    void enterChat(Integer friendUID) {
+    void enterChat(Integer friendUID, String friendName) {
+
+        this.friendName.setText(friendName);
+
         sendMessageTextField.setUserData(friendUID);
         chatMessageObservableList = FXCollections.observableArrayList();
         chatMessageObservableList.addAll(user.getPrivateChats().get(friendUID));
@@ -1403,10 +1279,11 @@ public class Controller {
     @FXML
     void createNewServer(Event event) {
         loadScene(event, "CreateNewServerPage.fxml");
+        newServerNameTextField.setText(user.getUsername() + "'s Server");
     }
 
     @FXML
-    void enterSetting(MouseEvent event) throws IOException, ClassNotFoundException {
+    void enterSetting(MouseEvent event) throws IOException {
         loadProfilePage(event);
     }
 
@@ -1427,22 +1304,24 @@ public class Controller {
         friendsDMVBox.setVisible(true);
 
         serverBorderPane.setVisible(false);
-        theTabPane.setVisible(true);
         directMessageGridPane.setVisible(false);
+        theTabPane.setVisible(true);
+        middlePartUpperLabel.setText("Friends");
 
         initializeMainPage();
     }
 
     @FXML
-    void loadServer(Server server) throws IOException {
+    void loadServer() throws IOException {
 
         friendsDMVBox.setVisible(false);
         textChannelsVBox.setVisible(true);
 
         theTabPane.setVisible(false);
+        directMessageGridPane.setVisible(false);
         serverBorderPane.setVisible(true);
 
-        initializeServerPage(server);
+        initializeServerPage();
     }
 
     //////////////////////////////////////////////////////////// create new server scene ->
@@ -1473,106 +1352,19 @@ public class Controller {
             initializeMyProfile();
             refreshServers();
             constructServersCells();
-            loadServer(newServer);
+            currentServer = newServer;
+            loadServer();
         }
     }
 
-    private void initializeServerPage(Server server) throws IOException {
+    private void initializeServerPage() throws IOException {
         // set the variable in place
-        middlePartUpperLabel.setText(server.getServerName());
+        middlePartUpperLabel.setText(currentServer.getServerName());
 
-        setUpdatedValuesForServerObservableLists(server, 0);
+        setUpdatedValuesForServerObservableLists(currentServer, 0);
 
-        // construct text channels cells:
-        textChannelsListView.setCellFactory(tcc -> new ListCell<>() {
-            @Override
-            protected void updateItem(TextChannel textChannel, boolean empty) {
-
-                super.updateItem(textChannel, empty);
-                if (textChannel == null || empty) {
-                    setGraphic(null);
-                } else {
-
-                    // Variables (Controls; GUI components):
-                    Label textChannelName = new Label("# " + textChannel.getName());
-                    textChannelName.setPadding(new Insets(5, 5, 5, 5));
-
-                    textChannelName.setStyle("-fx-font-weight: bold");
-                    textChannelName.setStyle("-fx-font-size: 18");
-                    textChannelName.setStyle("-fx-text-fill: White");
-
-                    textChannelName.setOnMouseClicked(mouseClickEvent -> refreshTextChannelChat(textChannel));
-
-                    setGraphic(textChannelName);
-                }
-            }
-        });
-
-        // construct members cells:
-        onlineMembersListView.setCellFactory(mc -> new ListCell<>() {
-            @Override
-            protected void updateItem(Model model, boolean empty) {
-
-                super.updateItem(model, empty);
-                if (model == null || empty) {
-                    setGraphic(null);
-                } else {
-
-                    // Variables (Controls; GUI components):
-                    GridPane gridPane = new GridPane();
-                    Circle avatarPic = new Circle(20);
-                    Label username = new Label();
-                    Label status = new Label();
-
-                    username.setStyle("-fx-font-weight: bold");
-                    username.setStyle("-fx-font-size: 18");
-                    username.setStyle("-fx-text-fill: White");
-
-                    gridPane.setStyle("-fx-background-color: #2f3136");
-
-                    ColumnConstraints col1 = new ColumnConstraints(USE_PREF_SIZE, USE_COMPUTED_SIZE, USE_PREF_SIZE);
-                    ColumnConstraints col2 = new ColumnConstraints(GridPane.USE_PREF_SIZE, GridPane.USE_COMPUTED_SIZE, Double.MAX_VALUE);
-                    gridPane.getColumnConstraints().addAll(col1, col2);
-
-                    gridPane.add(avatarPic, 0, 0, 1, GridPane.REMAINING);
-                    gridPane.add(username, 1, 0, 1, 1);
-                    gridPane.add(status, 1, 1, 1, 1);
-
-                    gridPane.setHgap(8);
-
-                    gridPane.setMinHeight(GridPane.USE_COMPUTED_SIZE);
-                    gridPane.setPrefHeight(GridPane.USE_COMPUTED_SIZE);
-                    gridPane.setMaxHeight(GridPane.USE_COMPUTED_SIZE);
-
-                    gridPane.setMinWidth(GridPane.USE_COMPUTED_SIZE);
-                    gridPane.setPrefWidth(GridPane.USE_COMPUTED_SIZE);
-                    gridPane.setMaxWidth(GridPane.USE_COMPUTED_SIZE);
-
-                    GridPane.setHalignment(avatarPic, HPos.LEFT);
-                    GridPane.setHalignment(username, HPos.LEFT);
-
-                    try {
-                        avatarPic.setFill(new ImagePattern(readAvatarImage(model)));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        avatarPic.setFill(new ImagePattern(new Image(getAbsolutePath("requirements" + File.separator + "emojipng.com-11701703.png"))));
-                    }
-
-                    username.setText(model.getUsername());
-                    status.setText(model.getStatus().toString());
-                    switch (model.getStatus()) {
-                        case Online -> status.setTextFill(new Color(0.24, 0.64, 0.36, 1));
-                        case Idle -> status.setTextFill(new Color(0.98, 0.66, 0.1, 1));
-                        case DoNotDisturb -> status.setTextFill(new Color(0.85, 0.24, 0.24, 1));
-                        case Invisible -> status.setTextFill(new Color(0.4549, 0.498, 0.553, 1));
-                    }
-
-                    //gridPane.setOnMouseClicked(mouseClickEvent -> enterChat(model.getUID()));
-
-                    setGraphic(gridPane);
-                }
-            }
-        });
+        constructTextChannelsCells();
+        constructMembersCells();
     }
 
     public void setUpdatedValuesForServerObservableLists(Server server, int textChannelIndex) throws IOException {
@@ -1625,6 +1417,115 @@ public class Controller {
         offlineCountInServer.setText("Offline - " + offlineCount);
         offlineMembersListView.setItems(offlineMembersObservableList);
     }
+
+    private void constructTextChannelsCells() {
+        textChannelsListView.setCellFactory(tcc -> new ListCell<>() {
+            @Override
+            protected void updateItem(TextChannel textChannel, boolean empty) {
+
+                super.updateItem(textChannel, empty);
+                if (textChannel == null || empty) {
+                    setGraphic(null);
+                } else {
+
+                    // Variables (Controls; GUI components):
+                    Label textChannelName = new Label("# " + textChannel.getName());
+                    textChannelName.setPadding(new Insets(5, 5, 5, 5));
+
+                    textChannelName.setStyle("-fx-font-weight: bold");
+                    textChannelName.setStyle("-fx-font-size: 18");
+                    textChannelName.setStyle("-fx-text-fill: White");
+
+                    textChannelName.setOnMouseClicked(mouseClickEvent -> refreshTextChannelChat(textChannel));
+
+                    setGraphic(textChannelName);
+                }
+            }
+        });
+    }
+
+    private void constructMembersCells() {
+        constructMemberGridPaneCell(onlineMembersListView);
+        constructMemberGridPaneCell(offlineMembersListView);
+    }
+
+    private void constructMemberGridPaneCell(ListView<Model> modelListView) {
+        modelListView.setCellFactory(mc -> new ListCell<>() {
+            @Override
+            protected void updateItem(Model model, boolean empty) {
+                super.updateItem(model, empty);
+                if (model == null || empty) {
+                    setGraphic(null);
+                } else {
+                    GridPane gridPane = getUserGridPane(model);
+
+                    //gridPane.setOnMouseClicked(mouseClickEvent -> seeProfile/enterChat?(model.getUID()));
+
+                    setGraphic(gridPane);
+                }
+            }
+        });
+    }
+
+    private GridPane getUserGridPane(Model user) {
+
+        GridPane gridPane = new GridPane();
+        Circle avatarPic = new Circle(20);
+        Label username = new Label();
+        Label status = new Label();
+
+        username.setStyle("-fx-font-weight: bold");
+        username.setStyle("-fx-font-size: 18");
+        username.setStyle("-fx-text-fill: White");
+
+        gridPane.setStyle("-fx-background-color: #2f3136");
+
+        ColumnConstraints col1 = new ColumnConstraints(GridPane.USE_PREF_SIZE, GridPane.USE_COMPUTED_SIZE, GridPane.USE_PREF_SIZE);
+        ColumnConstraints col2 = new ColumnConstraints(GridPane.USE_PREF_SIZE, GridPane.USE_COMPUTED_SIZE, Double.MAX_VALUE);
+        gridPane.getColumnConstraints().addAll(col1, col2);
+
+        gridPane.add(avatarPic, 0, 0, 1, GridPane.REMAINING);
+        gridPane.add(username, 1, 0, 1, 1);
+        gridPane.add(status, 1, 1, 1, 1);
+
+        gridPane.setHgap(8);
+
+        gridPane.setMinHeight(GridPane.USE_COMPUTED_SIZE);
+        gridPane.setPrefHeight(GridPane.USE_COMPUTED_SIZE);
+        gridPane.setMaxHeight(GridPane.USE_COMPUTED_SIZE);
+
+        gridPane.setMinWidth(GridPane.USE_COMPUTED_SIZE);
+        gridPane.setPrefWidth(GridPane.USE_COMPUTED_SIZE);
+        gridPane.setMaxWidth(GridPane.USE_COMPUTED_SIZE);
+
+        GridPane.setHalignment(avatarPic, HPos.LEFT);
+        GridPane.setHalignment(username, HPos.LEFT);
+
+        try {
+            avatarPic.setFill(new ImagePattern(readAvatarImage(user)));
+        } catch (IOException e) {
+            e.printStackTrace();
+            avatarPic.setFill(new ImagePattern(new Image(getAbsolutePath("requirements" + File.separator + "emojipng.com-11701703.png"))));
+        }
+
+        username.setText(user.getUsername());
+        status.setText(user.getStatus().toString());
+        switch (user.getStatus()) {
+            case Online -> status.setTextFill(new Color(0.24, 0.64, 0.36, 1));
+            case Idle -> status.setTextFill(new Color(0.98, 0.66, 0.1, 1));
+            case DoNotDisturb -> status.setTextFill(new Color(0.85, 0.24, 0.24, 1));
+            case Invisible -> status.setTextFill(new Color(0.4549, 0.498, 0.553, 1));
+        }
+
+        return gridPane;
+    }
+
+
+    //////////////////////////////////////////////////////////// direct message scene of the main page->
+    // fields:
+    @FXML
+    private Label friendName;
+
 
     //////////////////////////////////////////////////////////// server scene of the main page->
     // fields:

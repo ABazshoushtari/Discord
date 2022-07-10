@@ -27,7 +27,7 @@ public class SmartListener implements Runnable {
 
                     if (mainServerResponse instanceof ModelUpdaterSignal mus) {
 
-                        if (!(mus instanceof FriendChangedModelUpdaterSignal)) {
+                        if (!(mus instanceof RelatedUserChangedSignal)) {
                             mus.setBeingUpdatedModel(controller.getUser());
                             controller.setUser(mus.getUpdatedModel());
                         }

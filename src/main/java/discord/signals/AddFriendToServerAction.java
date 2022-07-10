@@ -17,7 +17,7 @@ public class AddFriendToServerAction implements Action {
         int friendID = MainServer.getIDs().get(friendUsername);
         Model targetFriend = MainServer.getUsers().get(friendID);
         targetFriend.getServers().add(unicode);
-        MainServer.updateDatabase(targetFriend);
+        MainServer.updateDatabaseAndMainServer(targetFriend);
         return null;
     }
 }

@@ -21,21 +21,25 @@ public class SendFriendRequestAction implements Action {
     public Object act() throws IOException {
         Integer receiverUID = MainServer.getIDs().getOrDefault(username, null);
         if (receiverUID == null) {
-            return 0;
+            return -1;
         }
         if (!MainServer.getUsers().containsKey(receiverUID)) {
-            return 0;
+            return -1;
         } else {
-            Model user = MainServer.getUsers().get(receiverUID);
+            Model receiverUser = MainServer.getUsers().get(receiverUID);
             int requesterUID = MainServer.getIDs().get(requester);
-            if (user.getIncomingFriendRequests().contains(requesterUID)) {
-                return 1;
+            if (receiverUser.getIncomingFriendRequests().contains(requesterUID)) {
+                return -2;
             }
-            if (user.getBlockedList().contains(requesterUID)) {
-                return 2;
+            if (receiverUser.getBlockedList().contains(requesterUID)) {
+                return -3;
             }
-            user.getIncomingFriendRequests().add(requesterUID);
-            MainServer.updateDatabase(user);
+
+            Model requesterUser = MainServer.getUsers().get(requesterUID);
+            requesterUser.getSentFriendRequests().add(requesterUID);
+
+            receiverUser.getIncomingFriendRequests().add(requesterUID);
+            MainServer.updateDatabaseAndMainServer(receiverUser);
 
             for (ClientHandler ch : clientHandlers) {
                 if (ch.getUser() != null) {
@@ -46,7 +50,7 @@ public class SendFriendRequestAction implements Action {
                 }
             }
 
-            return 3;
+            return receiverUID;
         }
     }
 }

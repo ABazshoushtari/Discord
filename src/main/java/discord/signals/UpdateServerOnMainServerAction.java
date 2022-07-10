@@ -12,8 +12,7 @@ public class UpdateServerOnMainServerAction implements Action {
 
     @Override
     public Object act() {
-        MainServer.getServers().replace(server.getUnicode(), server);
-        MainServer.updateDatabase(server);
+        MainServer.updateDatabaseAndMainServer(server);
         return null;
     }
 }

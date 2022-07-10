@@ -135,28 +135,24 @@ public class MainServer {
     public static void signUpUser(Model newUser) {
         IDs.put(newUser.getUsername(), newUser.getUID());
         users.put(newUser.getUID(), newUser);
-        updateDatabase(newUser);
+        updateDatabaseAndMainServer(newUser);
     }
 
-    public static <Type extends Asset> void updateDatabase(Type asset) {
+    public static <Type extends Asset> void updateDatabaseAndMainServer(Type asset) {
         FileOutputStream fileOut = null;
         ObjectOutputStream out = null;
         try {
             String path = "assets\\";
             String identification = "";
-            //String avatarContentType = "";
-            //String imagePath = path;
             if (asset instanceof Model model) {
+                users.replace(model.getUID(), model);
                 identification = model.getUID() + "";
-                //avatarContentType = model.getAvatarContentType();
                 path = path.concat("users");
-                //imagePath = imagePath.concat("user profile pictures" + File.separator);
             }
             if (asset instanceof Server server) {
+                servers.replace(server.getUnicode(), server);
                 identification = server.getUnicode() + "";
-                // avatarContentType = server.getAvatarContentType();
                 path = path.concat("servers");
-                //imagePath = imagePath.concat("server profile pictures" + File.separator);
             }
             fileOut = new FileOutputStream(path + File.separator + identification.concat(".bin"));
             out = new ObjectOutputStream(fileOut);

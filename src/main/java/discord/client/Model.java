@@ -17,7 +17,7 @@ public class Model implements Asset {
     private Status status;
     private Status previousSetStatus;
     private final LinkedList<Integer> incomingFriendRequests;
-    //private final LinkedList<Integer> sentFriendRequests;
+    private final LinkedList<Integer> sentFriendRequests;
     private final LinkedList<Integer> friends;
     private final LinkedList<Integer> blockedList;
     private final HashMap<Integer, Boolean> isInChat;
@@ -42,7 +42,7 @@ public class Model implements Asset {
         status = Status.Online;
         previousSetStatus = Status.Online;
         incomingFriendRequests = new LinkedList<>();
-        //sentFriendRequests = new LinkedList<>();
+        sentFriendRequests = new LinkedList<>();
         friends = new LinkedList<>();
         blockedList = new LinkedList<>();
         isInChat = new HashMap<>();
@@ -95,6 +95,10 @@ public class Model implements Asset {
 
     public LinkedList<Integer> getIncomingFriendRequests() {
         return incomingFriendRequests;
+    }
+
+    public LinkedList<Integer> getSentFriendRequests() {
+        return sentFriendRequests;
     }
 
     public LinkedList<Integer> getFriends() {

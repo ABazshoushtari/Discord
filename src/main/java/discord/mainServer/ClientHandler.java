@@ -49,16 +49,12 @@ public class ClientHandler implements Runnable {
                 // the second while loop is for any other action after logging in or signing up
                 while (user != null) {
                     action = mySocket.read();
-                    if (action instanceof UpdateUserOnMainServerAction) {
-                        user = (Model) action.act();
-                    } else if (action instanceof LogoutAction) {
+                    if (action instanceof LogoutAction) {
                         handleQuit();
+                        user = null;
                     } else {
-                        Object writeBack = action.act();
-                        if (writeBack instanceof Model model && !(action instanceof GetUserFromMainServerAction)) {
-                            user = model;
-                        }
-                        mySocket.write(writeBack);
+                        user = MainServer.getUsers().get(user.getUID());
+                        mySocket.write(action.act());
                     }
                 }
             } catch (IOException | ClassNotFoundException e) {
@@ -83,14 +79,22 @@ public class ClientHandler implements Runnable {
 
     private void handleQuit() throws IOException {
         user.setStatus(Status.Invisible);
+        informRelatedPeople(user);
+        MainServer.updateDatabaseAndMainServer(user);
+    }
+
+    public static void informRelatedPeople(Model updatedMe) throws IOException {
         for (ClientHandler ch : clientHandlers) {
-            if (ch.user != null) {
-                if (user.getFriends().contains(ch.getUser().getUID())) {
-                    ch.mySocket.write(new FriendChangedModelUpdaterSignal());
+            if (ch.getUser() != null) {
+                Model user = ch.getUser();
+                Integer UID = user.getUID();
+                boolean related = updatedMe.getFriends().contains(UID) ||   // a friend
+                        updatedMe.getSentFriendRequests().contains(UID) ||  // someone whom I've sent a friend request to
+                        updatedMe.getIncomingFriendRequests().contains(UID);    //someone who has sent a friend request to me
+                if (related) {
+                    ch.getMySocket().write(new RelatedUserChangedSignal());
                 }
             }
         }
-        MainServer.getUsers().replace(user.getUID(), user);
-        MainServer.updateDatabase(user);
     }
 }

@@ -6,8 +6,6 @@ import discord.mainServer.MainServer;
 
 import java.io.IOException;
 
-import static discord.mainServer.ClientHandler.clientHandlers;
-
 public class LoginAction implements Action {
     private final String username;
     private final String password;
@@ -30,16 +28,10 @@ public class LoginAction implements Action {
         } else {
             Model me = MainServer.getUsers().get(UID);
             me.setStatus(me.getPreviousSetStatus());
-            MainServer.getUsers().replace(UID, me);
-            MainServer.updateDatabase(me);
 
-            for (ClientHandler ch : clientHandlers) {
-                if (ch.getUser() != null) {
-                    if (ch.getUser().getFriends().contains(me.getUID())) {
-                        ch.getMySocket().write(new FriendChangedModelUpdaterSignal());
-                    }
-                }
-            }
+            MainServer.updateDatabaseAndMainServer(me);
+
+            ClientHandler.informRelatedPeople(me);
 
             return me;
         }

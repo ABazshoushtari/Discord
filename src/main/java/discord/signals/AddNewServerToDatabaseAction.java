@@ -19,7 +19,7 @@ public class AddNewServerToDatabaseAction implements Action {
         MainServer.getUsers().replace(creator.getUID(), creator);
 
         MainServer.getServers().put(newServer.getUnicode(), newServer);
-        MainServer.updateDatabase(newServer);
+        MainServer.updateDatabaseAndMainServer(newServer);
 
         return null;
     }

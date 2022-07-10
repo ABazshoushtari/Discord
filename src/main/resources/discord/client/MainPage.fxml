@@ -25,7 +25,7 @@
    <center>
       <StackPane maxWidth="1.7976931348623157E308" prefWidth="714.0" style="-fx-background-color: #36393F;" BorderPane.alignment="CENTER">
          <children>
-            <TabPane fx:id="theTabPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #36393F;" stylesheets="@styles/TabPaneStyle.css" tabClosingPolicy="UNAVAILABLE" tabMinWidth="68.0">
+            <TabPane fx:id="theTabPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #36393F;" stylesheets="@styles/TabPaneStyle.css" tabClosingPolicy="UNAVAILABLE" tabMinWidth="68.0" visible="false">
                <tabs>
                   <Tab disable="true" text="Friends" />
                   <Tab text="Online">
@@ -205,7 +205,7 @@
                   <String fx:value="tab-pane" />
                </styleClass>
             </TabPane>
-            <GridPane fx:id="directMessageGridPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #36393F;" vgap="5.0">
+            <GridPane fx:id="directMessageGridPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #36393F;" vgap="5.0" visible="false">
                <columnConstraints>
                   <ColumnConstraints hgrow="SOMETIMES" maxWidth="1.7976931348623157E308" />
                </columnConstraints>
@@ -225,7 +225,7 @@
                         <Insets top="10.0" />
                      </GridPane.margin>
                   </ListView>
-                  <Label text="Friend name" textFill="WHITE">
+                  <Label fx:id="friendName" textFill="WHITE">
                      <font>
                         <Font name="System Bold" size="16.0" />
                      </font>
@@ -264,7 +264,7 @@
                   <Insets bottom="10.0" top="10.0" />
                </padding>
             </GridPane>
-            <BorderPane fx:id="serverBorderPane" maxWidth="1.7976931348623157E308" visible="false">
+            <BorderPane fx:id="serverBorderPane" maxWidth="1.7976931348623157E308">
                <center>
                   <GridPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #36393F;" vgap="5.0" BorderPane.alignment="CENTER">
                      <columnConstraints>
@@ -322,7 +322,7 @@
                <right>
                   <GridPane maxHeight="1.7976931348623157E308" prefWidth="135.0" style="-fx-background-color: #2f3136;" BorderPane.alignment="CENTER">
                      <columnConstraints>
-                        <ColumnConstraints hgrow="SOMETIMES" />
+                        <ColumnConstraints halignment="LEFT" hgrow="SOMETIMES" />
                      </columnConstraints>
                      <rowConstraints>
                         <RowConstraints vgrow="SOMETIMES" />
@@ -336,13 +336,13 @@
                               <Font name="System Bold" size="12.0" />
                            </font>
                         </Label>
-                        <ListView fx:id="onlineMembersListView" style="-fx-background-color: #2f3136;" styleClass="list-cell" stylesheets="@styles/ListViewColor2.css" GridPane.rowIndex="1" />
+                        <ListView fx:id="onlineMembersListView" style="-fx-background-color: #2f3136;" styleClass="list-cell" stylesheets="@styles/ListViewColor2.css" GridPane.halignment="LEFT" GridPane.rowIndex="1" />
                         <Label fx:id="offlineCountInServer" alignment="TOP_LEFT" text="Offline - " textFill="WHITE" GridPane.rowIndex="2" GridPane.valignment="TOP">
                            <font>
                               <Font name="System Bold" size="12.0" />
                            </font>
                         </Label>
-                        <ListView fx:id="offlineMembersListView" style="-fx-background-color: #2f3136;" styleClass="list-cell" stylesheets="@styles/ListViewColor2.css" GridPane.rowIndex="3" />
+                        <ListView fx:id="offlineMembersListView" style="-fx-background-color: #2f3136;" styleClass="list-cell" stylesheets="@styles/ListViewColor2.css" GridPane.halignment="LEFT" GridPane.rowIndex="3" />
                      </children>
                      <padding>
                         <Insets left="10.0" top="65.0" />
@@ -388,7 +388,7 @@
                   <RowConstraints maxHeight="-Infinity" minHeight="-Infinity" prefHeight="70.0" vgrow="SOMETIMES" />
               </rowConstraints>
                <children>
-                  <Button fx:id="middlePartUpperLabel" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" style="-fx-background-color: #2f3136;" text="friends/server name" textFill="WHITE" GridPane.halignment="CENTER" GridPane.valignment="TOP">
+                  <Button fx:id="middlePartUpperLabel" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" style="-fx-background-color: #2f3136;" text="Friends" textFill="WHITE" GridPane.halignment="CENTER" GridPane.valignment="TOP">
                      <font>
                         <Font name="System Bold" size="13.0" />
                      </font>

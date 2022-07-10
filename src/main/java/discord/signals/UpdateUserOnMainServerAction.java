@@ -6,8 +6,6 @@ import discord.client.Model;
 
 import java.io.IOException;
 
-import static discord.mainServer.ClientHandler.clientHandlers;
-
 public class UpdateUserOnMainServerAction implements Action {
     private final Model updatedMe;
     private String oldUsername;
@@ -32,17 +30,10 @@ public class UpdateUserOnMainServerAction implements Action {
             MainServer.getIDs().put(updatedMe.getUsername(), updatedMe.getUID());
         }
 
-        for (ClientHandler ch : clientHandlers) {
-            if (ch.getUser() != null) {
-                if (updatedMe.getFriends().contains(ch.getUser().getUID())) {
-                    ch.getMySocket().write(new FriendChangedModelUpdaterSignal());
-                }
-            }
-        }
+        ClientHandler.informRelatedPeople(updatedMe);
 
-        MainServer.getUsers().replace(updatedMe.getUID(), updatedMe);
-        MainServer.updateDatabase(updatedMe);
+        MainServer.updateDatabaseAndMainServer(updatedMe);
 
-        return updatedMe;
+        return null;
     }
 }
