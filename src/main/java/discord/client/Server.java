@@ -9,6 +9,7 @@ public class Server implements Asset {
     // Fields:
     private final int unicode;
     private String serverName;
+    private final Integer creatorUID;
     private byte[] avatarImage;
     private String avatarContentType;  // type of avatarImage
     private HashMap<String, Role> serverRoles;      // maps the roles' names to their Role object
@@ -17,10 +18,11 @@ public class Server implements Asset {
     private HashSet<Integer> bannedUsers;
 
     // Constructors:
-    public Server(int unicode, String serverName, int creatorID) {
+    public Server(int unicode, String serverName, int creatorUID) {
         // construct and initialize the fields
         this.unicode = unicode;
         this.serverName = serverName;
+        this.creatorUID = creatorUID;
         serverRoles = new HashMap<>();
         members = new HashMap<>();
         textChannels = new ArrayList<>();
@@ -34,10 +36,10 @@ public class Server implements Asset {
         HashSet<Ability> ownerAbilities = new HashSet<>(Arrays.asList(Ability.values()));
         Role ownerRole = new Role("owner", ownerAbilities);
         HashSet<Role> ownerRoleSet = new HashSet<>(List.of(ownerRole, memberRole));
-        members.put(creatorID, ownerRoleSet);
+        members.put(creatorUID, ownerRoleSet);
 
         //initialize the first default text channel called general with just a creator member
-        textChannels.add(new TextChannel("general", new HashSet<>(List.of(creatorID))));
+        textChannels.add(new TextChannel("general", new HashSet<>(List.of(creatorUID))));
     }
 
     // Getters:
@@ -46,6 +48,10 @@ public class Server implements Asset {
     }
     public Integer getID() {
         return unicode;
+    }
+
+    public Integer getCreatorUID() {
+        return creatorUID;
     }
 
     public String getServerName() {

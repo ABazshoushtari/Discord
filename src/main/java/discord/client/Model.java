@@ -56,6 +56,7 @@ public class Model implements Asset {
     public Integer getUID() {
         return UID;
     }
+
     public Integer getID() {
         return UID;
     }
@@ -158,13 +159,22 @@ public class Model implements Asset {
     }
 
     // Other Methods:
-    public void removeFriend(Integer UID) {
-        friends.remove(UID);
-        isInChat.remove(UID);
-        privateChats.remove(UID);
-        urlsOfPrivateChat.remove(UID);
-        filesOfPrivateChat.remove(UID);
+    public void addFriend(Integer newFriendUID) {
+        friends.add(newFriendUID);
+        isInChat.put(newFriendUID, false);
+        privateChats.put(newFriendUID, new ArrayList<>());
+        urlsOfPrivateChat.put(newFriendUID, new ArrayList<>());
+        filesOfPrivateChat.put(newFriendUID, new ArrayList<>());
     }
+
+    public void removeFriend(Integer lostFriendUID) {
+        friends.remove(lostFriendUID);
+        isInChat.remove(lostFriendUID);
+        privateChats.remove(lostFriendUID);
+        urlsOfPrivateChat.remove(lostFriendUID);
+        filesOfPrivateChat.remove(lostFriendUID);
+    }
+
     public String toString() {
         return username + " " + password + " " + email + " " + phoneNumber;
     }
