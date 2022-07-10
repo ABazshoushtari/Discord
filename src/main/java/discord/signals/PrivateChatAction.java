@@ -111,8 +111,8 @@ public class PrivateChatAction implements Action {
                 message = sender + ": " + message;
             }
             // updating database and server
-            senderUser.getPrivateChats().get(receiverID).add(message);
-            receiverUser.getPrivateChats().get(senderID).add(message);
+//            senderUser.getPrivateChats().get(receiverID).add(message);
+//            receiverUser.getPrivateChats().get(senderID).add(message);
 
             MainServer.updateDatabase(senderUser);
             MainServer.updateDatabase(receiverUser);

@@ -5,10 +5,12 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -503,6 +505,10 @@ public class Controller {
     //////////////////////////////////////////////////////////// main page scene ->
     // main page fields:
     @FXML
+    private TabPane theTabPane;
+    @FXML
+    private GridPane directMessageGridPane;
+    @FXML
     private Rectangle discordLogo;
     @FXML
     private Circle mainPageAvatar;
@@ -510,8 +516,6 @@ public class Controller {
     private Rectangle setting;
     @FXML
     private Label usernameLabel;
-    @FXML
-    TabPane theTabPane;
 
     // send a friend request:
     @FXML
@@ -542,6 +546,14 @@ public class Controller {
     private ListView<Model> onlineListView;
     @FXML
     private Label onlineCount;
+
+    // chat messages
+    @FXML
+    private TextField sendMessageTextField;
+    @FXML
+    private ListView<ChatMessage> chatMessagesListView;
+
+    private ObservableList<ChatMessage> chatMessageObservableList;
 
     // direct messages
     @FXML
@@ -688,6 +700,7 @@ public class Controller {
         constructOnlineFriendsCells();
         constructDirectMessagesCells();
         constructServersCells();
+        constructChatMessagesCells();
     }
 
     private void initializeMyProfile() throws IOException {
@@ -1174,6 +1187,154 @@ public class Controller {
         });
     }
 
+    private void constructChatMessagesCells() {
+        chatMessagesListView.setCellFactory(cmc -> new ListCell<>() {
+            @Override
+            protected void updateItem(ChatMessage chatMessage, boolean empty) {
+                super.updateItem(chatMessage, empty);
+
+                if (chatMessage == null || empty) {
+                    setGraphic(null);
+                } else {
+
+                    // Variables (Controls; GUI components):
+                    HBox hBox = new HBox(10);
+                    Circle avatarPic = new Circle(20);
+                    VBox vBox = new VBox(7);
+                    HBox hBox2 = new HBox(10);
+                    Label usernameLabel = new Label();
+                    Label dateTimeLabel = new Label();
+                    TextField textField = new TextField();
+                    Label editedLabel = new Label();
+                    ContextMenu contextMenu = new ContextMenu();
+                    CustomMenuItem reactionMenuItem;
+                    HBox hBox3 = new HBox(5);
+                    Circle laughReaction = new Circle(14);
+                    Circle likeReaction = new Circle(14);
+                    Circle dislikeReaction = new Circle(14);
+
+                    // css styles
+                    hBox.setStyle("-fx-background-color: #36393F");
+                    hBox.setOnMouseEntered(new EventHandler<MouseEvent>() {
+                        @Override
+                        public void handle(MouseEvent mouseEvent) {
+                            hBox.setStyle("-fx-background-color: #32353b");
+                        }
+                    });
+                    hBox.setOnMouseExited(new EventHandler<MouseEvent>() {
+                        @Override
+                        public void handle(MouseEvent mouseEvent) {
+                            hBox.setStyle("-fx-background-color: #36393F");
+                        }
+                    });
+
+                    usernameLabel.setStyle("-fx-text-fill: White");
+
+                    dateTimeLabel.setStyle("-fx-text-fill: #6f7681");
+
+                    textField.setStyle("-fx-background-color: #36393F");
+                    textField.setStyle("-fx-text-fill: White");
+
+                    editedLabel.setStyle("-fx-text-fill: #6f7681");
+
+                    // javafx codes.
+                    hBox.setAlignment(Pos.TOP_LEFT);
+                    hBox.setPadding((new Insets(10, 10, 0, 10)));
+                    avatarPic.setStroke(Color.TRANSPARENT);
+                    vBox.setAlignment(Pos.TOP_LEFT);
+                    hBox2.setAlignment(Pos.CENTER_LEFT);
+                    usernameLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
+                    dateTimeLabel.setFont(Font.font("System", FontWeight.NORMAL, 12));
+                    editedLabel.setFont(Font.font("System", FontWeight.NORMAL, 12));
+                    editedLabel.setPadding(new Insets(0, 0, 0, 10));
+
+                    textField.setMinWidth(USE_COMPUTED_SIZE);
+                    textField.setMinHeight(USE_COMPUTED_SIZE);
+                    textField.setPrefWidth(600);
+                    textField.setPrefHeight(USE_COMPUTED_SIZE);
+                    textField.setMaxWidth(Double.MAX_VALUE);
+                    textField.setMaxHeight(USE_COMPUTED_SIZE);
+
+                    hBox2.getChildren().addAll(usernameLabel, dateTimeLabel);
+
+                    //reactionsMenuItem:
+                    laughReaction.setFill(new ImagePattern(new Image(getAbsolutePath("requirements" + File.separator + "laugh emoji.png"))));
+                    laughReaction.setOnMouseClicked(new EventHandler<MouseEvent>() {
+                        @Override
+                        public void handle(MouseEvent mouseEvent) {
+                            chatMessage.laugh(user.getUID());
+                            // send signal
+                        }
+                    });
+                    likeReaction.setFill(new ImagePattern(new Image(getAbsolutePath("requirements" + File.separator + "like emoji.png"))));
+                    likeReaction.setOnMouseClicked(new EventHandler<MouseEvent>() {
+                        @Override
+                        public void handle(MouseEvent mouseEvent) {
+                            chatMessage.like(user.getUID());
+                            // send signal
+                        }
+                    });
+                    dislikeReaction.setFill(new ImagePattern(new Image(getAbsolutePath("requirements" + File.separator + "dislike emoji2.png"))));
+                    dislikeReaction.setOnMouseClicked(new EventHandler<MouseEvent>() {
+                        @Override
+                        public void handle(MouseEvent mouseEvent) {
+                            chatMessage.dislike(user.getUID());
+                            // send signal
+                        }
+                    });
+                    hBox3.setAlignment(Pos.CENTER_LEFT);
+                    hBox3.getChildren().addAll(laughReaction, likeReaction, dislikeReaction);
+                    reactionMenuItem = new CustomMenuItem(hBox3);
+
+                    Model sender = null;
+                    try {
+                        mySocket.write(new GetUserFromMainServerAction(chatMessage.getSenderUID()));
+                        waiting();
+                        sender = smartListener.getReceivedUser();
+                        if (sender == null) {
+                            return;
+                        }
+                        avatarPic.setFill(new ImagePattern(readAvatarImage(sender)));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        avatarPic.setFill(new ImagePattern(new Image(getAbsolutePath("requirements" + File.separator + "emojipng.com-11701703.png"))));
+                    }
+
+                    usernameLabel.setText(sender.getUsername());
+                    dateTimeLabel.setText(chatMessage.getDateTime());
+                    if (chatMessage.isEdited()) {
+                        editedLabel.setText("(edited)");
+                    }
+
+                    // String chat Message
+                    if (chatMessage instanceof ChatStringMessage chatStringMessage) {
+                        textField.setText(chatStringMessage.getMessage());
+                        vBox.getChildren().addAll(hBox2, textField, editedLabel);
+                        MenuItem menuItemReactions = new MenuItem("Reactions");
+                        MenuItem menuItemDeleteForMe = new MenuItem("Delete Message for me");
+                        MenuItem menuItemDeleteForAll = new MenuItem("Delete Message for all");
+                        if (sender.getUID().intValue() == user.getUID().intValue()) {
+                            MenuItem menuItemEdit = new MenuItem("Edit Message");
+                            /* setOnActions
+
+
+                             */
+                            contextMenu.getItems().addAll(reactionMenuItem, menuItemReactions, menuItemEdit, menuItemDeleteForMe, menuItemDeleteForAll);
+                        } else {
+                            contextMenu.getItems().addAll(reactionMenuItem, menuItemReactions, menuItemDeleteForMe, menuItemDeleteForAll);
+                        }
+                        textField.setContextMenu(contextMenu);
+                    } /*else if (chatMessage instanceof FileChatMessage fileChatMessage) {
+
+                    }*/
+                    hBox.getChildren().addAll(avatarPic, vBox);
+
+                    setGraphic(hBox);
+                }
+            }
+        });
+    }
+
     @FXML
     void sendFriendRequest(ActionEvent event) throws IOException {
         String receivedUsername = friendRequestTextField.getText().trim();
@@ -1218,8 +1379,25 @@ public class Controller {
     }
 
     @FXML
-    void enterChat(Integer friendUID) {
+    void sendChatStringMessage(ActionEvent event) {
+        TextField textField = (TextField) event.getSource();
+        Integer friendUID = (Integer) textField.getUserData();
+        ChatStringMessage chatStringMessage = new ChatStringMessage(user.getUID(), friendUID, textField.getText());
+        // next line is optional
+        chatMessageObservableList.addAll(user.getPrivateChats().get(friendUID));
+        chatMessageObservableList.add(chatStringMessage);
+        textField.setText("");
+    }
 
+    @FXML
+    void enterChat(Integer friendUID) {
+        sendMessageTextField.setUserData(friendUID);
+        chatMessageObservableList = FXCollections.observableArrayList();
+        chatMessageObservableList.addAll(user.getPrivateChats().get(friendUID));
+        chatMessagesListView.setItems(chatMessageObservableList);
+
+        theTabPane.setVisible(false);
+        directMessageGridPane.setVisible(true);
     }
 
     @FXML
@@ -1250,6 +1428,7 @@ public class Controller {
 
         serverBorderPane.setVisible(false);
         theTabPane.setVisible(true);
+        directMessageGridPane.setVisible(false);
 
         initializeMainPage();
     }

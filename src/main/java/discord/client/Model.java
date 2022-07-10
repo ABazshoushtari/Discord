@@ -22,7 +22,7 @@ public class Model implements Asset {
     private final LinkedList<Integer> blockedList;
     private final HashMap<Integer, Boolean> isInChat;
     // maps all the friends' UIDs to whether this user is in their private char (true) or not (false)
-    private final HashMap<Integer, ArrayList<String>> privateChats;
+    private final HashMap<Integer, ArrayList<ChatMessage>> privateChats;
     // maps all the friend's UIDs to all the exchanged messages between this user and them
     private final HashMap<Integer, ArrayList<URL>> urlsOfPrivateChat;
     // maps all the friends UIDs to all the urls exchanged between then
@@ -109,7 +109,7 @@ public class Model implements Asset {
         return isInChat;
     }
 
-    public HashMap<Integer, ArrayList<String>> getPrivateChats() {
+    public HashMap<Integer, ArrayList<ChatMessage>> getPrivateChats() {
         return privateChats;
     }
 
