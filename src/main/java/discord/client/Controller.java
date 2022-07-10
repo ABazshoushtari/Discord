@@ -16,6 +16,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 
+import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -1204,11 +1205,11 @@ public class Controller {
                     HBox hBox2 = new HBox(10);
                     Label usernameLabel = new Label();
                     Label dateTimeLabel = new Label();
-                    TextField textField = new TextField();
+                    Label messageLabel = new Label();
                     Label editedLabel = new Label();
                     ContextMenu contextMenu = new ContextMenu();
                     CustomMenuItem reactionMenuItem;
-                    HBox hBox3 = new HBox(5);
+                    HBox hBoxReaction = new HBox(10);
                     Circle laughReaction = new Circle(14);
                     Circle likeReaction = new Circle(14);
                     Circle dislikeReaction = new Circle(14);
@@ -1232,10 +1233,19 @@ public class Controller {
 
                     dateTimeLabel.setStyle("-fx-text-fill: #6f7681");
 
-                    textField.setStyle("-fx-background-color: #36393F");
-                    textField.setStyle("-fx-text-fill: White");
+                    messageLabel.setStyle("-fx-background-color: #36393F");
+                    messageLabel.setStyle("-fx-text-fill: white");
+                    messageLabel.setFont(Font.font("System", FontWeight.NORMAL, 14));
 
                     editedLabel.setStyle("-fx-text-fill: #6f7681");
+
+//                    hBoxReaction.setStyle("-fx-background-color: #18191c");
+                    laughReaction.setStyle("-fx-background-color: #202225");
+//                    laughReaction.setStyle("-fx-background-size: 20");
+                    likeReaction.setStyle("-fx-background-color: #202225");
+//                    likeReaction.setStyle("-fx-background-size: cover");
+                    dislikeReaction.setStyle("-fx-background-color: #202225");
+//                    dislikeReaction.setStyle("-fx-background-size: auto");
 
                     // javafx codes.
                     hBox.setAlignment(Pos.TOP_LEFT);
@@ -1248,12 +1258,12 @@ public class Controller {
                     editedLabel.setFont(Font.font("System", FontWeight.NORMAL, 12));
                     editedLabel.setPadding(new Insets(0, 0, 0, 10));
 
-                    textField.setMinWidth(USE_COMPUTED_SIZE);
-                    textField.setMinHeight(USE_COMPUTED_SIZE);
-                    textField.setPrefWidth(600);
-                    textField.setPrefHeight(USE_COMPUTED_SIZE);
-                    textField.setMaxWidth(Double.MAX_VALUE);
-                    textField.setMaxHeight(USE_COMPUTED_SIZE);
+                    messageLabel.setMinWidth(USE_COMPUTED_SIZE);
+                    messageLabel.setMinHeight(USE_COMPUTED_SIZE);
+                    messageLabel.setPrefWidth(USE_COMPUTED_SIZE);
+                    messageLabel.setPrefHeight(USE_COMPUTED_SIZE);
+                    messageLabel.setMaxWidth(Double.MAX_VALUE);
+                    messageLabel.setMaxHeight(USE_COMPUTED_SIZE);
 
                     hBox2.getChildren().addAll(usernameLabel, dateTimeLabel);
 
@@ -1282,9 +1292,9 @@ public class Controller {
                             // send signal
                         }
                     });
-                    hBox3.setAlignment(Pos.CENTER_LEFT);
-                    hBox3.getChildren().addAll(laughReaction, likeReaction, dislikeReaction);
-                    reactionMenuItem = new CustomMenuItem(hBox3);
+                    hBoxReaction.setAlignment(Pos.CENTER_LEFT);
+                    hBoxReaction.getChildren().addAll(laughReaction, likeReaction, dislikeReaction);
+                    reactionMenuItem = new CustomMenuItem(hBoxReaction);
 
                     Model sender = null;
                     try {
@@ -1308,8 +1318,8 @@ public class Controller {
 
                     // String chat Message
                     if (chatMessage instanceof ChatStringMessage chatStringMessage) {
-                        textField.setText(chatStringMessage.getMessage());
-                        vBox.getChildren().addAll(hBox2, textField, editedLabel);
+                        messageLabel.setText(chatStringMessage.getMessage());
+                        vBox.getChildren().addAll(hBox2, messageLabel, editedLabel);
                         MenuItem menuItemReactions = new MenuItem("Reactions");
                         MenuItem menuItemDeleteForMe = new MenuItem("Delete Message for me");
                         MenuItem menuItemDeleteForAll = new MenuItem("Delete Message for all");
@@ -1323,11 +1333,16 @@ public class Controller {
                         } else {
                             contextMenu.getItems().addAll(reactionMenuItem, menuItemReactions, menuItemDeleteForMe, menuItemDeleteForAll);
                         }
-                        textField.setContextMenu(contextMenu);
                     } /*else if (chatMessage instanceof FileChatMessage fileChatMessage) {
 
                     }*/
                     hBox.getChildren().addAll(avatarPic, vBox);
+                    hBox.setOnContextMenuRequested(new EventHandler<ContextMenuEvent>() {
+                        @Override
+                        public void handle(ContextMenuEvent contextMenuEvent) {
+                            contextMenu.show(hBox, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
+                        }
+                    });
 
                     setGraphic(hBox);
                 }
@@ -1583,7 +1598,7 @@ public class Controller {
 
     private void refreshTextChannels(Server server) {
         ObservableList<TextChannel> textChannelsObservableList = FXCollections.observableArrayList();
-        textChannelsListView.setStyle("-fx-background-color:  #2f3136");
+        textChannelsListView.setStyle("-fx-background-color: #2f3136");
         textChannelsObservableList.addAll(server.getTextChannels());
         textChannelsListView.setItems(textChannelsObservableList);
     }
@@ -1600,8 +1615,8 @@ public class Controller {
         ObservableList<Model> onlineMembersObservableList = FXCollections.observableArrayList();
         ObservableList<Model> offlineMembersObservableList = FXCollections.observableArrayList();
 
-        onlineMembersListView.setStyle("-fx-background-color:   #2f3136");
-        offlineMembersListView.setStyle("-fx-background-color:   #2f3136");
+        onlineMembersListView.setStyle("-fx-background-color: #2f3136");
+        offlineMembersListView.setStyle("-fx-background-color: #2f3136");
 
         int onlineCount = 0;
         int offlineCount = 0;

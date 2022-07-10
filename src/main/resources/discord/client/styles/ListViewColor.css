@@ -1,3 +1,33 @@
 .list-view .list-cell {
     -fx-background-color: #36393f;
 }
+
+.context-menu {
+    /*-fx-background-size: ;*/
+    -fx-background-color: #18191c;
+    -fx-background-radius: 8;
+    -fx-text-fill: white;
+    -fx-font-weight: BOLD;
+    -fx-padding: 10 10 10 10;
+}
+
+.menu-item:focused {
+    -fx-background: -fx-accent;
+    -fx-background-color: #4752c4;
+    -fx-background-radius: 2;
+    -fx-text-fill: white;
+    -fx-font-weight: BOLD;
+}
+
+.menu-item .label {
+    -fx-text-fill: #b9bbbe;
+    -fx-font-weight: BOLD;
+    /*-fx-background-radius: 10;*/
+}
+
+.menu-item:focused .label {
+    -fx-background-color: #4752c4;
+    -fx-background-radius: 10;
+    -fx-text-fill: white;
+    -fx-font-weight: BOLD;
+}
