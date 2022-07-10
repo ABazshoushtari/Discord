@@ -8,15 +8,14 @@ import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.HPos;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
@@ -505,15 +504,14 @@ public class Controller {
     // main page fields:
     @FXML
     private Rectangle discordLogo;
-
     @FXML
     private Circle mainPageAvatar;
-
     @FXML
     private Rectangle setting;
-
     @FXML
     private Label usernameLabel;
+    @FXML
+    TabPane theTabPane;
 
     // send a friend request:
     @FXML
@@ -546,6 +544,8 @@ public class Controller {
     private Label onlineCount;
 
     // direct messages
+    @FXML
+    private VBox friendsDMVBox;
     @FXML
     private ListView<Model> directMessagesListView;
 
@@ -626,7 +626,7 @@ public class Controller {
     }
 
     public void refreshFriends() throws IOException {
-        //if (allListView == null) return;
+        //if (allListView == null || onlineListView == null || directMessagesListView == null) return;
         refreshAll();
         refreshOnline();
         refreshDirectMessages();
@@ -646,8 +646,8 @@ public class Controller {
     }
 
     public void setUpdatedValuesForObservableLists() throws IOException {
-        refreshPending();
         refreshBlockedPeople();
+        refreshPending();
         refreshFriends();
         refreshServers();
     }
@@ -680,7 +680,17 @@ public class Controller {
 
         setUpdatedValuesForObservableLists();
 
-        //discord logo:
+        initializeMyProfile();
+
+        constructBlockedCells();
+        constructPendingCells();
+        constructAllFriendsCells();
+        constructOnlineFriendsCells();
+        constructDirectMessagesCells();
+        constructServersCells();
+    }
+
+    private void initializeMyProfile() throws IOException {
         discordLogo.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\discordLogo.jpg"))));
         setting.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\user setting.jpg"))));
 
@@ -688,8 +698,9 @@ public class Controller {
 
         usernameLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
         usernameLabel.setText(user.getUsername());
+    }
 
-        //construct blocked cells:
+    private void constructBlockedCells() {
         blockedListView.setCellFactory(blc -> new ListCell<>() {
             @Override
             protected void updateItem(Model model, boolean empty) {
@@ -719,8 +730,8 @@ public class Controller {
                     ColumnConstraints col1 = new ColumnConstraints(USE_PREF_SIZE, USE_COMPUTED_SIZE, USE_PREF_SIZE);
                     ColumnConstraints col2 = new ColumnConstraints(GridPane.USE_PREF_SIZE, 300, Double.MAX_VALUE);
                     ColumnConstraints col3 = new ColumnConstraints(GridPane.USE_PREF_SIZE, GridPane.USE_COMPUTED_SIZE, GridPane.USE_PREF_SIZE);
-                    ColumnConstraints col4 = new ColumnConstraints(GridPane.USE_PREF_SIZE, GridPane.USE_COMPUTED_SIZE, GridPane.USE_PREF_SIZE);
-                    gridPane.getColumnConstraints().addAll(col1, col2, col3, col4);
+
+                    gridPane.getColumnConstraints().addAll(col1, col2, col3);
 
                     gridPane.add(avatarPic, 0, 0, 1, GridPane.REMAINING);
                     gridPane.add(username, 1, 0, 1, 1);
@@ -764,8 +775,9 @@ public class Controller {
                 }
             }
         });
+    }
 
-        // construct pending cells:
+    private void constructPendingCells() {
         pendingListView.setCellFactory(frc -> new ListCell<>() {
             @Override
             protected void updateItem(Model model, boolean empty) {
@@ -863,8 +875,9 @@ public class Controller {
                 }
             }
         });
+    }
 
-        // construct all friends cells:
+    private void constructAllFriendsCells() {
         allListView.setCellFactory(fc -> new ListCell<>() {
             @Override
             protected void updateItem(Model model, boolean empty) {
@@ -957,8 +970,9 @@ public class Controller {
                 }
             }
         });
+    }
 
-        // construct online friends cells:
+    private void constructOnlineFriendsCells() {
         onlineListView.setCellFactory(ofc -> new ListCell<>() {
             @Override
             protected void updateItem(Model model, boolean empty) {
@@ -1049,8 +1063,9 @@ public class Controller {
                 }
             }
         });
+    }
 
-        // construct direct messages cells:
+    private void constructDirectMessagesCells() {
         directMessagesListView.setCellFactory(dmc -> new ListCell<>() {
             @Override
             protected void updateItem(Model model, boolean empty) {
@@ -1074,9 +1089,7 @@ public class Controller {
 
                     ColumnConstraints col1 = new ColumnConstraints(USE_PREF_SIZE, USE_COMPUTED_SIZE, USE_PREF_SIZE);
                     ColumnConstraints col2 = new ColumnConstraints(GridPane.USE_PREF_SIZE, 105, Double.MAX_VALUE);
-                    ColumnConstraints col3 = new ColumnConstraints(GridPane.USE_PREF_SIZE, GridPane.USE_COMPUTED_SIZE, GridPane.USE_PREF_SIZE);
-                    ColumnConstraints col4 = new ColumnConstraints(GridPane.USE_PREF_SIZE, GridPane.USE_COMPUTED_SIZE, GridPane.USE_PREF_SIZE);
-                    gridPane.getColumnConstraints().addAll(col1, col2, col3, col4);
+                    gridPane.getColumnConstraints().addAll(col1, col2);
 
                     gridPane.add(avatarPic, 0, 0, 1, GridPane.REMAINING);
                     gridPane.add(username, 1, 0, 1, 1);
@@ -1117,8 +1130,9 @@ public class Controller {
                 }
             }
         });
+    }
 
-        // construct servers cells:
+    private void constructServersCells() {
         serversListView.setCellFactory(sc -> new ListCell<>() {
             @Override
             protected void updateItem(Server server, boolean empty) {
@@ -1141,13 +1155,18 @@ public class Controller {
                         avatarPic.setFill(new ImagePattern(new Image(getAbsolutePath("requirements" + File.separator + "emojipng.com-11701703.png"))));
                     }
 
-                    avatarPic.setOnMouseClicked(mouseClickEvent -> enterServer(server.getUnicode()));
+                    avatarPic.setOnMouseClicked(mouseClickEvent -> {
+                        try {
+                            loadServer(server);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    });
 
                     setGraphic(avatarPic);
                 }
             }
         });
-
     }
 
     @FXML
@@ -1200,12 +1219,7 @@ public class Controller {
 
     @FXML
     void createNewServer(Event event) {
-        //loadScene(event, "");
-    }
-
-    @FXML
-    void enterServer(Integer unicode) {
-
+        loadScene(event, "CreateNewServerPage.fxml");
     }
 
     @FXML
@@ -1221,5 +1235,246 @@ public class Controller {
     @FXML
     void mouseExitedSetting(MouseEvent event) {
         setting.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\user setting.jpg"))));
+    }
+
+    @FXML
+    void loadHome() throws IOException {
+
+        textChannelsVBox.setVisible(false);
+        friendsDMVBox.setVisible(true);
+
+        serverBorderPane.setVisible(false);
+        theTabPane.setVisible(true);
+
+        initializeMainPage();
+    }
+
+    @FXML
+    void loadServer(Server server) throws IOException {
+
+        friendsDMVBox.setVisible(false);
+        textChannelsVBox.setVisible(true);
+
+        theTabPane.setVisible(false);
+        serverBorderPane.setVisible(true);
+
+        initializeServerPage(server);
+    }
+
+    //////////////////////////////////////////////////////////// create new server scene ->
+    @FXML
+    private Circle newServerAvatarImage;
+    @FXML
+    private TextField newServerNameTextField;
+
+    @FXML
+    void addServerImage(MouseEvent event) {
+
+    }
+
+    @FXML
+    void createServer(Event event) throws IOException {
+        String newServerName = newServerNameTextField.getText().trim();
+        if (!"".equals(newServerName)) {
+            mySocket.write(new CreateNewServerAction());
+            waiting();
+            Integer newUnicode = smartListener.getReceivedInteger();
+            Server newServer = new Server(newUnicode, newServerName, user.getUID());
+            mySocket.write(new AddNewServerToDatabaseAction(newServer));
+            //waiting();
+            user.getServers().add(newUnicode);
+            mySocket.write(new UpdateUserOnMainServerAction(user));
+            //waiting();
+            loadScene(event, "MainPage.fxml");
+            initializeMyProfile();
+            refreshServers();
+            constructServersCells();
+            loadServer(newServer);
+        }
+    }
+
+    private void initializeServerPage(Server server) throws IOException {
+        // set the variable in place
+        middlePartUpperLabel.setText(server.getServerName());
+
+        setUpdatedValuesForServerObservableLists(server, 0);
+
+        // construct text channels cells:
+        textChannelsListView.setCellFactory(tcc -> new ListCell<>() {
+            @Override
+            protected void updateItem(TextChannel textChannel, boolean empty) {
+
+                super.updateItem(textChannel, empty);
+                if (textChannel == null || empty) {
+                    setGraphic(null);
+                } else {
+
+                    // Variables (Controls; GUI components):
+                    Label textChannelName = new Label("# " + textChannel.getName());
+                    textChannelName.setPadding(new Insets(5, 5, 5, 5));
+
+                    textChannelName.setStyle("-fx-font-weight: bold");
+                    textChannelName.setStyle("-fx-font-size: 18");
+                    textChannelName.setStyle("-fx-text-fill: White");
+
+                    textChannelName.setOnMouseClicked(mouseClickEvent -> refreshTextChannelChat(textChannel));
+
+                    setGraphic(textChannelName);
+                }
+            }
+        });
+
+        // construct members cells:
+        onlineMembersListView.setCellFactory(mc -> new ListCell<>() {
+            @Override
+            protected void updateItem(Model model, boolean empty) {
+
+                super.updateItem(model, empty);
+                if (model == null || empty) {
+                    setGraphic(null);
+                } else {
+
+                    // Variables (Controls; GUI components):
+                    GridPane gridPane = new GridPane();
+                    Circle avatarPic = new Circle(20);
+                    Label username = new Label();
+                    Label status = new Label();
+
+                    username.setStyle("-fx-font-weight: bold");
+                    username.setStyle("-fx-font-size: 18");
+                    username.setStyle("-fx-text-fill: White");
+
+                    gridPane.setStyle("-fx-background-color: #2f3136");
+
+                    ColumnConstraints col1 = new ColumnConstraints(USE_PREF_SIZE, USE_COMPUTED_SIZE, USE_PREF_SIZE);
+                    ColumnConstraints col2 = new ColumnConstraints(GridPane.USE_PREF_SIZE, GridPane.USE_COMPUTED_SIZE, Double.MAX_VALUE);
+                    gridPane.getColumnConstraints().addAll(col1, col2);
+
+                    gridPane.add(avatarPic, 0, 0, 1, GridPane.REMAINING);
+                    gridPane.add(username, 1, 0, 1, 1);
+                    gridPane.add(status, 1, 1, 1, 1);
+
+                    gridPane.setHgap(8);
+
+                    gridPane.setMinHeight(GridPane.USE_COMPUTED_SIZE);
+                    gridPane.setPrefHeight(GridPane.USE_COMPUTED_SIZE);
+                    gridPane.setMaxHeight(GridPane.USE_COMPUTED_SIZE);
+
+                    gridPane.setMinWidth(GridPane.USE_COMPUTED_SIZE);
+                    gridPane.setPrefWidth(GridPane.USE_COMPUTED_SIZE);
+                    gridPane.setMaxWidth(GridPane.USE_COMPUTED_SIZE);
+
+                    GridPane.setHalignment(avatarPic, HPos.LEFT);
+                    GridPane.setHalignment(username, HPos.LEFT);
+
+                    try {
+                        avatarPic.setFill(new ImagePattern(readAvatarImage(model)));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        avatarPic.setFill(new ImagePattern(new Image(getAbsolutePath("requirements" + File.separator + "emojipng.com-11701703.png"))));
+                    }
+
+                    username.setText(model.getUsername());
+                    status.setText(model.getStatus().toString());
+                    switch (model.getStatus()) {
+                        case Online -> status.setTextFill(new Color(0.24, 0.64, 0.36, 1));
+                        case Idle -> status.setTextFill(new Color(0.98, 0.66, 0.1, 1));
+                        case DoNotDisturb -> status.setTextFill(new Color(0.85, 0.24, 0.24, 1));
+                        case Invisible -> status.setTextFill(new Color(0.4549, 0.498, 0.553, 1));
+                    }
+
+                    //gridPane.setOnMouseClicked(mouseClickEvent -> enterChat(model.getUID()));
+
+                    setGraphic(gridPane);
+                }
+            }
+        });
+    }
+
+    public void setUpdatedValuesForServerObservableLists(Server server, int textChannelIndex) throws IOException {
+        refreshTextChannels(server);
+        refreshTextChannelChat(server.getTextChannels().get(textChannelIndex));
+        refreshMembers(server);
+    }
+
+    private void refreshTextChannels(Server server) {
+        ObservableList<TextChannel> textChannelsObservableList = FXCollections.observableArrayList();
+        textChannelsListView.setStyle("-fx-background-color:  #2f3136");
+        textChannelsObservableList.addAll(server.getTextChannels());
+        textChannelsListView.setItems(textChannelsObservableList);
+    }
+
+    private void refreshTextChannelChat(TextChannel textChannel) {
+        ObservableList<TextChannelMessage> textChannelChatObservableList = FXCollections.observableArrayList();
+        textChannelChatListView.setStyle("-fx-background-color: #36393F");
+        textChannelChatObservableList.addAll(textChannel.getTextChannelMessages());
+        textChannelChatListView.setItems(textChannelChatObservableList);
+    }
+
+    private void refreshMembers(Server server) throws IOException {
+
+        ObservableList<Model> onlineMembersObservableList = FXCollections.observableArrayList();
+        ObservableList<Model> offlineMembersObservableList = FXCollections.observableArrayList();
+
+        onlineMembersListView.setStyle("-fx-background-color:   #2f3136");
+        offlineMembersListView.setStyle("-fx-background-color:   #2f3136");
+
+        int onlineCount = 0;
+        int offlineCount = 0;
+
+        for (Integer UID : server.getMembers().keySet()) {
+            mySocket.write(new GetUserFromMainServerAction(UID));
+            waiting();
+            Model member = smartListener.getReceivedUser();
+            if (member.getStatus() == Status.Invisible) {
+                offlineMembersObservableList.add(member);
+                offlineCount++;
+            } else {
+                onlineMembersObservableList.add(member);
+                onlineCount++;
+            }
+        }
+
+        onlineCountInServer.setText("Online - " + onlineCount);
+        onlineMembersListView.setItems(onlineMembersObservableList);
+
+        offlineCountInServer.setText("Offline - " + offlineCount);
+        offlineMembersListView.setItems(offlineMembersObservableList);
+    }
+
+    //////////////////////////////////////////////////////////// server scene of the main page->
+    // fields:
+    @FXML
+    private Button middlePartUpperLabel;
+    @FXML
+    private Label textChannelName;
+    @FXML
+    private VBox textChannelsVBox;
+    @FXML
+    private TextField textChannelMessage;
+    @FXML
+    private ListView<TextChannel> textChannelsListView;
+    @FXML
+    private ListView<TextChannelMessage> textChannelChatListView;
+    @FXML
+    private BorderPane serverBorderPane;
+    @FXML
+    private Label onlineCountInServer;
+    @FXML
+    private Label offlineCountInServer;
+    @FXML
+    private ListView<Model> onlineMembersListView;
+    @FXML
+    private ListView<Model> offlineMembersListView;
+
+    // server scene methods:
+    @FXML
+    void addNewTextChannel() {
+
+    }
+
+    @FXML
+    void sendFileOnTextChannel() {
+
     }
 }

@@ -35,6 +35,7 @@ public class SmartListener implements Runnable {
                         Platform.runLater(() -> {
                             try {
                                 controller.setUpdatedValuesForObservableLists();
+                                //controller.setUpdatedValuesForServerObservableLists();
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }

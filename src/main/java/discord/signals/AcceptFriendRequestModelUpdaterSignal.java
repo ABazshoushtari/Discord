@@ -12,7 +12,7 @@ public class AcceptFriendRequestModelUpdaterSignal extends ModelUpdaterSignal {
 
     @Override
     public Model getUpdatedModel() {
-        beingUpdatedModel.getFriends().add(acceptorUID);
+        beingUpdatedModel.addFriend(acceptorUID);
         return beingUpdatedModel;
     }
 }

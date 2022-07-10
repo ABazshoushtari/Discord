@@ -30,18 +30,8 @@ public class CheckFriendRequestsAction implements Action {
 
         if (accept) {
 
-            myUser.getFriends().add(requesterID);
-            requester.getFriends().add(myUID);
-
-            myUser.getIsInChat().put(requesterID, false);
-            myUser.getPrivateChats().put(requesterID, new ArrayList<>());
-            myUser.getUrlsOfPrivateChat().put(requesterID, new ArrayList<>());
-            myUser.getFilesOfPrivateChat().put(requesterID, new ArrayList<>());
-
-            requester.getIsInChat().put(myUID, false);
-            requester.getPrivateChats().put(myUID, new ArrayList<>());
-            requester.getUrlsOfPrivateChat().put(myUID, new ArrayList<>());
-            requester.getFilesOfPrivateChat().put(myUID, new ArrayList<>());
+            myUser.addFriend(requesterID);
+            requester.addFriend(myUID);
 
             for (ClientHandler ch : clientHandlers) {
                 if (ch.getUser() != null) {
