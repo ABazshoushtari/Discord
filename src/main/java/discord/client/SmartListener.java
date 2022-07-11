@@ -34,12 +34,27 @@ public class SmartListener implements Runnable {
                             controller.setUser(mus.getUpdatedModel());  // update receiver of the signal
                         }
 
+//                        try {
+//                            if (mus instanceof RespondFriendRequestModelUpdaterSignal respondFriendRequestModelUpdaterSignal) {
+//                                controller.getPendingObservableList().remove(respondFriendRequestModelUpdaterSignal.getAcceptorUID());
+//                            }
+//                        }
+//                        try {
+//                            switch (mus.getClass().getSimpleName()) {
+//                                case "RespondFriendRequestModelUpdaterSignal" -> {
+//
+//                                    controller.getPendingObservableList().remove();
+//                                }
+//                                case "ChatMessageSignal" -> controller.getChatMessageObservableList().add(((ChatMessageSignal) mus).getChatMessage());
+//                            }
+//                        }
+
                         Platform.runLater(() -> {
                             try {
                                 switch (mus.getClass().getSimpleName()) {
-
+                                    /*
                                     case "RelatedUserChangedSignal" -> controller.refreshEverything();  // odd(distinctive) signal
-
+                                    */
                                     case "RespondFriendRequestModelUpdaterSignal" -> {
                                         controller.refreshPending();
                                         controller.refreshFriends();
@@ -47,7 +62,7 @@ public class SmartListener implements Runnable {
                                     case "CancelFriendRequestModelUpdaterSignal",
                                             "FriendRequestModelUpdaterSignal" -> controller.refreshPending();
                                     case "LostAFriendModelUpdaterSignal" -> controller.refreshFriends();
-                                    case "ChatMessageSignal" -> controller.refreshPrivateChat();
+                                    case "ChatMessageSignal" -> controller.getChatMessageObservableList().add(((ChatMessageSignal) mus).getChatMessage());
                                     case "AddedToNewServerModelUpdaterSignal" -> controller.refreshServers();
                                 }
                             } catch (IOException e) {

@@ -16,4 +16,8 @@ public class ChatMessageSignal extends ModelUpdaterSignal {
         beingUpdatedModel.getPrivateChats().get(chatMessage.getSenderUID()).add(chatMessage);
         return beingUpdatedModel;
     }
+
+    public ChatMessage getChatMessage() {
+        return chatMessage;
+    }
 }

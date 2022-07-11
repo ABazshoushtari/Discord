@@ -1,6 +1,8 @@
 package discord.client;
 
 import discord.signals.*;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -41,14 +43,42 @@ public class Controller {
     private final SmartListener smartListener;
 
     // ObservableLists:
-    ObservableList<Model> blockedPeopleObservableList;
-    ObservableList<Model> pendingObservableList;
-    ObservableList<Model> allFriendsObservableList;
-    ObservableList<Model> onlineFriendsObservableList;
-    ObservableList<Model> directMessagesObservableList;
-    ObservableList<Server> serversObservableList;
+    private ObservableList<Model> blockedPeopleObservableList;
+    private ObservableList<Model> pendingObservableList;
+    private ObservableList<Model> allFriendsObservableList;
+    private ObservableList<Model> onlineFriendsObservableList;
+    private ObservableList<Model> directMessagesObservableList;
+    private ObservableList<Server> serversObservableList;
+    private ObservableList<ChatMessage> chatMessageObservableList;
 
-    ObservableList<ChatMessage> chatMessageObservableList;
+    // getters of ObservableLists:
+    public ObservableList<Model> getBlockedPeopleObservableList() {
+        return blockedPeopleObservableList;
+    }
+
+    public ObservableList<Model> getPendingObservableList() {
+        return pendingObservableList;
+    }
+
+    public ObservableList<Model> getAllFriendsObservableList() {
+        return allFriendsObservableList;
+    }
+
+    public ObservableList<Model> getOnlineFriendsObservableList() {
+        return onlineFriendsObservableList;
+    }
+
+    public ObservableList<Model> getDirectMessagesObservableList() {
+        return directMessagesObservableList;
+    }
+
+    public ObservableList<Server> getServersObservableList() {
+        return serversObservableList;
+    }
+
+    public ObservableList<ChatMessage> getChatMessageObservableList() {
+        return chatMessageObservableList;
+    }
 
     // the constructor:
     public Controller(MySocket mySocket) {
@@ -91,7 +121,8 @@ public class Controller {
 
     private void loadScene(Event event, String sceneName) {
         FXMLLoader loader = new FXMLLoader(getClass().getResource(sceneName));
-        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+//        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        Stage stage = App.getStage();
         try {
             loader.setController(this);
             Scene scene = new Scene(loader.load());
@@ -131,13 +162,13 @@ public class Controller {
         makeDirectory("cache");
         if (asset instanceof Model model) {
 
-            makeDirectory("cache" + File.separator + "User Profile Pictures");
-            makeDirectory("cache" + File.separator + "User Profile Pictures" + File.separator + model.getUID());
-            return "cache" + File.separator + "User Profile Pictures" + File.separator + model.getUID();
+            makeDirectory("cache" + File.separator + "user profile pictures");
+            makeDirectory("cache" + File.separator + "user profile pictures" + File.separator + model.getUID());
+            return "cache" + File.separator + "user profile pictures" + File.separator + model.getUID();
         } else if (asset instanceof Server server) {
-            makeDirectory("cache" + File.separator + "server Profile Pictures");
-            makeDirectory("cache" + File.separator + "server Profile Pictures" + File.separator + server.getUnicode());
-            return "cache" + File.separator + "server Profile Pictures" + File.separator + server.getUnicode();
+            makeDirectory("cache" + File.separator + "server profile pictures");
+            makeDirectory("cache" + File.separator + "server profile pictures" + File.separator + server.getUnicode());
+            return "cache" + File.separator + "server profile pictures" + File.separator + server.getUnicode();
         }
         return null;
     }
@@ -148,10 +179,11 @@ public class Controller {
         }
         String directory = getAvatarImageCachePath(asset);
         FileOutputStream fos = new FileOutputStream(directory + File.separator + asset.getID() + "." + asset.getAvatarContentType());
-        FileInputStream fis = new FileInputStream(directory + File.separator + asset.getID() + "." + asset.getAvatarContentType());
         fos.write(asset.getAvatarImage());
-        Image avatarImage = new Image(fis);
+        fos.flush();
         fos.close();
+        FileInputStream fis = new FileInputStream(directory + File.separator + asset.getID() + "." + asset.getAvatarContentType());
+        Image avatarImage = new Image(fis);
         fis.close();
         return avatarImage;
     }
@@ -468,7 +500,8 @@ public class Controller {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select a profile pic");
         fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("All Images", "*.jpg", "*.jpeg", "*.png"), new FileChooser.ExtensionFilter("JPG", "*.jpg", "*.jpeg"), new FileChooser.ExtensionFilter("PNG", "*.png"));
-        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+//        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        Stage stage = App.getStage();
         File selectedFile = fileChooser.showOpenDialog(stage);
         if (selectedFile == null) {
             return;
@@ -490,6 +523,7 @@ public class Controller {
              FileInputStream fileInputStream = new FileInputStream(selectedFile)) {
             user.setAvatarImage(fileInputStream.readAllBytes());
             fileOutputStream.write(user.getAvatarImage());
+            fileOutputStream.flush();
         }
         writeAndWait(new UpdateUserOnMainServerAction(user));
     }
@@ -691,6 +725,14 @@ public class Controller {
         constructOnlineOrAllCells(onlineListView);
         constructDirectMessagesCells();
         constructServersCells();
+
+//        directMessagesListView.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Model>() {
+//            @Override
+//            public void changed(ObservableValue<? extends Model> observableValue, Model oldValue, Model newValue) {
+//                currentFriendDM = newValue.getUID();
+//                enterChat(newValue.getUsername());
+//            }
+//        });
 
         constructChatMessagesCells();
     }
@@ -1366,10 +1408,10 @@ public class Controller {
         Integer friendUID = (Integer) textField.getUserData();
         ChatStringMessage chatStringMessage = new ChatStringMessage(user.getUID(), friendUID, textField.getText());
 
-        if (chatMessageObservableList == null) {
-            currentFriendDM = friendUID;
-            refreshPrivateChat();
-        }
+//        if (chatMessageObservableList == null) {
+//            currentFriendDM = friendUID;
+//            refreshPrivateChat();
+//        }
 
         user.getPrivateChats().get(friendUID).add(chatStringMessage);
 //        refreshPrivateChat();

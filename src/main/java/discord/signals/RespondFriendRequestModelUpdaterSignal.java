@@ -20,4 +20,11 @@ public class RespondFriendRequestModelUpdaterSignal extends ModelUpdaterSignal {
         beingUpdatedModel.getSentFriendRequests().remove(acceptorUID);
         return beingUpdatedModel;
     }
+
+    public Integer getAcceptorUID() {
+        return acceptorUID;
+    }
+    public boolean isAccept() {
+        return accept;
+    }
 }
