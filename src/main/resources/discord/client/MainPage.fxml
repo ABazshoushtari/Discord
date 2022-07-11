@@ -25,7 +25,7 @@
    <center>
       <StackPane maxWidth="1.7976931348623157E308" prefWidth="714.0" style="-fx-background-color: #36393F;" BorderPane.alignment="CENTER">
          <children>
-            <TabPane fx:id="theTabPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #36393F;" stylesheets="@styles/TabPaneStyle.css" tabClosingPolicy="UNAVAILABLE" tabMinWidth="68.0" visible="false">
+            <TabPane fx:id="theTabPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #36393F;" stylesheets="@styles/TabPaneStyle.css" tabClosingPolicy="UNAVAILABLE" tabMinWidth="68.0">
                <tabs>
                   <Tab disable="true" text="Friends" />
                   <Tab text="Online">
@@ -264,7 +264,7 @@
                   <Insets bottom="10.0" top="10.0" />
                </padding>
             </GridPane>
-            <BorderPane fx:id="serverBorderPane" maxWidth="1.7976931348623157E308">
+            <BorderPane fx:id="serverBorderPane" maxWidth="1.7976931348623157E308" visible="false">
                <center>
                   <GridPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #36393F;" vgap="5.0" BorderPane.alignment="CENTER">
                      <columnConstraints>

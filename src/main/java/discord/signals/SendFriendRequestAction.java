@@ -39,7 +39,9 @@ public class SendFriendRequestAction implements Action {
             requesterUser.getSentFriendRequests().add(requesterUID);
 
             receiverUser.getIncomingFriendRequests().add(requesterUID);
-            MainServer.updateDatabaseAndMainServer(receiverUser);
+
+            MainServer.getUsers().replace(requesterUID, requesterUser);
+            MainServer.updateDatabase(receiverUser);
 
             for (ClientHandler ch : clientHandlers) {
                 if (ch.getUser() != null) {

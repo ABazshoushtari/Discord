@@ -63,6 +63,11 @@ public class Controller {
     }
 
     // some useful universal methods:
+    private void writeAndWait(Action action) throws IOException {
+        mySocket.write(action);
+        waiting();
+    }
+
     private void waiting() {
         synchronized (this) {
             try {
@@ -144,8 +149,7 @@ public class Controller {
         String usernameField = usernameOnLoginMenu.getText();
         String passwordField = passwordOnLoginMenu.getText();
         if (!"".equals(usernameField.trim()) && !"".equals(passwordField.trim())) {
-            mySocket.write(new LoginAction(usernameField, passwordField));
-            waiting();
+            writeAndWait(new LoginAction(usernameField, passwordField));
             user = smartListener.getReceivedUser();
             if (user == null) {
                 loginErrorMessage.setText("A username by this password could not be found!");
@@ -218,8 +222,7 @@ public class Controller {
 
             // validating username
             signupAction.setUsername(usernameOnSignupMenu.getText());
-            mySocket.write(signupAction);
-            waiting();
+            writeAndWait(signupAction);
             Boolean success = smartListener.getReceivedBoolean();
             if (success == null) {
                 signupErrorMessage.setText("This username is already taken!");
@@ -233,8 +236,7 @@ public class Controller {
 
             // validating password
             signupAction.setPassword(passwordField);
-            mySocket.write(signupAction);
-            waiting();
+            writeAndWait(signupAction);
             if (!smartListener.getReceivedBoolean()) {
                 signupErrorMessage.setText("Invalid password format!");
                 conditionMessage1.setText("A password should consist of only English letters/numbers and be of a minimal length of 8");
@@ -244,8 +246,7 @@ public class Controller {
 
             // validating email
             signupAction.setEmail(emailField);
-            mySocket.write(signupAction);
-            waiting();
+            writeAndWait(signupAction);
             if (!smartListener.getReceivedBoolean()) {
                 signupErrorMessage.setText("Invalid email format!");
                 return;
@@ -253,13 +254,11 @@ public class Controller {
 
             // no phone number is taken from the user at first
             signupAction.setPhoneNumber("");
-            mySocket.write(signupAction);
-            waiting();
+            writeAndWait(signupAction);
             // a true is stored in receivedBoolean of the smart listener
 
             signupAction.finalizeStage();
-            mySocket.write(signupAction);
-            //waiting();
+            writeAndWait(signupAction);
             //user = smartListener.getReceivedUser();     // we can get the signed-up user here but ignore for now
             loadLoginMenu(event);
             //loadProfilePage(event);
@@ -329,8 +328,7 @@ public class Controller {
 
                 boolean validUsername;
                 if (!user.getUsername().equals(profileUsername.getText())) {
-                    mySocket.write(changeInfoAction);
-                    waiting();
+                    writeAndWait(changeInfoAction);
                     if (smartListener.getReceivedBoolean() == null) {
                         editErrorMessage.setText("This username is taken!");
                         return;
@@ -342,15 +340,13 @@ public class Controller {
                 }
 
                 changeInfoAction.setEmail(profileEmail.getText());
-                mySocket.write(changeInfoAction);
-                waiting();
+                writeAndWait(changeInfoAction);
                 boolean validEmail = smartListener.getReceivedBoolean();
 
                 changeInfoAction.setUsername(profilePhoneNumber.getText());
                 String emptyMessage = "You haven't added a phone number yet.";
                 boolean empty = profilePhoneNumber.getText().equals(emptyMessage) || profilePhoneNumber.getText().trim().equals("");
-                mySocket.write(changeInfoAction);
-                waiting();
+                writeAndWait(changeInfoAction);
                 boolean validPhoneNumber = smartListener.getReceivedBoolean() || empty;
 
                 if (!validUsername) {
@@ -377,7 +373,7 @@ public class Controller {
                     if (empty) {
                         profilePhoneNumber.setText("You haven't added a phone number yet.");
                     }
-                    mySocket.write(new UpdateUserOnMainServerAction(user, oldUsername));
+                    writeAndWait(new UpdateUserOnMainServerAction(user, oldUsername));
                 }
             }
         }
@@ -408,12 +404,11 @@ public class Controller {
         String newPassword = newPasswordTextField.getText().trim();
         SignUpOrChangeInfoAction changeInfoAction = new SignUpOrChangeInfoAction(user.getUsername());
         changeInfoAction.setPassword(newPassword);
-        mySocket.write(changeInfoAction);
-        waiting();
+        writeAndWait(changeInfoAction);
         if (smartListener.getReceivedBoolean()) {
             doneWithPasswordChange();
             user.setPassword(newPassword);
-            mySocket.write(new UpdateUserOnMainServerAction(user));
+            writeAndWait(new UpdateUserOnMainServerAction(user));
         } else {
             profileErrorMessage.setVisible(true);
             profileErrorMessage.setText("Invalid format!");
@@ -437,7 +432,7 @@ public class Controller {
         user.setPreviousSetStatus(user.getStatus());
         setStatusColor(user.getStatus());
         changeStatusMenu.setVisible(false);
-        mySocket.write(new UpdateUserOnMainServerAction(user));
+        writeAndWait(new UpdateUserOnMainServerAction(user));
     }
 
     @FXML
@@ -468,14 +463,14 @@ public class Controller {
             user.setAvatarImage(fileInputStream.readAllBytes());
             fileOutputStream.write(user.getAvatarImage());
         }
-        mySocket.write(new UpdateUserOnMainServerAction(user));
+        writeAndWait(new UpdateUserOnMainServerAction(user));
     }
 
     @FXML
     void removeAvatar() throws IOException {
         avatar.setFill(new Color(0.125, 0.13, 0, 0.145));
         user.setAvatarImage(null);
-        mySocket.write(new UpdateUserOnMainServerAction(user));
+        writeAndWait(new UpdateUserOnMainServerAction(user));
     }
 
     @FXML
@@ -486,7 +481,7 @@ public class Controller {
 
     @FXML
     void logout(Event event) throws IOException {
-        mySocket.write(new LogoutAction());
+        mySocket.write(new LogoutAction());     // log out is the ONLY action that doesn't need waiting
         user = null;
         loadLoginMenu(event);
     }
@@ -560,8 +555,7 @@ public class Controller {
         ObservableList<Model> blockedPeopleObservableList = FXCollections.observableArrayList();
         blockedListView.setStyle("-fx-background-color: #36393f");
         for (Integer UID : user.getBlockedList()) {
-            mySocket.write(new GetUserFromMainServerAction(UID));
-            waiting();
+            writeAndWait(new GetUserFromMainServerAction(UID));
             Model blockedUser = smartListener.getReceivedUser();
             blockedPeopleObservableList.add(blockedUser);
         }
@@ -577,16 +571,14 @@ public class Controller {
 
         // sent requests
         for (Integer UID : user.getSentFriendRequests()) {
-            mySocket.write(new GetUserFromMainServerAction(UID));
-            waiting();
+            writeAndWait(new GetUserFromMainServerAction(UID));
             Model user = smartListener.getReceivedUser();
             pendingObservableList.add((user));
         }
 
         // incoming requests
         for (Integer UID : user.getIncomingFriendRequests()) {
-            mySocket.write(new GetUserFromMainServerAction(UID));
-            waiting();
+            writeAndWait(new GetUserFromMainServerAction(UID));
             Model user = smartListener.getReceivedUser();
             pendingObservableList.add(user);
         }
@@ -598,8 +590,7 @@ public class Controller {
         ObservableList<Model> allFriendsObservableList = FXCollections.observableArrayList();
         allListView.setStyle("-fx-background-color: #36393f");
         for (Integer UID : user.getFriends()) {
-            mySocket.write(new GetUserFromMainServerAction(UID));
-            waiting();
+            writeAndWait(new GetUserFromMainServerAction(UID));
             Model friend = smartListener.getReceivedUser();
             allFriendsObservableList.add(friend);
         }
@@ -612,8 +603,7 @@ public class Controller {
         onlineListView.setStyle("-fx-background-color: #36393f");
         int onlineFriendsCount = 0;
         for (Integer UID : user.getFriends()) {
-            mySocket.write(new GetUserFromMainServerAction(UID));
-            waiting();
+            writeAndWait(new GetUserFromMainServerAction(UID));
             Model friend = smartListener.getReceivedUser();
             if (friend.getStatus() != Status.Invisible) {
                 onlineFriendsObservableList.add(friend);
@@ -628,8 +618,7 @@ public class Controller {
         ObservableList<Model> directMessagesObservableList = FXCollections.observableArrayList();
         directMessagesListView.setStyle("-fx-background-color: #2f3136");
         for (Integer UID : user.getFriends()) {
-            mySocket.write(new GetUserFromMainServerAction(UID));
-            waiting();
+            writeAndWait(new GetUserFromMainServerAction(UID));
             Model friend = smartListener.getReceivedUser();
             directMessagesObservableList.add(friend);
         }
@@ -647,8 +636,7 @@ public class Controller {
         ObservableList<Server> serversObservableList = FXCollections.observableArrayList();
         serversListView.setStyle("-fx-background-color: #202225");
         for (Integer unicode : user.getServers()) {
-            mySocket.write(new GetServerFromMainServerAction(unicode));
-            waiting();
+            writeAndWait(new GetServerFromMainServerAction(unicode));
             Server server = smartListener.getReceivedServer();
             serversObservableList.add(server);
         }
@@ -782,7 +770,7 @@ public class Controller {
                     unblockButton.setOnAction(actionEvent -> {
                         user.getBlockedList().remove(model.getUID());
                         try {
-                            mySocket.write(new UpdateUserOnMainServerAction(user));
+                            writeAndWait(new UpdateUserOnMainServerAction(user));
                             setUpdatedValuesForObservableLists();
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -876,8 +864,7 @@ public class Controller {
                         Integer UID = model.getUID();
                         int index = user.getIncomingFriendRequests().indexOf(UID);
                         try {
-                            mySocket.write(new CheckFriendRequestsAction(user.getUID(), index, true));
-                            waiting();
+                            writeAndWait(new CheckFriendRequestsAction(user.getUID(), index, true));
                             user = smartListener.getReceivedUser();
                             setUpdatedValuesForObservableLists();
                         } catch (IOException e) {
@@ -889,8 +876,7 @@ public class Controller {
                         ignoreOrCancelButton.setOnAction(actionEvent -> {
                             int index = user.getIncomingFriendRequests().indexOf(model.getUID());
                             try {
-                                mySocket.write(new CheckFriendRequestsAction(user.getUID(), index, false));
-                                waiting();
+                                writeAndWait(new CheckFriendRequestsAction(user.getUID(), index, false));
                                 user = smartListener.getReceivedUser();
                                 setUpdatedValuesForObservableLists();
                             } catch (IOException e) {
@@ -901,7 +887,7 @@ public class Controller {
                         ignoreOrCancelButton.setOnAction(actionEvent -> {
                             try {
                                 user.getSentFriendRequests().remove(model.getUID());
-                                mySocket.write(new CancelSentFriendRequestAction(user.getUID(), model.getUID()));
+                                writeAndWait(new CancelSentFriendRequestAction(user.getUID(), model.getUID()));
                                 setUpdatedValuesForObservableLists();
                             } catch (IOException e) {
                                 e.printStackTrace();
@@ -989,8 +975,7 @@ public class Controller {
                         // finglish: in model mal hamun listView hastesh ke az tush remove ro zadim, be hamin khater doroste ama baraye un yeki listView ok nist
                         user.removeFriend(model.getUID());
                         try {
-                            mySocket.write(new RemoveFriendAction(user.getUID(), model.getUID()));
-                            //waiting();
+                            writeAndWait(new RemoveFriendAction(user.getUID(), model.getUID()));
                             setUpdatedValuesForObservableLists();
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -1171,8 +1156,7 @@ public class Controller {
 
                     Model sender = null;
                     try {
-                        mySocket.write(new GetUserFromMainServerAction(chatMessage.getSenderUID()));
-                        waiting();
+                        writeAndWait(new GetUserFromMainServerAction(chatMessage.getSenderUID()));
                         sender = smartListener.getReceivedUser();
                         if (sender == null) {
                             return;
@@ -1226,8 +1210,7 @@ public class Controller {
     @FXML
     void sendFriendRequest(ActionEvent event) throws IOException {
         String receivedUsername = friendRequestTextField.getText().trim();
-        mySocket.write(new GetUIDbyUsernameAction(receivedUsername));
-        waiting();
+        writeAndWait(new GetUIDbyUsernameAction(receivedUsername));
         Integer friendUID = smartListener.getReceivedInteger();
         successOrError.setStyle("-fx-text-fill: #E38082");
         if (friendUID == null) {
@@ -1247,8 +1230,7 @@ public class Controller {
                 successOrError.setText("Check your pending friend requests! :)");
                 return;
             }
-            mySocket.write(new SendFriendRequestAction(user.getUsername(), receivedUsername));
-            waiting();
+            writeAndWait(new SendFriendRequestAction(user.getUsername(), receivedUsername));
             Integer scenario = smartListener.getReceivedInteger();
             switch (scenario) {
                 case -1 -> successOrError.setText("A user by this username was not found!");
@@ -1258,7 +1240,7 @@ public class Controller {
                     successOrError.setStyle("-fx-text-fill: #46C46E");
                     successOrError.setText("The request was sent successfully");
                     user.getSentFriendRequests().add(scenario);
-                    mySocket.write(new UpdateUserOnMainServerAction(user));
+                    writeAndWait(new UpdateUserOnMainServerAction(user));
                 }
             }
             refreshPending();
@@ -1354,15 +1336,12 @@ public class Controller {
     void createServer(Event event) throws IOException {
         String newServerName = newServerNameTextField.getText().trim();
         if (!"".equals(newServerName)) {
-            mySocket.write(new CreateNewServerAction());
-            waiting();
+            writeAndWait(new CreateNewServerAction());
             Integer newUnicode = smartListener.getReceivedInteger();
             Server newServer = new Server(newUnicode, newServerName, user.getUID());
-            mySocket.write(new AddNewServerToDatabaseAction(newServer));
-            //waiting();
+            writeAndWait(new AddNewServerToDatabaseAction(newServer));
             user.getServers().add(newUnicode);
-            mySocket.write(new UpdateUserOnMainServerAction(user));
-            //waiting();
+            writeAndWait(new UpdateUserOnMainServerAction(user));
             loadScene(event, "MainPage.fxml");
             initializeMyProfile();
             refreshServers();
@@ -1414,8 +1393,7 @@ public class Controller {
         int offlineCount = 0;
 
         for (Integer UID : server.getMembers().keySet()) {
-            mySocket.write(new GetUserFromMainServerAction(UID));
-            waiting();
+            writeAndWait(new GetUserFromMainServerAction(UID));
             Model member = smartListener.getReceivedUser();
             if (member.getStatus() == Status.Invisible) {
                 offlineMembersObservableList.add(member);

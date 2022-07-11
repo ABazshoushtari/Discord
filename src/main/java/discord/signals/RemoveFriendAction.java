@@ -32,8 +32,12 @@ public class RemoveFriendAction implements Action {
                 }
             }
         }
-        MainServer.updateDatabaseAndMainServer(remover);
-        MainServer.updateDatabaseAndMainServer(beingRemoved);
+
+        MainServer.getUsers().replace(removerUID, remover);
+        MainServer.updateDatabase(remover);
+
+        MainServer.getUsers().replace(beingRemovedUID, beingRemoved);
+        MainServer.updateDatabase(beingRemoved);
         return null;
     }
 }

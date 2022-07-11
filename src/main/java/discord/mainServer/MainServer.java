@@ -135,22 +135,22 @@ public class MainServer {
     public static void signUpUser(Model newUser) {
         IDs.put(newUser.getUsername(), newUser.getUID());
         users.put(newUser.getUID(), newUser);
-        updateDatabaseAndMainServer(newUser);
+        updateDatabase(newUser);
     }
 
-    public static <Type extends Asset> void updateDatabaseAndMainServer(Type asset) {
+    public static <Type extends Asset> void updateDatabase(Type asset) {
         FileOutputStream fileOut = null;
         ObjectOutputStream out = null;
         try {
             String path = "assets\\";
             String identification = "";
             if (asset instanceof Model model) {
-                users.replace(model.getUID(), model);
+                //users.replace(model.getUID(), model);
                 identification = model.getUID() + "";
                 path = path.concat("users");
             }
             if (asset instanceof Server server) {
-                servers.replace(server.getUnicode(), server);
+                //servers.replace(server.getUnicode(), server);
                 identification = server.getUnicode() + "";
                 path = path.concat("servers");
             }

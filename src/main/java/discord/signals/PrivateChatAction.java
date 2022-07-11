@@ -114,8 +114,11 @@ public class PrivateChatAction implements Action {
 //            senderUser.getPrivateChats().get(receiverID).add(message);
 //            receiverUser.getPrivateChats().get(senderID).add(message);
 
-            MainServer.updateDatabaseAndMainServer(senderUser);
-            MainServer.updateDatabaseAndMainServer(receiverUser);
+            MainServer.getUsers().replace(senderID, senderUser);
+            MainServer.updateDatabase(senderUser);
+
+            MainServer.getUsers().replace(receiverID, receiverUser);
+            MainServer.updateDatabase(receiverUser);
 
             // sending message from socket if the receiver is online and in the private chat
             for (ClientHandler c : clientHandlers) {

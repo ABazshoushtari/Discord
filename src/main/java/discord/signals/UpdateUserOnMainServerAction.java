@@ -32,7 +32,8 @@ public class UpdateUserOnMainServerAction implements Action {
 
         ClientHandler.informRelatedPeople(updatedMe);
 
-        MainServer.updateDatabaseAndMainServer(updatedMe);
+        MainServer.getUsers().replace(updatedMe.getID(), updatedMe);
+        MainServer.updateDatabase(updatedMe);
 
         return null;
     }

@@ -80,7 +80,9 @@ public class ClientHandler implements Runnable {
     private void handleQuit() throws IOException {
         user.setStatus(Status.Invisible);
         informRelatedPeople(user);
-        MainServer.updateDatabaseAndMainServer(user);
+
+        MainServer.getUsers().replace(user.getUID(), user);
+        MainServer.updateDatabase(user);
     }
 
     public static void informRelatedPeople(Model updatedMe) throws IOException {

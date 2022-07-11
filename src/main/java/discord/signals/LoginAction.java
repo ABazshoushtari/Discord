@@ -17,19 +17,20 @@ public class LoginAction implements Action {
 
     @Override
     public Object act() throws IOException {
-        Integer UID = MainServer.getIDs().get(username);
-        if (UID == null) {
+        Integer myUID = MainServer.getIDs().get(username);
+        if (myUID == null) {
             return null;
         }
-        if (!MainServer.getUsers().containsKey(UID)) {
+        if (!MainServer.getUsers().containsKey(myUID)) {
             return null;
-        } else if (!MainServer.getUsers().get(UID).getPassword().equals(password)) {
+        } else if (!MainServer.getUsers().get(myUID).getPassword().equals(password)) {
             return null;
         } else {
-            Model me = MainServer.getUsers().get(UID);
+            Model me = MainServer.getUsers().get(myUID);
             me.setStatus(me.getPreviousSetStatus());
 
-            MainServer.updateDatabaseAndMainServer(me);
+            MainServer.getUsers().replace(myUID, me);
+            MainServer.updateDatabase(me);
 
             ClientHandler.informRelatedPeople(me);
 
