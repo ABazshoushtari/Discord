@@ -3,6 +3,7 @@ package discord.client;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 public class Model implements Asset {
@@ -177,6 +178,22 @@ public class Model implements Asset {
         privateChats.remove(lostFriendUID);
         urlsOfPrivateChat.remove(lostFriendUID);
         filesOfPrivateChat.remove(lostFriendUID);
+    }
+
+    public void enterPrivateChat(Integer friendUID) {
+        for (Integer current : isInChat.keySet()) {
+            if (current.equals(friendUID)) {
+                isInChat.replace(current, true);
+                continue;
+            }
+            isInChat.replace(current, false);  // make other isInChats false
+        }
+    }
+
+    public void makeAllIsInChatsFalse() {
+        for (Integer current : isInChat.keySet()) {
+            isInChat.replace(current, false);
+        }
     }
 
     public String toString() {

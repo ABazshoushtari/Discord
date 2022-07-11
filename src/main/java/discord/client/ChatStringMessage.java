@@ -1,5 +1,13 @@
 package discord.client;
 
+import discord.mainServer.ClientHandler;
+import discord.mainServer.MainServer;
+import discord.signals.ChatMessageSignal;
+
+import java.io.IOException;
+
+import static discord.mainServer.ClientHandler.clientHandlers;
+
 public class ChatStringMessage extends ChatMessage {
     // Fields:
     /* inherited fields:
@@ -27,4 +35,37 @@ public class ChatStringMessage extends ChatMessage {
     }
 
     // Other Methods:
+    @Override
+    public Object act() throws IOException {
+
+        Model senderUser = MainServer.getUsers().get(senderUID);
+        Model receiverUser = MainServer.getUsers().get(receiverUID);
+
+        senderUser.getPrivateChats().get(receiverUID).add(this);
+        receiverUser.getPrivateChats().get(senderUID).add(this);
+
+        MainServer.getUsers().replace(senderUID, senderUser);
+        MainServer.getUsers().replace(receiverUID, receiverUser);
+
+        MainServer.updateDatabase(senderUser);
+        MainServer.updateDatabase(receiverUser);
+
+        for (ClientHandler ch : clientHandlers) {
+            Model user = ch.getUser();
+            if (user != null) {
+                if (receiverUID.equals(user.getUID())) {
+
+                    user = MainServer.getUsers().get(receiverUID);  //userOfClientHandler.getUID()
+
+                    if (user.getIsInChat().get(senderUID)) {
+                        synchronized (ch.getMySocket()) {
+                            ch.getMySocket().write(new ChatMessageSignal(this));
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
 }

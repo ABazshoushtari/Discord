@@ -34,6 +34,7 @@ public class Controller {
 
     // backend fields:
     private Model user;
+    private Integer currentFriendDM;
     private Server currentServer;
     private TextChannel currentTextChannel;
     private final MySocket mySocket;
@@ -163,6 +164,10 @@ public class Controller {
     }
 
     private void loadProfilePage(Event event) throws IOException {
+
+        user.getIsInChat().replace(currentFriendDM, false);
+        writeAndWait(new UpdateUserOnMainServerAction(user));
+
         loadScene(event, "ProfilePage.fxml");
         avatar.setFill(new ImagePattern(readAvatarImage(user)));
         profileUsername.setText(user.getUsername());
@@ -491,6 +496,8 @@ public class Controller {
     @FXML
     private TabPane theTabPane;
     @FXML
+    private Label friendsLabel;
+    @FXML
     private GridPane directMessageGridPane;
     @FXML
     private Rectangle discordLogo;
@@ -536,8 +543,6 @@ public class Controller {
     private TextField sendMessageTextField;
     @FXML
     private ListView<ChatMessage> chatMessagesListView;
-
-    private ObservableList<ChatMessage> chatMessageObservableList;
 
     // direct messages
     @FXML
@@ -632,7 +637,6 @@ public class Controller {
     }
 
     public void refreshServers() throws IOException {
-        //if (serversListView == null) return;
         ObservableList<Server> serversObservableList = FXCollections.observableArrayList();
         serversListView.setStyle("-fx-background-color: #202225");
         for (Integer unicode : user.getServers()) {
@@ -643,40 +647,16 @@ public class Controller {
         serversListView.setItems(serversObservableList);
     }
 
-    public void setUpdatedValuesForObservableLists() throws IOException {
+    public void refreshEverything() throws IOException {
         refreshBlockedPeople();
         refreshPending();
         refreshFriends();
         refreshServers();
     }
 
-    /*private GridPane getTabGridPane(int col2Width) {
-
-        GridPane gridPane = new GridPane();
-
-        gridPane.setStyle("-fx-background-color:  #36393f");
-
-        ColumnConstraints col1 = new ColumnConstraints(USE_PREF_SIZE, USE_COMPUTED_SIZE, USE_PREF_SIZE);
-        ColumnConstraints col2 = new ColumnConstraints(GridPane.USE_PREF_SIZE, col2Width, Double.MAX_VALUE);
-        ColumnConstraints col3 = new ColumnConstraints(GridPane.USE_PREF_SIZE, GridPane.USE_COMPUTED_SIZE, GridPane.USE_PREF_SIZE);
-        ColumnConstraints col4 = new ColumnConstraints(GridPane.USE_PREF_SIZE, GridPane.USE_COMPUTED_SIZE, GridPane.USE_PREF_SIZE);
-        gridPane.getColumnConstraints().addAll(col1, col2, col3, col4);
-        gridPane.setHgap(8);
-
-        gridPane.setMinHeight(GridPane.USE_COMPUTED_SIZE);
-        gridPane.setPrefHeight(GridPane.USE_COMPUTED_SIZE);
-        gridPane.setMaxHeight(GridPane.USE_COMPUTED_SIZE);
-
-        gridPane.setMinWidth(GridPane.USE_COMPUTED_SIZE);
-        gridPane.setPrefWidth(GridPane.USE_COMPUTED_SIZE);
-        gridPane.setMaxWidth(Double.MAX_VALUE);
-
-        return gridPane;
-    }*/
-
     public void initializeMainPage() throws IOException {
 
-        setUpdatedValuesForObservableLists();
+        refreshEverything();
 
         initializeMyProfile();
 
@@ -686,7 +666,8 @@ public class Controller {
         constructOnlineOrAllCells(onlineListView);
         constructDirectMessagesCells();
         constructServersCells();
-        constructChatMessagesCells();
+
+        //constructChatMessagesCells();
     }
 
     private void initializeMyProfile() throws IOException {
@@ -771,7 +752,7 @@ public class Controller {
                         user.getBlockedList().remove(model.getUID());
                         try {
                             writeAndWait(new UpdateUserOnMainServerAction(user));
-                            setUpdatedValuesForObservableLists();
+                            refreshEverything();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -866,7 +847,7 @@ public class Controller {
                         try {
                             writeAndWait(new CheckFriendRequestsAction(user.getUID(), index, true));
                             user = smartListener.getReceivedUser();
-                            setUpdatedValuesForObservableLists();
+                            refreshEverything();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -878,7 +859,7 @@ public class Controller {
                             try {
                                 writeAndWait(new CheckFriendRequestsAction(user.getUID(), index, false));
                                 user = smartListener.getReceivedUser();
-                                setUpdatedValuesForObservableLists();
+                                refreshEverything();
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
@@ -888,7 +869,7 @@ public class Controller {
                             try {
                                 user.getSentFriendRequests().remove(model.getUID());
                                 writeAndWait(new CancelSentFriendRequestAction(user.getUID(), model.getUID()));
-                                setUpdatedValuesForObservableLists();
+                                refreshEverything();
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
@@ -976,7 +957,7 @@ public class Controller {
                         user.removeFriend(model.getUID());
                         try {
                             writeAndWait(new RemoveFriendAction(user.getUID(), model.getUID()));
-                            setUpdatedValuesForObservableLists();
+                            refreshEverything();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -1074,13 +1055,13 @@ public class Controller {
 
                     // css styles
                     hBox.setStyle("-fx-background-color: #36393F");
-                    hBox.setOnMouseEntered(new EventHandler<MouseEvent>() {
+                    hBox.setOnMouseEntered(new EventHandler<>() {
                         @Override
                         public void handle(MouseEvent mouseEvent) {
                             hBox.setStyle("-fx-background-color: #32353b");
                         }
                     });
-                    hBox.setOnMouseExited(new EventHandler<MouseEvent>() {
+                    hBox.setOnMouseExited(new EventHandler<>() {
                         @Override
                         public void handle(MouseEvent mouseEvent) {
                             hBox.setStyle("-fx-background-color: #36393F");
@@ -1127,7 +1108,7 @@ public class Controller {
 
                     //reactionsMenuItem:
                     laughReaction.setFill(new ImagePattern(new Image(getAbsolutePath("requirements" + File.separator + "laugh emoji.png"))));
-                    laughReaction.setOnMouseClicked(new EventHandler<MouseEvent>() {
+                    laughReaction.setOnMouseClicked(new EventHandler<>() {
                         @Override
                         public void handle(MouseEvent mouseEvent) {
                             chatMessage.laugh(user.getUID());
@@ -1135,7 +1116,7 @@ public class Controller {
                         }
                     });
                     likeReaction.setFill(new ImagePattern(new Image(getAbsolutePath("requirements" + File.separator + "like emoji.png"))));
-                    likeReaction.setOnMouseClicked(new EventHandler<MouseEvent>() {
+                    likeReaction.setOnMouseClicked(new EventHandler<>() {
                         @Override
                         public void handle(MouseEvent mouseEvent) {
                             chatMessage.like(user.getUID());
@@ -1143,7 +1124,7 @@ public class Controller {
                         }
                     });
                     dislikeReaction.setFill(new ImagePattern(new Image(getAbsolutePath("requirements" + File.separator + "dislike emoji2.png"))));
-                    dislikeReaction.setOnMouseClicked(new EventHandler<MouseEvent>() {
+                    dislikeReaction.setOnMouseClicked(new EventHandler<>() {
                         @Override
                         public void handle(MouseEvent mouseEvent) {
                             chatMessage.dislike(user.getUID());
@@ -1194,7 +1175,7 @@ public class Controller {
 
                     }*/
                     hBox.getChildren().addAll(avatarPic, vBox);
-                    hBox.setOnContextMenuRequested(new EventHandler<ContextMenuEvent>() {
+                    hBox.setOnContextMenuRequested(new EventHandler<>() {
                         @Override
                         public void handle(ContextMenuEvent contextMenuEvent) {
                             contextMenu.show(hBox, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
@@ -1211,9 +1192,9 @@ public class Controller {
     void sendFriendRequest(ActionEvent event) throws IOException {
         String receivedUsername = friendRequestTextField.getText().trim();
         writeAndWait(new GetUIDbyUsernameAction(receivedUsername));
-        Integer friendUID = smartListener.getReceivedInteger();
+        Integer receiverUID = smartListener.getReceivedInteger();
         successOrError.setStyle("-fx-text-fill: #E38082");
-        if (friendUID == null) {
+        if (receiverUID == null) {
             successOrError.setText("A user by this username was not found!");
             return;
         }
@@ -1222,15 +1203,15 @@ public class Controller {
                 successOrError.setText("You can't send a friend request to yourself!");
                 return;
             }
-            if (user.getFriends().contains(friendUID)) {
+            if (user.getFriends().contains(receiverUID)) {
                 successOrError.setText("This user is already your friend!");
                 return;
             }
-            if (user.getIncomingFriendRequests().contains(friendUID)) {
+            if (user.getIncomingFriendRequests().contains(receiverUID)) {
                 successOrError.setText("Check your pending friend requests! :)");
                 return;
             }
-            writeAndWait(new SendFriendRequestAction(user.getUsername(), receivedUsername));
+            writeAndWait(new SendFriendRequestAction(user.getUID(), receiverUID));
             Integer scenario = smartListener.getReceivedInteger();
             switch (scenario) {
                 case -1 -> successOrError.setText("A user by this username was not found!");
@@ -1240,7 +1221,7 @@ public class Controller {
                     successOrError.setStyle("-fx-text-fill: #46C46E");
                     successOrError.setText("The request was sent successfully");
                     user.getSentFriendRequests().add(scenario);
-                    writeAndWait(new UpdateUserOnMainServerAction(user));
+                    //writeAndWait(new UpdateUserOnMainServerAction(user));
                 }
             }
             refreshPending();
@@ -1249,28 +1230,34 @@ public class Controller {
     }
 
     @FXML
-    void sendChatStringMessage(ActionEvent event) {
-        TextField textField = (TextField) event.getSource();
-        Integer friendUID = (Integer) textField.getUserData();
-        ChatStringMessage chatStringMessage = new ChatStringMessage(user.getUID(), friendUID, textField.getText());
-        // next line is optional
-        chatMessageObservableList.addAll(user.getPrivateChats().get(friendUID));
-        chatMessageObservableList.add(chatStringMessage);
-        textField.setText("");
-    }
-
-    @FXML
     void enterChat(Integer friendUID, String friendName) {
 
-        this.friendName.setText(friendName);
+        currentFriendDM = friendUID;
+        user.enterPrivateChat(friendUID);
+
+        try {
+            writeAndWait(new EnteredChatAction(user.getUID(), friendUID));
+            writeAndWait(new GetUserFromMainServerAction(user.getUID()));
+            user = smartListener.getReceivedUser();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        friendNameLabel.setText(friendName);
 
         sendMessageTextField.setUserData(friendUID);
-        chatMessageObservableList = FXCollections.observableArrayList();
-        chatMessageObservableList.addAll(user.getPrivateChats().get(friendUID));
-        chatMessagesListView.setItems(chatMessageObservableList);
+
+        refreshPrivateChat();
+        constructChatMessagesCells();
 
         theTabPane.setVisible(false);
         directMessageGridPane.setVisible(true);
+    }
+
+    public void refreshPrivateChat() {
+        ObservableList<ChatMessage> chatMessageObservableList = FXCollections.observableArrayList();
+        chatMessageObservableList.addAll(user.getPrivateChats().get(currentFriendDM));
+        chatMessagesListView.setItems(chatMessageObservableList);
     }
 
     @FXML
@@ -1280,7 +1267,8 @@ public class Controller {
     }
 
     @FXML
-    void enterSetting(MouseEvent event) throws IOException {
+    void loadProfile(MouseEvent event) throws IOException {
+        user.getIsInChat().replace(currentFriendDM, false);
         loadProfilePage(event);
     }
 
@@ -1297,19 +1285,27 @@ public class Controller {
     @FXML
     void loadHome() throws IOException {
 
+        user.getIsInChat().replace(currentFriendDM, false);
+        writeAndWait(new UpdateUserOnMainServerAction(user));
+
         textChannelsVBox.setVisible(false);
         friendsDMVBox.setVisible(true);
 
         serverBorderPane.setVisible(false);
         directMessageGridPane.setVisible(false);
         theTabPane.setVisible(true);
-        middlePartUpperLabel.setText("Friends");
 
         initializeMainPage();
     }
 
     @FXML
     void loadServer() throws IOException {
+
+        user.getIsInChat().replace(currentFriendDM, false);
+        writeAndWait(new UpdateUserOnMainServerAction(user));
+
+        friendsLabel.setVisible(false);
+        serverMenuButton.setVisible(true);
 
         friendsDMVBox.setVisible(false);
         textChannelsVBox.setVisible(true);
@@ -1319,6 +1315,24 @@ public class Controller {
         serverBorderPane.setVisible(true);
 
         initializeServerPage();
+    }
+
+    //////////////////////////////////////////////////////////// direct message scene of the main page->
+    // fields:
+    @FXML
+    private Label friendNameLabel;
+
+    @FXML
+    void sendChatStringMessage(ActionEvent event) throws IOException {
+        TextField textField = (TextField) event.getSource();
+        Integer friendUID = (Integer) textField.getUserData();
+        ChatStringMessage chatStringMessage = new ChatStringMessage(user.getUID(), friendUID, textField.getText());
+
+        user.getPrivateChats().get(friendUID).add(chatStringMessage);
+        refreshPrivateChat();
+
+        writeAndWait(chatStringMessage);
+        textField.setText("");
     }
 
     //////////////////////////////////////////////////////////// create new server scene ->
@@ -1352,11 +1366,7 @@ public class Controller {
     }
 
     private void initializeServerPage() throws IOException {
-        // set the variable in place
-        middlePartUpperLabel.setText(currentServer.getServerName());
-
         setUpdatedValuesForServerObservableLists(currentServer, 0);
-
         constructTextChannelsCells();
         constructMembersCells();
     }
@@ -1514,16 +1524,10 @@ public class Controller {
     }
 
 
-    //////////////////////////////////////////////////////////// direct message scene of the main page->
-    // fields:
-    @FXML
-    private Label friendName;
-
-
     //////////////////////////////////////////////////////////// server scene of the main page->
     // fields:
     @FXML
-    private Button middlePartUpperLabel;
+    private MenuButton serverMenuButton;
     @FXML
     private Label textChannelName;
     @FXML
@@ -1547,12 +1551,17 @@ public class Controller {
 
     // server scene methods:
     @FXML
-    void addNewTextChannel() {
+    void InvitePeople() {
 
     }
 
     @FXML
-    void sendFileOnTextChannel() {
+    void changeServerSettings() {
+
+    }
+
+    @FXML
+    void createChannel() {
 
     }
 }

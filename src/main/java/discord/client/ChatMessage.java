@@ -1,17 +1,21 @@
 package discord.client;
 
+import discord.signals.Action;
+import discord.signals.ModelUpdaterSignal;
+
+import java.io.IOException;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.HashSet;
 
-public class ChatMessage implements Serializable {
+public abstract class ChatMessage implements Action {
     // Fields:
     protected Integer senderUID;
     protected Integer receiverUID;
     protected String dateTime;
-    protected HashMap<Integer, HashSet<Reaction>> reactions;  //  maps UID of the person who reacted to this message to its reactions
+    protected HashMap<Integer, HashSet<Reaction>> reactions;  //  maps UID of the person who has reacted to this message to its reactions
     protected boolean edited;
 
     // Constructors:
@@ -63,7 +67,7 @@ public class ChatMessage implements Serializable {
     }
 
     public void setEdited(boolean edited) {
-        edited = edited;
+        this.edited = edited;
     }
 
     // Other Methods:

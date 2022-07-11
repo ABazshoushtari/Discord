@@ -21,12 +21,13 @@ public class SmartListener implements Runnable {
 
         MySocket mySocket = controller.getMySocket();
         while (mySocket.isConnected()) {
+
             try {
                 Object mainServerResponse = mySocket.read();
                 if (mainServerResponse != null) {
 
                     if (mainServerResponse instanceof ModelUpdaterSignal mus) {
-
+                        // a signal generated from another client to inform us of a change
                         if (!(mus instanceof RelatedUserChangedSignal)) {
                             mus.setBeingUpdatedModel(controller.getUser());
                             controller.setUser(mus.getUpdatedModel());
@@ -34,14 +35,26 @@ public class SmartListener implements Runnable {
 
                         Platform.runLater(() -> {
                             try {
-                                controller.setUpdatedValuesForObservableLists();
+                                switch (mus.getClass().getSimpleName()) {
+                                    case "RespondFriendRequestModelUpdaterSignal" -> {
+                                        controller.refreshPending();
+                                        controller.refreshFriends();
+                                    }
+                                    case "CancelFriendRequestModelUpdaterSignal",
+                                            "FriendRequestModelUpdaterSignal" -> controller.refreshPending();
+                                    case "LostAFriendModelUpdaterSignal" -> controller.refreshFriends();
+                                    case "RelatedUserChangedSignal" -> controller.refreshEverything();
+                                    case "ChatMessageSignal" -> controller.refreshPrivateChat();
+
+                                }
+                                //controller.refreshEverything();
                                 //controller.setUpdatedValuesForServerObservableLists();
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
                         });
-                    }
-                    else {
+
+                    } else {    // the write-back of the written action by the user themselves
                         synchronized (controller) {
                             switch (mainServerResponse.getClass().getSimpleName()) {
                                 case "Model" -> receivedUser = (Model) mainServerResponse;
@@ -52,61 +65,16 @@ public class SmartListener implements Runnable {
                             controller.notify();
                         }
                     }
-                        /*
-                        switch (classSimpleName) {
-                            case "FriendRequestSignal" -> {
-                                FriendRequestSignal frs = (FriendRequestSignal) mainServerResponse;
-                                controller.getUser().getIncomingFriendRequests().add(frs.requesterUID());
-                                Platform.runLater(() -> {
-                                    try {
-                                        controller.refreshPending();
-                                    } catch (IOException e) {
-                                        throw new RuntimeException(e);
-                                    }
-                                });
-                            }
-                            case "AcceptFriendRequestSignal" -> {
-                                AcceptFriendRequestSignal afs = (AcceptFriendRequestSignal) mainServerResponse;
-                                controller.getUser().getFriends().add(afs.accepterUID());
-                                Platform.runLater(() -> {
-                                    try {
-                                        controller.refreshPending();
-                                        controller.refreshFriends();
-                                    } catch (IOException e) {
-                                        throw new RuntimeException(e);
-                                    }
-                                });
-                            }
-                            case "LostAFriendSignal" -> {
-                                LostAFriendSignal lfs = (LostAFriendSignal) mainServerResponse;
-                                controller.getUser().removeFriend(lfs.removerUID());
-                                Platform.runLater(() -> {
-                                    try {
-                                        controller.refreshFriends();
-                                    } catch (IOException e) {
-                                        throw new RuntimeException(e);
-                                    }
-                                });
-                            }
-                            case "FriendChangedSignal" -> Platform.runLater(() -> {
-                                try {
-                                    controller.refreshFriends();
-                                } catch (IOException e) {
-                                    throw new RuntimeException(e);
-                                }
-                            });
-                        }
-                    }*/
                 } else {
                     synchronized (controller) {
                         receiveNull();
                         controller.notify();
                     }
                 }
-
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
             }
+
         }
     }
 
