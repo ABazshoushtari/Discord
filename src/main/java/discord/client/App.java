@@ -10,8 +10,11 @@ import java.net.Socket;
 
 public class App extends Application {
 
+    private static Stage stage;
+
     @Override
     public void start(Stage stage) {
+        this.stage = stage;
         FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource("LoginMenu.fxml"));
         try {
         Controller controller = new Controller(new MySocket(new Socket("127.0.0.1", 6000)));
@@ -28,5 +31,9 @@ public class App extends Application {
 
     public static void main(String[] args) {
         launch();
+    }
+
+    public static Stage getStage() {
+        return stage;
     }
 }

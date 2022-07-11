@@ -91,6 +91,18 @@ public class Controller {
         }
     }
 
+    private void loadScene(String sceneName) {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource(sceneName));
+        Stage stage = App.getStage();
+        try {
+            loader.setController(this);
+            Scene scene = new Scene(loader.load());
+            stage.setScene(scene);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void makeDirectory(String path) {
         File directory = new File(path);
         if (!directory.exists()) {
@@ -652,6 +664,7 @@ public class Controller {
         refreshPending();
         refreshFriends();
         refreshServers();
+        refreshPrivateChat();
     }
 
     public void initializeMainPage() throws IOException {
@@ -667,7 +680,7 @@ public class Controller {
         constructDirectMessagesCells();
         constructServersCells();
 
-        //constructChatMessagesCells();
+        constructChatMessagesCells();
     }
 
     private void initializeMyProfile() throws IOException {
@@ -1236,7 +1249,7 @@ public class Controller {
         user.enterPrivateChat(friendUID);
 
         try {
-            writeAndWait(new EnteredChatAction(user.getUID(), friendUID));
+            writeAndWait(new UpdateUserOnMainServerAction(user));
             writeAndWait(new GetUserFromMainServerAction(user.getUID()));
             user = smartListener.getReceivedUser();
         } catch (IOException e) {
@@ -1255,6 +1268,7 @@ public class Controller {
     }
 
     public void refreshPrivateChat() {
+        if (currentFriendDM == null) return;
         ObservableList<ChatMessage> chatMessageObservableList = FXCollections.observableArrayList();
         chatMessageObservableList.addAll(user.getPrivateChats().get(currentFriendDM));
         chatMessagesListView.setItems(chatMessageObservableList);
@@ -1366,32 +1380,38 @@ public class Controller {
     }
 
     private void initializeServerPage() throws IOException {
-        setUpdatedValuesForServerObservableLists(currentServer, 0);
+        serverMenuButton.setText(currentServer.getServerName());
+        currentTextChannel = currentServer.getTextChannels().get(0);
+        setUpdatedValuesForServerObservableLists();
         constructTextChannelsCells();
+        // construct textChannelChatCells();
         constructMembersCells();
     }
 
-    public void setUpdatedValuesForServerObservableLists(Server server, int textChannelIndex) throws IOException {
-        refreshTextChannels(server);
-        refreshTextChannelChat(server.getTextChannels().get(textChannelIndex));
-        refreshMembers(server);
+    public void setUpdatedValuesForServerObservableLists() throws IOException {
+        refreshTextChannels();
+        refreshTextChannelChat();
+        refreshMembers();
     }
 
-    private void refreshTextChannels(Server server) {
+    private void refreshTextChannels() {
         ObservableList<TextChannel> textChannelsObservableList = FXCollections.observableArrayList();
         textChannelsListView.setStyle("-fx-background-color: #2f3136");
-        textChannelsObservableList.addAll(server.getTextChannels());
+        textChannelsObservableList.addAll(currentServer.getTextChannels());
         textChannelsListView.setItems(textChannelsObservableList);
     }
 
-    private void refreshTextChannelChat(TextChannel textChannel) {
+    private void refreshTextChannelChat() {
+
+        textChannelName.setText(currentTextChannel.getName());
+
         ObservableList<TextChannelMessage> textChannelChatObservableList = FXCollections.observableArrayList();
         textChannelChatListView.setStyle("-fx-background-color: #36393F");
-        textChannelChatObservableList.addAll(textChannel.getTextChannelMessages());
+        textChannelChatObservableList.addAll(currentTextChannel.getTextChannelMessages());
         textChannelChatListView.setItems(textChannelChatObservableList);
     }
 
-    private void refreshMembers(Server server) throws IOException {
+    private void refreshMembers() throws IOException {
 
         ObservableList<Model> onlineMembersObservableList = FXCollections.observableArrayList();
         ObservableList<Model> offlineMembersObservableList = FXCollections.observableArrayList();
@@ -1402,7 +1422,7 @@ public class Controller {
         int onlineCount = 0;
         int offlineCount = 0;
 
-        for (Integer UID : server.getMembers().keySet()) {
+        for (Integer UID : currentServer.getMembers().keySet()) {
             writeAndWait(new GetUserFromMainServerAction(UID));
             Model member = smartListener.getReceivedUser();
             if (member.getStatus() == Status.Invisible) {
@@ -1439,7 +1459,10 @@ public class Controller {
                     textChannelName.setStyle("-fx-font-size: 18");
                     textChannelName.setStyle("-fx-text-fill: White");
 
-                    textChannelName.setOnMouseClicked(mouseClickEvent -> refreshTextChannelChat(textChannel));
+                    textChannelName.setOnMouseClicked(mouseClickEvent -> {
+                        currentTextChannel = textChannel;
+                        refreshTextChannelChat();
+                    });
 
                     setGraphic(textChannelName);
                 }
@@ -1491,15 +1514,7 @@ public class Controller {
         gridPane.add(username, 1, 0, 1, 1);
         gridPane.add(status, 1, 1, 1, 1);
 
-        gridPane.setHgap(8);
-
-        gridPane.setMinHeight(GridPane.USE_COMPUTED_SIZE);
-        gridPane.setPrefHeight(GridPane.USE_COMPUTED_SIZE);
-        gridPane.setMaxHeight(GridPane.USE_COMPUTED_SIZE);
-
-        gridPane.setMinWidth(GridPane.USE_COMPUTED_SIZE);
-        gridPane.setPrefWidth(GridPane.USE_COMPUTED_SIZE);
-        gridPane.setMaxWidth(GridPane.USE_COMPUTED_SIZE);
+        setUpGridPaneSizes(gridPane);
 
         GridPane.setHalignment(avatarPic, HPos.LEFT);
         GridPane.setHalignment(username, HPos.LEFT);
@@ -1531,6 +1546,8 @@ public class Controller {
     @FXML
     private Label textChannelName;
     @FXML
+    private TextField newTextChannelNameTextField;
+    @FXML
     private VBox textChannelsVBox;
     @FXML
     private TextField textChannelMessage;
@@ -1551,17 +1568,142 @@ public class Controller {
 
     // server scene methods:
     @FXML
-    void InvitePeople() {
+    void InvitePeople(Event event) throws IOException {
+        loadScene("InvitePeopleScene.fxml");
+        serverNameOnInviteScene.setText("Invite People to " + currentServer.getServerName());
+        refreshPeople();
+        constructPeopleCells();
+    }
 
+    private void refreshPeople() throws IOException {
+        ObservableList<Model> peopleObservableList = FXCollections.observableArrayList();
+        uninvitedFriendsListView.setStyle("-fx-background-color: #36393F");
+        for (Integer UID : user.getFriends()) {
+            if (currentServer.getMembers().containsKey(UID)) {
+                continue;
+            }
+            writeAndWait(new GetUserFromMainServerAction(UID));
+            Model friend = smartListener.getReceivedUser();
+            peopleObservableList.add(friend);
+        }
+        uninvitedFriendsListView.setItems(peopleObservableList);
+    }
+
+    private void constructPeopleCells() {
+        uninvitedFriendsListView.setCellFactory(mc -> new ListCell<>() {
+            @Override
+            protected void updateItem(Model model, boolean empty) {
+                super.updateItem(model, empty);
+                if (model == null || empty) {
+                    setGraphic(null);
+                } else {
+
+                    GridPane gridPane = new GridPane();
+                    Circle avatarPic = new Circle(20);
+                    Label username = new Label();
+                    Button inviteButton = new Button("Invite");
+
+                    username.setStyle("-fx-font-weight: bold");
+                    username.setStyle("-fx-font-size: 18");
+                    username.setStyle("-fx-text-fill: White");
+
+                    gridPane.setStyle("-fx-background-color: #2f3136");
+
+                    ColumnConstraints col1 = new ColumnConstraints(GridPane.USE_PREF_SIZE, GridPane.USE_COMPUTED_SIZE, GridPane.USE_PREF_SIZE);
+                    ColumnConstraints col2 = new ColumnConstraints(GridPane.USE_PREF_SIZE, 880, Double.MAX_VALUE);
+                    ColumnConstraints col3 = new ColumnConstraints(GridPane.USE_PREF_SIZE, GridPane.USE_COMPUTED_SIZE, GridPane.USE_PREF_SIZE);
+                    gridPane.getColumnConstraints().addAll(col1, col2, col3);
+
+                    gridPane.add(avatarPic, 0, 0, 1, GridPane.REMAINING);
+                    gridPane.add(username, 1, 0, 1, GridPane.REMAINING);
+                    gridPane.add(inviteButton, 2, 0, 1, GridPane.REMAINING);
+
+                    setUpGridPaneSizes(gridPane);
+
+                    GridPane.setHalignment(avatarPic, HPos.LEFT);
+                    GridPane.setHalignment(username, HPos.LEFT);
+                    GridPane.setHalignment(inviteButton, HPos.RIGHT);
+
+                    try {
+                        avatarPic.setFill(new ImagePattern(readAvatarImage(model)));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        avatarPic.setFill(new ImagePattern(new Image(getAbsolutePath("requirements" + File.separator + "emojipng.com-11701703.png"))));
+                    }
+
+                    username.setText(model.getUsername());
+
+                    inviteButton.setOnAction(new EventHandler<ActionEvent>() {
+                        @Override
+                        public void handle(ActionEvent event) {
+                            if (currentServer.addNewMember(model.getUID())) {
+                                successOrFailMessageLabel.setText("Invited successfully!");
+                                try {
+                                    writeAndWait(new UpdateServerOnMainServerAction(currentServer));
+                                    writeAndWait(new AddFriendToServerAction(currentServer.getUnicode(), model.getUID()));
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                                successOrFailMessageLabel.setStyle("-fx-text-fill: green");
+                            } else {
+                                successOrFailMessageLabel.setText("Invited Failed! This user is banned from the server!");
+                                successOrFailMessageLabel.setStyle("-fx-text-fill: red");
+                            }
+
+                            inviteButton.setDisable(true);
+                        }
+                    });
+
+                    setGraphic(gridPane);
+                }
+            }
+        });
     }
 
     @FXML
     void changeServerSettings() {
-
+        // change name
+        // change profile pic
+        // role
+        // limit members from the server
     }
 
     @FXML
     void createChannel() {
+        newTextChannelNameTextField.setVisible(true);
+        textChannelName.setText("Enter the name:");
+    }
 
+    @FXML
+    void createNewTextChannel() throws IOException {
+        String newTextChannelName = newTextChannelNameTextField.getText().trim();
+        if (newTextChannelName.equals("")) return;
+        currentServer.addNewTextChannel(newTextChannelName);
+        writeAndWait(new UpdateServerOnMainServerAction(currentServer));
+        newTextChannelNameTextField.setVisible(false);
+        textChannelName.setText(currentTextChannel.getName());
+        int currentIndex = currentServer.getTextChannels().indexOf(currentTextChannel);
+        currentTextChannel = currentServer.getTextChannels().get(currentIndex + 1);
+        refreshTextChannels();
+        refreshTextChannelChat();
+    }
+
+    //////////////////////////////////////////////////////////// invite people scene ->
+    // fields:
+    @FXML
+    private Label serverNameOnInviteScene;
+    @FXML
+    private Label successOrFailMessageLabel;
+    @FXML
+    private ListView<Model> uninvitedFriendsListView;
+
+    // methods:
+    @FXML
+    private void backFromInvitePeople(Event event) throws IOException {
+        loadScene(event, "MainPage.fxml");
+        initializeMyProfile();
+        loadServer();
+        refreshServers();
+        constructServersCells();
     }
 }

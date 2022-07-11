@@ -24,10 +24,10 @@ public class BlockAction implements Action {
         beingBlockerUser.getIncomingFriendRequests().remove(beingBlockedUID);
         beingBlockerUser.getFriends().remove(beingBlockedUID);
 
-        MainServer.getUsers().replace(blockerUID, blockerUser);
+        //MainServer.getUsers().replace(blockerUID, blockerUser);
         MainServer.updateDatabase(blockerUser);
 
-        MainServer.getUsers().replace(blockerUID, blockerUser);
+        //MainServer.getUsers().replace(blockerUID, blockerUser);
         MainServer.updateDatabase(beingBlockerUser);
 
         return null;

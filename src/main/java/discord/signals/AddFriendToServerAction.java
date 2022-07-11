@@ -1,25 +1,43 @@
 package discord.signals;
 
+import discord.mainServer.ClientHandler;
 import discord.mainServer.MainServer;
 import discord.client.Model;
 
-public class AddFriendToServerAction implements Action {
-    private final int unicode;
-    private final String friendUsername;
+import java.io.IOException;
 
-    public AddFriendToServerAction(int unicode, String friendUsername) {
+import static discord.mainServer.ClientHandler.clientHandlers;
+
+public class AddFriendToServerAction implements Action {
+    private final Integer unicode;
+    private final Integer newMemberUID;
+
+    public AddFriendToServerAction(Integer unicode, Integer newMemberUID) {
         this.unicode = unicode;
-        this.friendUsername = friendUsername;
+        this.newMemberUID = newMemberUID;
     }
 
     @Override
-    public Object act() {
-        int friendID = MainServer.getIDs().get(friendUsername);
-        Model targetFriend = MainServer.getUsers().get(friendID);
+    public Object act() throws IOException {
+
+        Model targetFriend = MainServer.getUsers().get(newMemberUID);
         targetFriend.getServers().add(unicode);
 
-        MainServer.getUsers().replace(friendID, targetFriend);
+        //MainServer.getUsers().replace(newMemberUID, targetFriend);
         MainServer.updateDatabase(targetFriend);
+
+        for (ClientHandler ch : clientHandlers) {
+            Model user = ch.getUser();
+            if (user != null) {
+                if (user.getUID().equals(newMemberUID)) {
+                    synchronized (ch.getMySocket()) {
+                        ch.getMySocket().write(new AddedToNewServerModelUpdaterSignal(unicode));
+                    }
+                    break;
+                }
+            }
+        }
+
         return null;
     }
 }

@@ -349,6 +349,10 @@ public class Server implements Asset {
         return false;
     }
 
+    public void addNewTextChannel(String newTextChannelName) {
+        textChannels.add(new TextChannel(newTextChannelName, members.keySet()));
+    }
+
     private Boolean removeOrBanMembersFromServer(Controller clientController, boolean ban) throws IOException, ClassNotFoundException {
 
 //        View printer = clientController.getPrinter();

@@ -45,10 +45,8 @@ public class SmartListener implements Runnable {
                                     case "LostAFriendModelUpdaterSignal" -> controller.refreshFriends();
                                     case "RelatedUserChangedSignal" -> controller.refreshEverything();
                                     case "ChatMessageSignal" -> controller.refreshPrivateChat();
-
+                                    case "AddedToNewServerModelUpdaterSignal" -> controller.refreshServers();
                                 }
-                                //controller.refreshEverything();
-                                //controller.setUpdatedValuesForServerObservableLists();
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }

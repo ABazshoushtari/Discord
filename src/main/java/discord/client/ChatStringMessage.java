@@ -44,9 +44,6 @@ public class ChatStringMessage extends ChatMessage {
         senderUser.getPrivateChats().get(receiverUID).add(this);
         receiverUser.getPrivateChats().get(senderUID).add(this);
 
-        MainServer.getUsers().replace(senderUID, senderUser);
-        MainServer.getUsers().replace(receiverUID, receiverUser);
-
         MainServer.updateDatabase(senderUser);
         MainServer.updateDatabase(receiverUser);
 

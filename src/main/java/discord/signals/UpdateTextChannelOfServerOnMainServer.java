@@ -23,7 +23,7 @@ public class UpdateTextChannelOfServerOnMainServer implements Action {
             Server server = MainServer.getServers().get(serverUnicode);
             server.getTextChannels().set(textChannelIndex, updatedTextChannel);
 
-            MainServer.getServers().replace(serverUnicode, server);
+            //MainServer.getServers().replace(serverUnicode, server);
             MainServer.updateDatabase(server);
             return null;
         }

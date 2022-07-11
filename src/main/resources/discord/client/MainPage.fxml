@@ -270,7 +270,8 @@
                <center>
                   <GridPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #36393F;" vgap="5.0" BorderPane.alignment="CENTER">
                      <columnConstraints>
-                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="1.7976931348623157E308" />
+                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="140.0" />
+                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="-Infinity" />
                      </columnConstraints>
                      <rowConstraints>
                         <RowConstraints maxHeight="-Infinity" minHeight="-Infinity" prefHeight="44.0" vgrow="SOMETIMES" />
@@ -279,7 +280,29 @@
                         <RowConstraints maxHeight="-Infinity" vgrow="SOMETIMES" />
                      </rowConstraints>
                      <children>
-                        <HBox alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" spacing="10.0" style="-fx-background-color: #40444b; -fx-background-radius: 13;" GridPane.rowIndex="3">
+                        <Label fx:id="textChannelName" text="# general" textFill="WHITE">
+                           <font>
+                              <Font name="System Bold" size="16.0" />
+                           </font>
+                           <padding>
+                              <Insets left="10.0" />
+                           </padding>
+                        </Label>
+                        <TextField fx:id="newTextChannelNameTextField" onAction="#createNewTextChannel" visible="false" GridPane.columnIndex="1">
+                           <GridPane.margin>
+                              <Insets left="10.0" right="10.0" />
+                           </GridPane.margin>
+                        </TextField>
+                        <Separator focusTraversable="false" maxWidth="1.7976931348623157E308" opacity="0.4" prefWidth="395.0" valignment="TOP" GridPane.columnSpan="2147483647" GridPane.rowIndex="1" GridPane.valignment="TOP" />
+                        <ListView fx:id="textChannelChatListView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #36393F;" styleClass="list-cell" stylesheets="@styles/ListViewColor.css" GridPane.columnSpan="2147483647" GridPane.rowIndex="2">
+                           <padding>
+                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                           </padding>
+                           <GridPane.margin>
+                              <Insets top="10.0" />
+                           </GridPane.margin>
+                        </ListView>
+                        <HBox alignment="CENTER_LEFT" maxWidth="1.7976931348623157E308" spacing="10.0" style="-fx-background-color: #40444b; -fx-background-radius: 13;" GridPane.columnSpan="2147483647" GridPane.rowIndex="3">
                            <children>
                               <StackPane>
                                  <children>
@@ -298,23 +321,6 @@
                               <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                            </padding>
                         </HBox>
-                        <Label fx:id="textChannelName" text="# general" textFill="WHITE">
-                           <font>
-                              <Font name="System Bold" size="16.0" />
-                           </font>
-                           <padding>
-                              <Insets left="10.0" />
-                           </padding>
-                        </Label>
-                        <Separator focusTraversable="false" maxWidth="1.7976931348623157E308" opacity="0.4" prefWidth="395.0" valignment="TOP" GridPane.rowIndex="1" GridPane.valignment="TOP" />
-                        <ListView fx:id="textChannelChatListView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #36393F;" styleClass="list-cell" stylesheets="@styles/ListViewColor.css" GridPane.rowIndex="2">
-                           <padding>
-                              <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-                           </padding>
-                           <GridPane.margin>
-                              <Insets top="10.0" />
-                           </GridPane.margin>
-                        </ListView>
                      </children>
                      <padding>
                         <Insets bottom="10.0" left="10.0" right="10.0" top="18.0" />

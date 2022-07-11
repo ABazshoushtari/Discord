@@ -29,7 +29,7 @@ public class LoginAction implements Action {
             Model me = MainServer.getUsers().get(myUID);
             me.setStatus(me.getPreviousSetStatus());
 
-            MainServer.getUsers().replace(myUID, me);
+            //MainServer.getUsers().replace(myUID, me);
             MainServer.updateDatabase(me);
 
             ClientHandler.informRelatedPeople(me);

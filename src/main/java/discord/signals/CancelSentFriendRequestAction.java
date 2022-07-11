@@ -24,13 +24,13 @@ public class CancelSentFriendRequestAction implements Action{
         Model canceller = MainServer.getUsers().get(cancellerUID);
         canceller.getSentFriendRequests().remove(beingCanceledUID);
 
-        MainServer.getUsers().replace(cancellerUID, canceller);
+        //MainServer.getUsers().replace(cancellerUID, canceller);
         MainServer.updateDatabase(canceller);
 
         Model beingCancelled = MainServer.getUsers().get(beingCanceledUID);
         beingCancelled.getIncomingFriendRequests().remove(cancellerUID);
 
-        MainServer.getUsers().replace(beingCanceledUID, beingCancelled);
+        //MainServer.getUsers().replace(beingCanceledUID, beingCancelled);
         MainServer.updateDatabase(beingCancelled);
 
         for (ClientHandler ch : clientHandlers) {

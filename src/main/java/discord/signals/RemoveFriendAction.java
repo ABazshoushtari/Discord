@@ -20,8 +20,10 @@ public class RemoveFriendAction implements Action {
 
     @Override
     public Object act() throws IOException {
+
         Model remover = MainServer.getUsers().get(removerUID);
         Model beingRemoved = MainServer.getUsers().get(beingRemovedUID);
+
         remover.getFriends().remove(beingRemovedUID);
         beingRemoved.getFriends().remove(removerUID);
         for (ClientHandler ch : clientHandlers) {
@@ -35,10 +37,10 @@ public class RemoveFriendAction implements Action {
             }
         }
 
-        MainServer.getUsers().replace(removerUID, remover);
+        //MainServer.getUsers().replace(removerUID, remover);
         MainServer.updateDatabase(remover);
 
-        MainServer.getUsers().replace(beingRemovedUID, beingRemoved);
+        //MainServer.getUsers().replace(beingRemovedUID, beingRemoved);
         MainServer.updateDatabase(beingRemoved);
         return null;
     }

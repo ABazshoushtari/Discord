@@ -46,10 +46,10 @@ public class CheckFriendRequestsAction implements Action {
         requester.getSentFriendRequests().remove(myUID);
         myUser.getIncomingFriendRequests().remove(index);
 
-        MainServer.getUsers().replace(myUID, myUser);
+        //MainServer.getUsers().replace(myUID, myUser);
         MainServer.updateDatabase(myUser);
 
-        MainServer.getUsers().replace(requesterID, requester);
+        //MainServer.getUsers().replace(requesterID, requester);
         MainServer.updateDatabase(requester);
 
         return myUser;
