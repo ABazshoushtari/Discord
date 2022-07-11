@@ -40,6 +40,16 @@ public class Controller {
     private final MySocket mySocket;
     private final SmartListener smartListener;
 
+    // ObservableLists:
+    ObservableList<Model> blockedPeopleObservableList;
+    ObservableList<Model> pendingObservableList;
+    ObservableList<Model> allFriendsObservableList;
+    ObservableList<Model> onlineFriendsObservableList;
+    ObservableList<Model> directMessagesObservableList;
+    ObservableList<Server> serversObservableList;
+
+    ObservableList<ChatMessage> chatMessageObservableList;
+
     // the constructor:
     public Controller(MySocket mySocket) {
         this.user = null;
@@ -177,7 +187,8 @@ public class Controller {
 
     private void loadProfilePage(Event event) throws IOException {
 
-        user.getIsInChat().replace(currentFriendDM, false);
+//        user.getIsInChat().replace(currentFriendDM, false);
+        user.makeAllIsInChatsFalse();
         writeAndWait(new UpdateUserOnMainServerAction(user));
 
         loadScene(event, "ProfilePage.fxml");
@@ -485,7 +496,8 @@ public class Controller {
 
     @FXML
     void removeAvatar() throws IOException {
-        avatar.setFill(new Color(0.125, 0.13, 0, 0.145));
+//        avatar.setFill(new Color(0.125, 0.13, 0, 0.145));
+        avatar.setFill(new ImagePattern(new Image(getAbsolutePath("requirements" + File.separator + "emojipng.com-11701703.png"))));
         user.setAvatarImage(null);
         writeAndWait(new UpdateUserOnMainServerAction(user));
     }
@@ -569,7 +581,7 @@ public class Controller {
     // main page methods:
     public void refreshBlockedPeople() throws IOException {
 
-        ObservableList<Model> blockedPeopleObservableList = FXCollections.observableArrayList();
+        blockedPeopleObservableList = FXCollections.observableArrayList();
         blockedListView.setStyle("-fx-background-color: #36393f");
         for (Integer UID : user.getBlockedList()) {
             writeAndWait(new GetUserFromMainServerAction(UID));
@@ -582,7 +594,7 @@ public class Controller {
 
     public void refreshPending() throws IOException {
 
-        ObservableList<Model> pendingObservableList = FXCollections.observableArrayList();
+        pendingObservableList = FXCollections.observableArrayList();
 
         pendingListView.setStyle("-fx-background-color: #36393f");
 
@@ -604,7 +616,7 @@ public class Controller {
     }
 
     public void refreshAll() throws IOException {
-        ObservableList<Model> allFriendsObservableList = FXCollections.observableArrayList();
+        allFriendsObservableList = FXCollections.observableArrayList();
         allListView.setStyle("-fx-background-color: #36393f");
         for (Integer UID : user.getFriends()) {
             writeAndWait(new GetUserFromMainServerAction(UID));
@@ -616,7 +628,7 @@ public class Controller {
     }
 
     public void refreshOnline() throws IOException {
-        ObservableList<Model> onlineFriendsObservableList = FXCollections.observableArrayList();
+        onlineFriendsObservableList = FXCollections.observableArrayList();
         onlineListView.setStyle("-fx-background-color: #36393f");
         int onlineFriendsCount = 0;
         for (Integer UID : user.getFriends()) {
@@ -632,7 +644,7 @@ public class Controller {
     }
 
     public void refreshDirectMessages() throws IOException {
-        ObservableList<Model> directMessagesObservableList = FXCollections.observableArrayList();
+        directMessagesObservableList = FXCollections.observableArrayList();
         directMessagesListView.setStyle("-fx-background-color: #2f3136");
         for (Integer UID : user.getFriends()) {
             writeAndWait(new GetUserFromMainServerAction(UID));
@@ -649,7 +661,7 @@ public class Controller {
     }
 
     public void refreshServers() throws IOException {
-        ObservableList<Server> serversObservableList = FXCollections.observableArrayList();
+        serversObservableList = FXCollections.observableArrayList();
         serversListView.setStyle("-fx-background-color: #202225");
         for (Integer unicode : user.getServers()) {
             writeAndWait(new GetServerFromMainServerAction(unicode));
@@ -961,7 +973,10 @@ public class Controller {
                         case Invisible -> label.setTextFill(new Color(0.4549, 0.498, 0.553, 1));
                     }
 
-                    enterChatButton.setOnAction(actionEvent -> enterChat(model.getUID(), model.getUsername()));
+                    enterChatButton.setOnAction(actionEvent -> {
+                        currentFriendDM = model.getUID();
+                        enterChat(model.getUsername());
+                    });
 
                     removeButton.setOnAction(actionEvent -> {
                         //int index = user.getFriends().indexOf(model.getUID());  // NECESSARY AND IMPORTANT for removing from directMessagesObservableList. 6 lines later
@@ -994,7 +1009,10 @@ public class Controller {
 
                     GridPane gridPane = getUserGridPane(model);
 
-                    gridPane.setOnMouseClicked(mouseClickEvent -> enterChat(model.getUID(), model.getUsername()));
+                    gridPane.setOnMouseClicked(mouseClickEvent -> {
+                        currentFriendDM = model.getUID();
+                        enterChat(model.getUsername());
+                    });
 
                     setGraphic(gridPane);
                 }
@@ -1243,34 +1261,39 @@ public class Controller {
     }
 
     @FXML
-    void enterChat(Integer friendUID, String friendName) {
+    void enterChat(String friendName) {
 
-        currentFriendDM = friendUID;
-        user.enterPrivateChat(friendUID);
+//        currentFriendDM = friendUID;
 
         try {
-            writeAndWait(new UpdateUserOnMainServerAction(user));
             writeAndWait(new GetUserFromMainServerAction(user.getUID()));
             user = smartListener.getReceivedUser();
+            user.enterPrivateChat(currentFriendDM);
+            writeAndWait(new UpdateUserOnMainServerAction(user));
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         friendNameLabel.setText(friendName);
 
-        sendMessageTextField.setUserData(friendUID);
+        sendMessageTextField.setUserData(currentFriendDM);
 
-        refreshPrivateChat();
         constructChatMessagesCells();
+        refreshPrivateChat();
 
         theTabPane.setVisible(false);
+        serverBorderPane.setVisible(false);
         directMessageGridPane.setVisible(true);
     }
 
     public void refreshPrivateChat() {
-        if (currentFriendDM == null) return;
-        ObservableList<ChatMessage> chatMessageObservableList = FXCollections.observableArrayList();
-        chatMessageObservableList.addAll(user.getPrivateChats().get(currentFriendDM));
+        if (currentFriendDM == null) {
+            return;
+        }
+        chatMessageObservableList = FXCollections.observableArrayList();
+        if (user.getPrivateChats().get(currentFriendDM) != null) {  //
+            chatMessageObservableList.addAll(user.getPrivateChats().get(currentFriendDM));
+        }
         chatMessagesListView.setItems(chatMessageObservableList);
     }
 
@@ -1282,7 +1305,6 @@ public class Controller {
 
     @FXML
     void loadProfile(MouseEvent event) throws IOException {
-        user.getIsInChat().replace(currentFriendDM, false);
         loadProfilePage(event);
     }
 
@@ -1299,7 +1321,8 @@ public class Controller {
     @FXML
     void loadHome() throws IOException {
 
-        user.getIsInChat().replace(currentFriendDM, false);
+//        user.getIsInChat().replace(currentFriendDM, false);
+        user.makeAllIsInChatsFalse();
         writeAndWait(new UpdateUserOnMainServerAction(user));
 
         textChannelsVBox.setVisible(false);
@@ -1315,7 +1338,8 @@ public class Controller {
     @FXML
     void loadServer() throws IOException {
 
-        user.getIsInChat().replace(currentFriendDM, false);
+//        user.getIsInChat().replace(currentFriendDM, false);
+        user.makeAllIsInChatsFalse();
         writeAndWait(new UpdateUserOnMainServerAction(user));
 
         friendsLabel.setVisible(false);
@@ -1342,8 +1366,14 @@ public class Controller {
         Integer friendUID = (Integer) textField.getUserData();
         ChatStringMessage chatStringMessage = new ChatStringMessage(user.getUID(), friendUID, textField.getText());
 
+        if (chatMessageObservableList == null) {
+            currentFriendDM = friendUID;
+            refreshPrivateChat();
+        }
+
         user.getPrivateChats().get(friendUID).add(chatStringMessage);
-        refreshPrivateChat();
+//        refreshPrivateChat();
+        chatMessageObservableList.add(chatStringMessage);
 
         writeAndWait(chatStringMessage);
         textField.setText("");
@@ -1397,7 +1427,10 @@ public class Controller {
     private void refreshTextChannels() {
         ObservableList<TextChannel> textChannelsObservableList = FXCollections.observableArrayList();
         textChannelsListView.setStyle("-fx-background-color: #2f3136");
+
+        // if not null:
         textChannelsObservableList.addAll(currentServer.getTextChannels());
+
         textChannelsListView.setItems(textChannelsObservableList);
     }
 
@@ -1407,7 +1440,10 @@ public class Controller {
 
         ObservableList<TextChannelMessage> textChannelChatObservableList = FXCollections.observableArrayList();
         textChannelChatListView.setStyle("-fx-background-color: #36393F");
+
+        // if not null:
         textChannelChatObservableList.addAll(currentTextChannel.getTextChannelMessages());
+
         textChannelChatListView.setItems(textChannelChatObservableList);
     }
 

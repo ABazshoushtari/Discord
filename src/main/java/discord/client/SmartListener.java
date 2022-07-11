@@ -28,14 +28,18 @@ public class SmartListener implements Runnable {
 
                     if (mainServerResponse instanceof ModelUpdaterSignal mus) {
                         // a signal generated from another client to inform us of a change
+                        // these signals are sent by other users in the act method of Actions to inform us something
                         if (!(mus instanceof RelatedUserChangedSignal)) {
                             mus.setBeingUpdatedModel(controller.getUser());
-                            controller.setUser(mus.getUpdatedModel());
+                            controller.setUser(mus.getUpdatedModel());  // update receiver of the signal
                         }
 
                         Platform.runLater(() -> {
                             try {
                                 switch (mus.getClass().getSimpleName()) {
+
+                                    case "RelatedUserChangedSignal" -> controller.refreshEverything();  // odd(distinctive) signal
+
                                     case "RespondFriendRequestModelUpdaterSignal" -> {
                                         controller.refreshPending();
                                         controller.refreshFriends();
@@ -43,7 +47,6 @@ public class SmartListener implements Runnable {
                                     case "CancelFriendRequestModelUpdaterSignal",
                                             "FriendRequestModelUpdaterSignal" -> controller.refreshPending();
                                     case "LostAFriendModelUpdaterSignal" -> controller.refreshFriends();
-                                    case "RelatedUserChangedSignal" -> controller.refreshEverything();
                                     case "ChatMessageSignal" -> controller.refreshPrivateChat();
                                     case "AddedToNewServerModelUpdaterSignal" -> controller.refreshServers();
                                 }
@@ -52,7 +55,7 @@ public class SmartListener implements Runnable {
                             }
                         });
 
-                    } else {    // the write-back of the written action by the user themselves
+                    } else {    // the write-back of the written action by the user themselves (get part of "send and get response")
                         synchronized (controller) {
                             switch (mainServerResponse.getClass().getSimpleName()) {
                                 case "Model" -> receivedUser = (Model) mainServerResponse;

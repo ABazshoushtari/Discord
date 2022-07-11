@@ -14,7 +14,7 @@ public class App extends Application {
 
     @Override
     public void start(Stage stage) {
-        this.stage = stage;
+        App.stage = stage;
         FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource("LoginMenu.fxml"));
         try {
         Controller controller = new Controller(new MySocket(new Socket("127.0.0.1", 6000)));
