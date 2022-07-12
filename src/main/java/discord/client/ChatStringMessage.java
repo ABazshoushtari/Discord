@@ -41,6 +41,9 @@ public class ChatStringMessage extends ChatMessage {
         Model senderUser = MainServer.getUsers().get(senderUID);
         Model receiverUser = MainServer.getUsers().get(receiverUID);
 
+        senderUsername = senderUser.getUsername();
+        senderImage = senderUser.getAvatarImage();
+
         senderUser.getPrivateChats().get(receiverUID).add(this);
         receiverUser.getPrivateChats().get(senderUID).add(this);
 

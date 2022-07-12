@@ -121,8 +121,7 @@ public class Controller {
 
     private void loadScene(Event event, String sceneName) {
         FXMLLoader loader = new FXMLLoader(getClass().getResource(sceneName));
-//        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        Stage stage = App.getStage();
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         try {
             loader.setController(this);
             Scene scene = new Scene(loader.load());
@@ -173,19 +172,27 @@ public class Controller {
         return null;
     }
 
+    private Image readAvatarImage(byte[] imageBytes) throws IOException {
+        if (imageBytes == null) {
+            return new Image(getAbsolutePath("requirements" + File.separator + "emojipng.com-11701703.png"));
+        }
+        return new Image(new ByteArrayInputStream(imageBytes));
+    }
+
     private Image readAvatarImage(Asset asset) throws IOException {
         if (asset.getAvatarImage() == null) {
             return new Image(getAbsolutePath("requirements" + File.separator + "emojipng.com-11701703.png"));
         }
-        String directory = getAvatarImageCachePath(asset);
-        FileOutputStream fos = new FileOutputStream(directory + File.separator + asset.getID() + "." + asset.getAvatarContentType());
-        fos.write(asset.getAvatarImage());
-        fos.flush();
-        fos.close();
-        FileInputStream fis = new FileInputStream(directory + File.separator + asset.getID() + "." + asset.getAvatarContentType());
-        Image avatarImage = new Image(fis);
-        fis.close();
-        return avatarImage;
+//        String directory = getAvatarImageCachePath(asset);
+//        FileOutputStream fos = new FileOutputStream(directory + File.separator + asset.getID() + "." + asset.getAvatarContentType());
+//        fos.write(asset.getAvatarImage());
+//        fos.flush();
+//        fos.close();
+//        FileInputStream fis = new FileInputStream(directory + File.separator + asset.getID() + "." + asset.getAvatarContentType());
+//        Image avatarImage = new Image(fis);
+//        fis.close();
+//        return avatarImage;
+        return new Image(new ByteArrayInputStream(asset.getAvatarImage()));
     }
 
     //////////////////////////////////////////////////////////// login scene ->
@@ -500,8 +507,7 @@ public class Controller {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select a profile pic");
         fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("All Images", "*.jpg", "*.jpeg", "*.png"), new FileChooser.ExtensionFilter("JPG", "*.jpg", "*.jpeg"), new FileChooser.ExtensionFilter("PNG", "*.png"));
-//        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        Stage stage = App.getStage();
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         File selectedFile = fileChooser.showOpenDialog(stage);
         if (selectedFile == null) {
             return;
@@ -519,11 +525,8 @@ public class Controller {
 //        user.setAvatarImage(outStreamObj.toByteArray());
 
         String directory = getAvatarImageCachePath(user);
-        try (FileOutputStream fileOutputStream = new FileOutputStream(directory + File.separator + user.getUID() + "." + user.getAvatarContentType());
-             FileInputStream fileInputStream = new FileInputStream(selectedFile)) {
+        try (FileInputStream fileInputStream = new FileInputStream(selectedFile)) {
             user.setAvatarImage(fileInputStream.readAllBytes());
-            fileOutputStream.write(user.getAvatarImage());
-            fileOutputStream.flush();
         }
         writeAndWait(new UpdateUserOnMainServerAction(user));
     }
@@ -536,9 +539,33 @@ public class Controller {
         writeAndWait(new UpdateUserOnMainServerAction(user));
     }
 
+    //TODO MOST IMPORTANT CHANGE
     @FXML
     void loadMainPage(Event event) throws IOException {
         loadScene(event, "MainPage.fxml");
+
+        constructBlockedCells();
+        constructPendingCells();
+        constructOnlineOrAllCells(allListView);
+        constructOnlineOrAllCells(onlineListView);
+        constructDirectMessagesCells();
+        constructServersCells();
+        constructChatMessagesCells();
+
+        discordLogo.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\discordLogo.jpg"))));
+        setting.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\user setting.jpg"))));
+
+        //TODO setListView
+//        blockedListView.setItems(blockedPeopleObservableList);
+//        pendingListView.setItems(pendingObservableList);
+//        allListView.setItems(allFriendsObservableList);
+//        onlineListView.setItems(onlineFriendsObservableList);
+//        directMessagesListView.setItems(directMessagesObservableList);
+//        serversListView.setItems(serversObservableList);
+//        chatMessagesListView.setItems(chatMessageObservableList);
+
+        refreshEverything();
+
         initializeMainPage();
     }
 
@@ -715,17 +742,18 @@ public class Controller {
 
     public void initializeMainPage() throws IOException {
 
-        refreshEverything();
+        //TODO
+//        refreshEverything();
 
 
         initializeMyProfile();
 
-        constructBlockedCells();
-        constructPendingCells();
-        constructOnlineOrAllCells(allListView);
-        constructOnlineOrAllCells(onlineListView);
-        constructDirectMessagesCells();
-        constructServersCells();
+//        constructBlockedCells();
+//        constructPendingCells();
+//        constructOnlineOrAllCells(allListView);
+//        constructOnlineOrAllCells(onlineListView);
+//        constructDirectMessagesCells();
+//        constructServersCells();
 
 //        directMessagesListView.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Model>() {
 //            @Override
@@ -735,12 +763,11 @@ public class Controller {
 //            }
 //        });
 
-        constructChatMessagesCells();
+//        constructChatMessagesCells();
     }
 
     private void initializeMyProfile() throws IOException {
-        discordLogo.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\discordLogo.jpg"))));
-        setting.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\user setting.jpg"))));
+
 
         mainPageAvatar.setFill(new ImagePattern(readAvatarImage(user)));
 
@@ -1209,20 +1236,13 @@ public class Controller {
                     hBoxReaction.getChildren().addAll(laughReaction, likeReaction, dislikeReaction);
                     reactionMenuItem = new CustomMenuItem(hBoxReaction);
 
-                    Model sender = null;
                     try {
-                        writeAndWait(new GetUserFromMainServerAction(chatMessage.getSenderUID()));
-                        sender = smartListener.getReceivedUser();
-                        if (sender == null) {
-                            return;
-                        }
-                        avatarPic.setFill(new ImagePattern(readAvatarImage(sender)));
+                        avatarPic.setFill(new ImagePattern(readAvatarImage(chatMessage.getSenderImage())));
                     } catch (IOException e) {
                         e.printStackTrace();
-                        avatarPic.setFill(new ImagePattern(new Image(getAbsolutePath("requirements" + File.separator + "emojipng.com-11701703.png"))));
                     }
 
-                    usernameLabel.setText(sender.getUsername());
+                    usernameLabel.setText(chatMessage.getSenderUsername());
                     dateTimeLabel.setText(chatMessage.getDateTime());
                     if (chatMessage.isEdited()) {
                         editedLabel.setText("(edited)");
@@ -1235,7 +1255,7 @@ public class Controller {
                         MenuItem menuItemReactions = new MenuItem("Reactions");
                         MenuItem menuItemDeleteForMe = new MenuItem("Delete Message for me");
                         MenuItem menuItemDeleteForAll = new MenuItem("Delete Message for all");
-                        if (sender.getUID().intValue() == user.getUID().intValue()) {
+                        if (chatMessage.getSenderUID() == user.getUID().intValue()) {
                             MenuItem menuItemEdit = new MenuItem("Edit Message");
                             /* setOnActions
 
@@ -1409,6 +1429,8 @@ public class Controller {
         Integer friendUID = (Integer) textField.getUserData();
         ChatStringMessage chatStringMessage = new ChatStringMessage(user.getUID(), friendUID, textField.getText());
 
+        chatStringMessage.setSenderUsername(user.getUsername());
+        chatStringMessage.setSenderImage(user.getAvatarImage());
 //        if (chatMessageObservableList == null) {
 //            currentFriendDM = friendUID;
 //            refreshPrivateChat();
