@@ -5,13 +5,8 @@ import discord.client.Server;
 
 public class AddedToNewServerModelUpdaterSignal extends ModelUpdaterSignal {
 
-    //private final Server newServer;
-    //private final Integer newServerUnicode;
-
     public AddedToNewServerModelUpdaterSignal(Server newServer) {
         super(newServer);
-        //this.newServer = newServer;
-        //newServerUnicode = newServer.getUnicode();
     }
 
     @Override
@@ -19,8 +14,4 @@ public class AddedToNewServerModelUpdaterSignal extends ModelUpdaterSignal {
         beingUpdatedModel.getServers().add(((Server) beingChangedScreenElement).getUnicode());
         return beingUpdatedModel;
     }
-
-//    public Server getNewServer() {
-//        return newServer;
-//    }
 }

@@ -33,6 +33,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.*;
+import java.util.HashSet;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -67,8 +68,76 @@ public class Controller {
     private ObservableList<Model> directMessagesObservableList;
     private ObservableList<Server> serversObservableList;
     private ObservableList<ChatMessage> chatMessageObservableList;
-    private ObservableList<ChatMessage> textChannelChatObservableList;
     private ObservableList<TextChannel> textChannelsObservableList;
+    private ObservableList<TextChannelMessage> textChannelChatObservableList;
+    private ObservableList<Model> onlineMembersObservableList;
+    private ObservableList<Model> offlineMembersObservableList;
+
+    public void addOrRemoveFromBlockedList(Model model, boolean add) {
+        if (add) {
+            blockedPeopleObservableList.add(model);
+        } else {
+            blockedPeopleObservableList.remove(model);
+        }
+        blockedCount.setText("Blocked - " + user.getBlockedList().size());
+    }
+
+    public void addOrRemoveFromPendingList(Model model, boolean add) {
+        if (add) {
+            pendingObservableList.add(model);
+        } else {
+            pendingObservableList.remove(model);
+        }
+        pendingCount.setText("Pending - " + (user.getSentFriendRequests().size() + user.getIncomingFriendRequests().size()));
+    }
+
+    public void addOrRemoveFromEveryFriendList(Model model, boolean add) {
+
+        if (add) {
+            allFriendsObservableList.add(model);
+            onlineFriendsObservableList.add(model);
+            directMessagesObservableList.add(model);
+        } else {
+            allFriendsObservableList.remove(model);
+            onlineFriendsObservableList.remove(model);
+            directMessagesObservableList.remove(model);
+        }
+        allCount.setText("All - " + user.getFriends().size());
+        if (model.getStatus().equals(Status.Online)) {
+            int change;
+            if (add) {
+                change = 1;
+            } else {
+                change = -1;
+            }
+            onlineCount.setText("Online - " + (Integer.parseInt(onlineCount.getText().split(" ")[2]) + change));
+        }
+    }
+
+//    public void addOrRemoveFromServer(Model model, boolean add) {
+//        int change;
+//        if (add) {
+//            change = 1;
+//        } else {
+//            change = -1;
+//        }
+//        if (model.getStatus().equals(Status.Invisible)) {
+//            if (add) {
+//                offlineMembersObservableList.add(model);
+//            } else {
+//                offlineMembersObservableList.remove(model);
+//            }
+//            offlineCountInServer.setText("Offline - " + (Integer.parseInt(offlineCountInServer.getText().split(" ")[3]) + change));
+//        } else {
+//            if (add) {
+//                onlineMembersObservableList.add(model);
+//            } else {
+//                onlineMembersObservableList.remove(model);
+//            }
+//
+//            onlineCountInServer.setText(("Online - " + (Integer.parseInt(onlineCountInServer.getText().split(" ")[3]) + change)));
+//        }
+//    }
 
     // getters of ObservableLists:
     public ObservableList<Model> getBlockedPeopleObservableList() {
@@ -324,6 +393,8 @@ public class Controller {
     //////////////////////////////////////////////////////////// profile page scene ->
     // profile fields:
     @FXML
+    private Label myAccountLabel;
+    @FXML
     private Circle avatar;
     @FXML
     private Circle profileStatus;
@@ -334,6 +405,10 @@ public class Controller {
     @FXML
     private TextField profilePhoneNumber;
     @FXML
+    private Button changeAvatarButton;
+    @FXML
+    private Button removeAvatarButton;
+    @FXML
     private Button editButton;
     @FXML
     private Label editErrorMessage;
@@ -342,13 +417,28 @@ public class Controller {
     @FXML
     private TextField newPasswordTextField;
     @FXML
-    private Button changePasswordButton;
-    @FXML
     private Label profileErrorMessage;
     @FXML
     private HBox changeStatusMenu;
+    @FXML
+    private Button profileBackButton;
+    @FXML
+    private Button changePasswordButton;
+    @FXML
+    private Button logoutButton;
 
     // profile methods:
+    @FXML
+    void backFromProfile(Event event) throws IOException {
+        switch (profileBackButton.getText()) {
+            case "Main Page" -> loadMainPage(event);
+            case "Server" -> {
+                loadMainPage(event);
+                loadServer();
+            }
+        }
+    }
+
     @FXML
     void changeRedOnEnter(MouseEvent event) {
         Button redButton = (Button) event.getSource();
@@ -528,7 +618,6 @@ public class Controller {
         constructServersCells();
         constructChatMessagesCells();
 
-        //initializeMyProfile();
         discordLogo.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\discordLogo.jpg"))));
         setting.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\user setting.jpg"))));
 
@@ -544,6 +633,28 @@ public class Controller {
         refreshEverything();
 
         initializeMainPage();
+    }
+
+    public void loadMainPage() {
+
+        loadScene("MainPage.fxml");
+        constructBlockedCells();
+        constructPendingCells();
+        constructOnlineOrAllCells(allListView);
+        constructOnlineOrAllCells(onlineListView);
+        constructDirectMessagesCells();
+        constructServersCells();
+        constructChatMessagesCells();
+
+        discordLogo.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\discordLogo.jpg"))));
+        setting.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\user setting.jpg"))));
+
+        try {
+            refreshEverything();
+            initializeMainPage();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @FXML
@@ -822,7 +933,7 @@ public class Controller {
                         user.getBlockedList().remove(model.getUID());
                         try {
                             writeAndWait(new UpdateUserOnMainServerAction(user));
-                            refreshEverything();
+                            addOrRemoveFromBlockedList(model, false);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -917,7 +1028,8 @@ public class Controller {
                         try {
                             writeAndWait(new CheckFriendRequestsAction(user.getUID(), index, true));
                             user = smartListener.getReceivedUser();
-                            refreshEverything();
+                            addOrRemoveFromPendingList(model, false);
+                            addOrRemoveFromEveryFriendList(model, true);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -929,7 +1041,7 @@ public class Controller {
                             try {
                                 writeAndWait(new CheckFriendRequestsAction(user.getUID(), index, false));
                                 user = smartListener.getReceivedUser();
-                                refreshEverything();
+                                addOrRemoveFromPendingList(model, false);
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
@@ -939,7 +1051,7 @@ public class Controller {
                             try {
                                 user.getSentFriendRequests().remove(model.getUID());
                                 writeAndWait(new CancelSentFriendRequestAction(user.getUID(), model.getUID()));
-                                refreshEverything();
+                                addOrRemoveFromPendingList(model, false);
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
@@ -1030,7 +1142,7 @@ public class Controller {
                         user.removeFriend(model.getUID());
                         try {
                             writeAndWait(new RemoveFriendAction(user.getUID(), model.getUID()));
-                            refreshEverything();
+                            addOrRemoveFromEveryFriendList(model, false);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -1076,10 +1188,7 @@ public class Controller {
                 } else {
 
                     // Variables (Controls; GUI components):
-                    Rectangle avatarPic = new Rectangle(50, 50);
-
-                    avatarPic.setStyle("-fx-arc-width: 200");
-                    avatarPic.setStyle("-fx-arc-height: 200");
+                    Circle avatarPic = new Circle(25);
 
                     try {
                         avatarPic.setFill(new ImagePattern(readAvatarImage(server)));
@@ -1537,13 +1646,14 @@ public class Controller {
 
     @FXML
     void loadCreateNewServerScene(Event event) {
-        loadScene(event, "CreateNewServerPage.fxml");
-        newServerNameTextField.setText(user.getUsername() + "'s Server");
+        loadScene(event, "CreateOrEditServerPage.fxml");
+        serverNameTextField.setText(user.getUsername() + "'s Server");
     }
 
     @FXML
     void loadProfile(MouseEvent event) throws IOException {
 
+        permissionErrorMessage.setVisible(false);
         //user.getIsInChat().replace(currentFriendDM, false);
         user.makeAllIsInChatsFalse();
         writeAndWait(new UpdateUserOnMainServerAction(user));
@@ -1572,6 +1682,15 @@ public class Controller {
         } else {
             profilePhoneNumber.setText("This user hasn't added a phone number yet.");
         }
+
+        myAccountLabel.setText(user.getUsername() + "'s Account");
+
+        changePasswordButton.setVisible(false);
+        logoutButton.setVisible(false);
+
+        changeAvatarButton.setVisible(false);
+        removeAvatarButton.setVisible(false);
+
         profileStatus.setDisable(true);
         editButton.setVisible(false);
 
@@ -1590,6 +1709,7 @@ public class Controller {
     @FXML
     void loadHome() throws IOException {
 
+        permissionErrorMessage.setVisible(false);
 //        user.getIsInChat().replace(currentFriendDM, false);
         user.makeAllIsInChatsFalse();
         writeAndWait(new UpdateUserOnMainServerAction(user));
@@ -1607,6 +1727,7 @@ public class Controller {
     @FXML
     void loadServer() throws IOException {
 
+        permissionErrorMessage.setVisible(false);
 //        user.getIsInChat().replace(currentFriendDM, false);
         user.makeAllIsInChatsFalse();
         writeAndWait(new UpdateUserOnMainServerAction(user));
@@ -1664,7 +1785,7 @@ public class Controller {
         writeAndWait(chatMessage);
         textField.setText("");
     }
-
+    
     @FXML
     void uploadPrivateChatFile(MouseEvent event) throws IOException {
         FileChooser fileChooser = new FileChooser();
@@ -1697,47 +1818,104 @@ public class Controller {
 
     //////////////////////////////////////////////////////////// create new server scene ->
     @FXML
-    private Circle newServerAvatarImage;
+    private Label createServerLabel1;
     @FXML
-    private TextField newServerNameTextField;
+    private Label createServerLabel2;
+    @FXML
+    private Label createServerLabel3;
+    @FXML
+    private Circle serverAvatarImage;
+    @FXML
+    private TextField serverNameTextField;
+    @FXML
+    private Button createOrEditServerButton;
+    @FXML
+    private Button rolesButton;
 
     @FXML
-    void addServerImage(MouseEvent event) {
+    void addServerImage(MouseEvent event) throws IOException {
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Select an image to set for the server");
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("All Images", "*.jpg", "*.jpeg", "*.png"), new FileChooser.ExtensionFilter("JPG", "*.jpg", "*.jpeg"), new FileChooser.ExtensionFilter("PNG", "*.png"));
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        File selectedFile = fileChooser.showOpenDialog(stage);
+        if (selectedFile == null) {
+            return;
+        }
+
+        serverAvatarImage.setFill(new ImagePattern(new Image(selectedFile.getAbsolutePath())));
+
+        try (FileInputStream fileInputStream = new FileInputStream(selectedFile)) {
+            currentServer.setAvatarImage(fileInputStream.readAllBytes());
+        }
+        writeAndWait(new UpdateServerOnMainServerAction(currentServer));
+    }
+
+    @FXML
+    void backFromCreateOrEditServer(Event event) throws IOException {
+        loadMainPage(event);
+        if ("Edit Your Server".equals(createServerLabel1.getText())) {
+            loadServer();
+        }
+    }
+
+    @FXML
+    void createOrEditServer(Event event) throws IOException {
+        String serverName = serverNameTextField.getText().trim();
+        switch (createServerLabel1.getText()) {
+            case "Create Your Server" -> {
+                if (!"".equals(serverName)) {
+
+                    writeAndWait(new CreateNewServerAction());
+                    Integer newUnicode = smartListener.getReceivedInteger();
+                    Server newServer = new Server(newUnicode, serverName, user.getUID());
+                    writeAndWait(new AddNewServerToDatabaseAction(newServer));
+                    user.getServers().add(newUnicode);
+                    writeAndWait(new UpdateUserOnMainServerAction(user));
+
+                    loadMainPage(event);
+
+                    currentServer = newServer;
+                    loadServer();
+                }
+            }
+            case "Edit Your Server" -> {
+                if (currentServer.getAllAbilities(user.getUID()).contains(Ability.ChangeServerName)) {
+                    serverAvatarImage.setVisible(true);
+                    currentServer.setServerName(serverName);
+                    writeAndWait(new UpdateServerOnMainServerAction(currentServer));
+                    loadMainPage(event);
+                    loadServer();
+                } else {
+                    permissionErrorMessage.setVisible(true);
+                }
+            }
+        }
 
     }
 
     @FXML
-    void createServer(Event event) throws IOException {
-        String newServerName = newServerNameTextField.getText().trim();
-        if (!"".equals(newServerName)) {
-            writeAndWait(new CreateNewServerAction());
-            Integer newUnicode = smartListener.getReceivedInteger();
-            Server newServer = new Server(newUnicode, newServerName, user.getUID());
-            writeAndWait(new AddNewServerToDatabaseAction(newServer));
-            user.getServers().add(newUnicode);
-            writeAndWait(new UpdateUserOnMainServerAction(user));
-
-            loadMainPage(event);
-
-            currentServer = newServer;
-            loadServer();
-        }
+    private void loadRolesPage(Event event) {
+        loadScene(event, "RolesPage.fxml");
     }
 
     private void initializeServerPage() throws IOException {
         serverMenuButton.setText(currentServer.getServerName());
         currentTextChannel = currentServer.getTextChannels().get(0);
-        refreshEveryServerThing();
         constructTextChannelsCells();
         constructTextChannelChatCells();
         constructMembersCells();
+
+        refreshEveryServerThing();
     }
 
     public void refreshEveryServerThing() throws IOException {
 
-        if (currentServer == null) {
-            return;
-        }
+        if (currentServer == null) return;
+
+        permissionErrorMessage.setText("");
+        serverMenuButton.setText(currentServer.getServerName());
 
         writeAndWait(new GetServerFromMainServerAction(currentServer.getUnicode()));
         currentServer = smartListener.getReceivedServer();
@@ -1750,10 +1928,7 @@ public class Controller {
     public void refreshTextChannels() {
         textChannelsObservableList = FXCollections.observableArrayList();
         textChannelsListView.setStyle("-fx-background-color: #2f3136");
-
-        // if not null:
         textChannelsObservableList.addAll(currentServer.getTextChannels());
-
         textChannelsListView.setItems(textChannelsObservableList);
     }
 
@@ -1763,6 +1938,7 @@ public class Controller {
         textChannelName.setText(currentTextChannel.getName());
 
         constructTextChannelChatCells();
+
         textChannelChatObservableList = FXCollections.observableArrayList();
         textChannelChatListView.setStyle("-fx-background-color: #36393F");
 
@@ -1774,8 +1950,8 @@ public class Controller {
 
     public void refreshMembers() throws IOException {
 
-        ObservableList<Model> onlineMembersObservableList = FXCollections.observableArrayList();
-        ObservableList<Model> offlineMembersObservableList = FXCollections.observableArrayList();
+        onlineMembersObservableList = FXCollections.observableArrayList();
+        offlineMembersObservableList = FXCollections.observableArrayList();
 
         onlineMembersListView.setStyle("-fx-background-color: #2f3136");
         offlineMembersListView.setStyle("-fx-background-color: #2f3136");
@@ -1850,13 +2026,14 @@ public class Controller {
 
                     MenuItem profile = new MenuItem("Profile");
                     MenuItem kick = new MenuItem("Kick");
+                    //MenuItem addRole = new MenuItem("Add a role");
 
                     profile.setOnAction(new EventHandler<>() {
                         @Override
                         public void handle(ActionEvent event) {
-                            // TODO load another person's profile
                             try {
                                 loadProfile(model);
+                                profileBackButton.setText("Server");
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
@@ -1866,15 +2043,42 @@ public class Controller {
                     kick.setOnAction(new EventHandler<>() {
                         @Override
                         public void handle(ActionEvent event) {
-
+                            if (currentServer.getAllAbilities(user.getUID()).contains(Ability.RemoveMember)) {
+                                currentServer.getMembers().remove(model.getUID());
+                                try {
+                                    writeAndWait(new RemoveMemberFromServerAction(currentServer.getUnicode(), model.getUID()));
+                                    if (model.getStatus().equals(Status.Invisible)) {
+                                        offlineMembersObservableList.remove(model);
+                                        int currentCount = Integer.parseInt(offlineCountInServer.getText().split(" ")[2]);
+                                        offlineCountInServer.setText("Offline - " + (currentCount - 1));
+                                    } else {
+                                        onlineMembersObservableList.remove(model);
+                                        int currentCount = Integer.parseInt(onlineCountInServer.getText().split(" ")[2]);
+                                        onlineCountInServer.setText("Online - " + (currentCount - 1));
+                                    }
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            } else {
+                                permissionErrorMessage.setVisible(true);
+                            }
                         }
                     });
+
+//                    addRole.setOnAction(new EventHandler<ActionEvent>() {
+//                        @Override
+//                        public void handle(ActionEvent event) {
+//                            loadScene();
+//                        }
+//                    });
 
                     contextMenu.getItems().addAll(profile, kick);
                     gridPane.setOnContextMenuRequested(new EventHandler<>() {
                         @Override
                         public void handle(ContextMenuEvent contextMenuEvent) {
-                            contextMenu.show(gridPane, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
+                            if (!model.getUID().equals(user.getUID())) {
+                                contextMenu.show(gridPane, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
+                            }
                         }
                     });
 
@@ -1887,12 +2091,12 @@ public class Controller {
     private GridPane getUserGridPane(Model model) {
 
         GridPane gridPane = new GridPane();
-        Circle avatarPic = new Circle(20);
+        Circle avatarPic = new Circle(18);
         Label username = new Label();
         Label status = new Label();
 
         username.setStyle("-fx-font-weight: bold");
-        username.setStyle("-fx-font-size: 18");
+        username.setStyle("-fx-font-size: 12");
         username.setStyle("-fx-text-fill: White");
 
         gridPane.setStyle("-fx-background-color: #2f3136");
@@ -1964,8 +2168,8 @@ public class Controller {
     void InvitePeople(Event event) throws IOException {
         loadScene("InvitePeopleScene.fxml");
         serverNameOnInviteScene.setText("Invite People to " + currentServer.getServerName());
+        constructPeopleCells(true);
         refreshPeople();
-        constructPeopleCells();
     }
 
     // text channel chat
@@ -2066,7 +2270,7 @@ public class Controller {
 
     private void refreshPeople() throws IOException {
         ObservableList<Model> peopleObservableList = FXCollections.observableArrayList();
-        uninvitedFriendsListView.setStyle("-fx-background-color: #36393F");
+        uninvitedFriendsOrMembersListView.setStyle("-fx-background-color: #36393F");
         for (Integer UID : user.getFriends()) {
             if (currentServer.getMembers().containsKey(UID)) {
                 continue;
@@ -2075,11 +2279,11 @@ public class Controller {
             Model friend = smartListener.getReceivedUser();
             peopleObservableList.add(friend);
         }
-        uninvitedFriendsListView.setItems(peopleObservableList);
+        uninvitedFriendsOrMembersListView.setItems(peopleObservableList);
     }
 
-    private void constructPeopleCells() {
-        uninvitedFriendsListView.setCellFactory(mc -> new ListCell<>() {
+    private void constructPeopleCells(boolean invite) {
+        uninvitedFriendsOrMembersListView.setCellFactory(mc -> new ListCell<>() {
             @Override
             protected void updateItem(Model model, boolean empty) {
                 super.updateItem(model, empty);
@@ -2090,7 +2294,9 @@ public class Controller {
                     GridPane gridPane = new GridPane();
                     Circle avatarPic = new Circle(20);
                     Label username = new Label();
-                    Button inviteButton = new Button("Invite");
+                    Button inviteOrAddButton = new Button();
+                    if (invite) inviteOrAddButton.setText("Invite");
+                    else inviteOrAddButton.setText("Add");
 
                     username.setStyle("-fx-font-weight: bold");
                     username.setStyle("-fx-font-size: 18");
@@ -2105,13 +2311,13 @@ public class Controller {
 
                     gridPane.add(avatarPic, 0, 0, 1, GridPane.REMAINING);
                     gridPane.add(username, 1, 0, 1, GridPane.REMAINING);
-                    gridPane.add(inviteButton, 2, 0, 1, GridPane.REMAINING);
+                    gridPane.add(inviteOrAddButton, 2, 0, 1, GridPane.REMAINING);
 
                     setUpGridPaneSizes(gridPane);
 
                     GridPane.setHalignment(avatarPic, HPos.LEFT);
                     GridPane.setHalignment(username, HPos.LEFT);
-                    GridPane.setHalignment(inviteButton, HPos.RIGHT);
+                    GridPane.setHalignment(inviteOrAddButton, HPos.RIGHT);
 
                     try {
                         avatarPic.setFill(new ImagePattern(readAvatarImage(model)));
@@ -2122,25 +2328,35 @@ public class Controller {
 
                     username.setText(model.getUsername());
 
-                    inviteButton.setOnAction(new EventHandler<>() {
+                    inviteOrAddButton.setOnAction(new EventHandler<>() {
                         @Override
                         public void handle(ActionEvent event) {
-                            if (currentServer.addNewMember(model.getUID())) {
-                                successOrFailMessageLabel.setText("Invited successfully!");
-                                inviteButton.setText("Done");
+                            if (invite) {
+                                if (currentServer.addNewMember(model.getUID())) {
+                                    successOrFailMessageLabel.setText("Invited successfully!");
+                                    inviteOrAddButton.setText("Done");
+                                    try {
+                                        writeAndWait(new UpdateServerOnMainServerAction(currentServer));
+                                        writeAndWait(new AddFriendToServerAction(currentServer.getUnicode(), model.getUID()));
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                    successOrFailMessageLabel.setStyle("-fx-text-fill: green");
+                                } else {
+                                    successOrFailMessageLabel.setText("Invited Failed! This user is banned from the server!");
+                                    successOrFailMessageLabel.setStyle("-fx-text-fill: red");
+                                }
+                            } else {
+                                Role currentRole = currentServer.getServerRoles().get(serverNameOnInviteScene.getText());
+                                currentServer.getMembers().get(model.getUID()).add(currentRole);
                                 try {
                                     writeAndWait(new UpdateServerOnMainServerAction(currentServer));
-                                    writeAndWait(new AddFriendToServerAction(currentServer.getUnicode(), model.getUID()));
                                 } catch (IOException e) {
                                     e.printStackTrace();
                                 }
-                                successOrFailMessageLabel.setStyle("-fx-text-fill: green");
-                            } else {
-                                successOrFailMessageLabel.setText("Invited Failed! This user is banned from the server!");
-                                successOrFailMessageLabel.setStyle("-fx-text-fill: red");
+                                inviteOrAddButton.setText("Done");
                             }
-
-                            inviteButton.setDisable(true);
+                            inviteOrAddButton.setDisable(true);
                         }
                     });
 
@@ -2152,8 +2368,13 @@ public class Controller {
 
     @FXML
     void changeServerSettings() {
-        // change name
-        // change profile pic
+        loadScene("CreateOrEditServerPage.fxml");
+        createServerLabel1.setText("Edit Your Server");
+        createServerLabel2.setVisible(false);
+        createServerLabel3.setVisible(false);
+        createOrEditServerButton.setText("Edit");
+        serverNameTextField.setText(currentServer.getServerName());
+        rolesButton.setVisible(true);
         // role
         // limit members from the server
     }
@@ -2171,17 +2392,21 @@ public class Controller {
     @FXML
     void createNewTextChannel() throws IOException {
 
+        newTextChannelNameTextField.setVisible(false);
+        textChannelName.setText(currentTextChannel.getName());
+
         String newTextChannelName = newTextChannelNameTextField.getText().trim();
         if (newTextChannelName.equals("")) return;
-        newTextChannelNameTextField.setVisible(false);
 
-        currentServer.addNewTextChannel(newTextChannelName);
+        TextChannel newTextChannel = currentServer.addNewTextChannel(newTextChannelName);
         writeAndWait(new UpdateServerOnMainServerAction(currentServer));
 
         int currentIndex = currentServer.getTextChannels().indexOf(currentTextChannel);
         currentTextChannel = currentServer.getTextChannels().get(currentIndex + 1);
+
+        textChannelsObservableList.add(newTextChannel);
         textChannelName.setText(currentTextChannel.getName());
-        refreshTextChannels();
+
         refreshTextChannelChat();
     }
 
@@ -2192,11 +2417,80 @@ public class Controller {
     @FXML
     private Label successOrFailMessageLabel;
     @FXML
-    private ListView<Model> uninvitedFriendsListView;
+    private ListView<Model> uninvitedFriendsOrMembersListView;
 
     // methods:
     @FXML
     private void backFromInvitePeople(Event event) throws IOException {
         loadMainPage(event);
+        loadServer();
+    }
+
+
+    //////////////////////////////////////////////////////////// create new role scene ->
+    // fields:
+    @FXML
+    private TextField newRoleNameTextField;
+
+    @FXML
+    private CheckBox banAbility;
+
+    @FXML
+    private CheckBox changeServerNameAbility;
+
+    @FXML
+    private CheckBox createChannelAbility;
+
+    @FXML
+    private CheckBox limitMembersOfChannelsAbility;
+
+    @FXML
+    private CheckBox pinMessageAbility;
+
+    @FXML
+    private CheckBox removeChannelAbility;
+
+    @FXML
+    private CheckBox removeMemberAbility;
+
+    @FXML
+    private CheckBox seeChatHistoryAbility;
+
+    @FXML
+    void doneMakingNewRole(Event event) throws IOException {
+
+        String newRoleName = newRoleNameTextField.getText().trim();
+
+        HashSet<Ability> newRoleAbilities = new HashSet<>();
+        if (banAbility.isSelected()) newRoleAbilities.add(Ability.Ban);
+        if (changeServerNameAbility.isSelected()) newRoleAbilities.add(Ability.ChangeServerName);
+        if (createChannelAbility.isSelected()) newRoleAbilities.add(Ability.CreateChannel);
+        if (limitMembersOfChannelsAbility.isSelected()) newRoleAbilities.add(Ability.LimitMembersOfChannels);
+        if (pinMessageAbility.isSelected()) newRoleAbilities.add(Ability.PinMessage);
+        if (removeChannelAbility.isSelected()) newRoleAbilities.add(Ability.RemoveChannel);
+        if (removeMemberAbility.isSelected()) newRoleAbilities.add(Ability.RemoveMember);
+        if (seeChatHistoryAbility.isSelected()) newRoleAbilities.add(Ability.SeeChatHistory);
+
+        Role newRole = new Role(newRoleName, newRoleAbilities);
+        currentServer.getServerRoles().put(newRoleName, newRole);
+        writeAndWait(new UpdateServerOnMainServerAction(currentServer));
+
+        loadScene(event, "InvitePeopleScene.fxml");
+        serverNameOnInviteScene.setText(newRoleName);
+        constructPeopleCells(false);
+        refreshFutureRoleHolders();
+        //loadMainPage(event);
+        //loadServer();
+    }
+
+    private void refreshFutureRoleHolders() throws IOException {
+        ObservableList<Model> peopleObservableList = FXCollections.observableArrayList();
+        uninvitedFriendsOrMembersListView.setStyle("-fx-background-color: #36393F");
+        for (Integer UID : currentServer.getMembers().keySet()) {
+            writeAndWait(new GetUserFromMainServerAction(UID));
+            Model member = smartListener.getReceivedUser();
+            peopleObservableList.add(member);
+        }
+        uninvitedFriendsOrMembersListView.setItems(peopleObservableList);
     }
 }

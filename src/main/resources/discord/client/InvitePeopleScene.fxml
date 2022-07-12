@@ -15,7 +15,7 @@
       <Insets top="20.0" />
    </padding>
    <center>
-      <ListView fx:id="uninvitedFriendsListView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #36393F;" styleClass="list-cell" stylesheets="@styles/ListViewColor4.css" BorderPane.alignment="CENTER" />
+      <ListView fx:id="uninvitedFriendsOrMembersListView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #36393F;" styleClass="list-cell" stylesheets="@styles/ListViewColor4.css" BorderPane.alignment="CENTER" />
    </center>
    <top>
       <GridPane BorderPane.alignment="CENTER">

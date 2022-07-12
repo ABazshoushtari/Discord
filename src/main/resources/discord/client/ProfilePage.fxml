@@ -17,7 +17,7 @@
    <center>
       <VBox spacing="20.0" style="-fx-background-color: #36393f;" BorderPane.alignment="CENTER">
          <children>
-            <Label text="My Account" textFill="WHITE">
+            <Label fx:id="myAccountLabel" text="My Account" textFill="WHITE">
                <font>
                   <Font name="Arial Bold" size="18.0" />
                </font>
@@ -35,7 +35,7 @@
                         <Circle fx:id="avatar" fill="#202225" onMouseClicked="#changeAvatar" radius="50.0" stroke="WHITE" strokeType="INSIDE" />
                         <VBox spacing="10.0">
                            <children>
-                              <Button alignment="CENTER" contentDisplay="CENTER" maxWidth="1.7976931348623157E308" onMouseClicked="#changeAvatar" style="-fx-background-color: #5862fd; -fx-background-radius: 5;" text="Change Avatar" textFill="WHITE">
+                              <Button fx:id="changeAvatarButton" alignment="CENTER" contentDisplay="CENTER" maxWidth="1.7976931348623157E308" onMouseClicked="#changeAvatar" style="-fx-background-color: #5862fd; -fx-background-radius: 5;" text="Change Avatar" textFill="WHITE">
                                  <font>
                                     <Font name="System Bold" size="14.0" />
                                  </font>
@@ -43,7 +43,7 @@
                                     <Insets bottom="5.0" left="10.0" right="10.0" top="5.0" />
                                  </padding>
                               </Button>
-                              <Button alignment="CENTER" contentDisplay="CENTER" onAction="#removeAvatar" onMouseEntered="#changeRedOnEnter" onMouseExited="#changeRedOnExit" style="-fx-background-color: #d83c3e; -fx-background-radius: 5;" text="Remove Avatar" textFill="WHITE">
+                              <Button fx:id="removeAvatarButton" alignment="CENTER" contentDisplay="CENTER" onAction="#removeAvatar" onMouseEntered="#changeRedOnEnter" onMouseExited="#changeRedOnExit" style="-fx-background-color: #d83c3e; -fx-background-radius: 5;" text="Remove Avatar" textFill="WHITE">
                                  <font>
                                     <Font name="System Bold" size="14.0" />
                                  </font>
@@ -209,7 +209,7 @@
    <left>
       <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" spacing="7.0" BorderPane.alignment="CENTER">
          <children>
-            <Button alignment="CENTER" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#loadMainPage" style="-fx-background-color: #3ca45c; -fx-background-radius: 5;" text="Back" textFill="WHITE">
+            <Button fx:id="profileBackButton" alignment="CENTER" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#backFromProfile" style="-fx-background-color: #3ca45c; -fx-background-radius: 5;" text="Main Page" textFill="WHITE">
                <font>
                   <Font name="System Bold" size="14.0" />
                </font>
@@ -219,7 +219,7 @@
                   <Font name="System Bold" size="14.0" />
                </font>
             </Button>
-            <Button alignment="CENTER" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#logout" onMouseEntered="#changeRedOnEnter" onMouseExited="#changeRedOnExit" style="-fx-background-color: #d83c3e; -fx-background-radius: 5;" text="Log out" textFill="WHITE">
+            <Button fx:id="logoutButton" alignment="CENTER" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#logout" onMouseEntered="#changeRedOnEnter" onMouseExited="#changeRedOnExit" style="-fx-background-color: #d83c3e; -fx-background-radius: 5;" text="Log out" textFill="WHITE">
                <font>
                   <Font name="System Bold" size="14.0" />
                </font>
