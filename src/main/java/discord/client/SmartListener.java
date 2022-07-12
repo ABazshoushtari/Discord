@@ -46,32 +46,28 @@ public class SmartListener implements Runnable {
                                     switch (mus.getClass().getSimpleName()) {
                                         case "RespondFriendRequestModelUpdaterSignal" -> {
                                             Model responder = (Model) beingChangedScreenElement;
-                                            controller.getPendingObservableList().remove(responder);
-                                            if (((RespondFriendRequestModelUpdaterSignal) mus).isAccept()) {
-                                                controller.getAllFriendsObservableList().add(responder);
-                                                controller.getDirectMessagesObservableList().add(responder);
-                                                if (responder.getStatus() != Status.Invisible) {
-                                                    controller.getOnlineFriendsObservableList().add(responder);
-                                                }
+
+                                            controller.addOrRemoveFromPendingList(responder, false);
+
+                                            boolean accept = ((RespondFriendRequestModelUpdaterSignal) mus).isAccept();
+                                            if (accept) {
+                                                controller.addOrRemoveFromEveryFriendList(responder, true);
                                             }
                                         }
 
                                         case "FriendRequestModelUpdaterSignal" -> {
                                             Model requester = (Model) beingChangedScreenElement;
-                                            controller.getPendingObservableList().add(requester);
+                                            controller.addOrRemoveFromPendingList(requester, true);
                                         }
 
                                         case "CancelFriendRequestModelUpdaterSignal" -> {
                                             Model canceller = (Model) beingChangedScreenElement;
-                                            controller.getPendingObservableList().remove(canceller);
+                                            controller.addOrRemoveFromPendingList(canceller, false);
                                         }
 
                                         case "LostAFriendModelUpdaterSignal" -> {
                                             Model remover = (Model) beingChangedScreenElement;
-
-                                            controller.getAllFriendsObservableList().remove(remover);
-                                            controller.getOnlineFriendsObservableList().remove(remover);
-                                            controller.getDirectMessagesObservableList().remove(remover);
+                                            controller.addOrRemoveFromEveryFriendList(remover, false);
                                         }
 
                                         case "ChatMessageSignal" -> {
@@ -83,66 +79,33 @@ public class SmartListener implements Runnable {
                                             Server newServer = (Server) beingChangedScreenElement;
                                             controller.getServersObservableList().add(newServer);
                                         }
+
+                                        case "GotRemovedFromAServerModelUpdaterSignal" -> {
+                                            Server lostServer = (Server) beingChangedScreenElement;
+                                            controller.getServersObservableList().remove(lostServer);
+                                        }
                                     }
                                 } else {
                                     switch (updaterSignal.getClass().getSimpleName()) {
                                         case "RelatedUserChangedUpdaterSignal" -> {
                                             try {
                                                 controller.refreshEverything();
+                                                controller.refreshEveryServerThing();
                                             } catch (IOException e) {
-                                                throw new RuntimeException(e);
+                                                e.printStackTrace();
                                             }
                                         }
                                         case "RelatedServerChangedUpdaterSignal" -> {
-                                            if (controller.getCurrentServer().getUnicode().equals(updaterSignal.getID())) {
-                                                try {
-                                                    controller.setUpdatedValuesForServerObservableLists();
-                                                } catch (IOException e) {
-                                                    throw new RuntimeException(e);
-                                                }
+                                            try {
+                                                controller.refreshEveryServerThing();
+                                            } catch (IOException e) {
+                                                e.printStackTrace();
                                             }
                                         }
                                     }
                                 }
                             }
                         });
-                        /*
-                        Platform.runLater(() -> {
-                            try {
-                                switch (mus.getClass().getSimpleName()) {
-
-                                    case "RelatedUserChangedSignal" -> controller.refreshEverything();  // odd(distinctive) signal
-
-
-                        Platform.runLater(() -> {
-                            try {
-                                switch (us.getClass().getSimpleName()) {
-                                    case "RelatedUserChangedUpdaterSignal" -> {
-                                        controller.refreshEverything();
-                                        // controller -> refresh us.getID() related people
-                                    }
-                                    case "AServerIsChangedSignal" -> {
-                                        if (controller.getCurrentServer().getUnicode().equals(us.getID())) {
-                                            controller.setUpdatedValuesForServerObservableLists();
-                                        }
-                                    }
-                                    case "RespondFriendRequestModelUpdaterSignal" -> {
-                                        controller.refreshPending();
-                                        controller.refreshFriends();
-                                    }
-                                    case "CancelFriendRequestModelUpdaterSignal",
-                                            "FriendRequestModelUpdaterSignal" -> controller.refreshPending();
-                                    case "LostAFriendModelUpdaterSignal" -> controller.refreshFriends();
-                                    case "ChatMessageSignal" ->
-                                            controller.getChatMessageObservableList().add(((ChatMessageSignal) mus).getChatMessage());
-                                    case "AddedToNewServerModelUpdaterSignal" -> controller.refreshServers();
-                                }
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        });
-                         */
-
                     } else {    // the write-back of the written action by the user themselves (get part of "send and get response")
                         synchronized (controller) {
                             switch (mainServerResponse.getClass().getSimpleName()) {

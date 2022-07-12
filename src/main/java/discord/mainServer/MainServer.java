@@ -78,11 +78,11 @@ public class MainServer {
             in = new ObjectInputStream(fileIn);
             return (Type) in.readObject();
         } catch (FileNotFoundException e) {
-            System.err.println("file not found while iterating over the users!");
+            System.err.println("file not found while iterating over the assets!");
         } catch (IOException e) {
-            System.err.println("I/O exception occurred while iterating over the users");
+            System.err.println("I/O exception occurred while iterating over the assets");
         } catch (ClassNotFoundException e) {
-            System.err.println("class not found exception occurred while iterating over the users");
+            System.err.println("class not found exception occurred while iterating over the assets");
         } finally {
             //handleClosingInputs(fileIn, in);
             if (handleClosingStreams(fileIn, in)) {
