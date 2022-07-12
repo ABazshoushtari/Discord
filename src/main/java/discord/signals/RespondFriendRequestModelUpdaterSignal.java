@@ -4,25 +4,30 @@ import discord.client.Model;
 
 public class RespondFriendRequestModelUpdaterSignal extends ModelUpdaterSignal {
 
-    private final Integer acceptorUID;
+    private final Integer responderUID;
+    private final Model responder;
     private final boolean accept;
 
-    public RespondFriendRequestModelUpdaterSignal(Integer acceptorUID, boolean accept) {
-        this.acceptorUID = acceptorUID;
+    public RespondFriendRequestModelUpdaterSignal(Model responder, boolean accept) {
+        this.responder = responder;
+        responderUID = responder.getUID();
         this.accept = accept;
     }
 
     @Override
     public Model getUpdatedModel() {
         if (accept) {
-            beingUpdatedModel.addFriend(acceptorUID);
+            beingUpdatedModel.addFriend(responderUID);
         }
-        beingUpdatedModel.getSentFriendRequests().remove(acceptorUID);
+        beingUpdatedModel.getSentFriendRequests().remove(responderUID);
         return beingUpdatedModel;
     }
 
-    public Integer getAcceptorUID() {
-        return acceptorUID;
+    public Integer getResponderUID() {
+        return responderUID;
+    }
+    public Model getResponder() {
+        return responder;
     }
     public boolean isAccept() {
         return accept;

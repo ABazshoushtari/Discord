@@ -30,7 +30,7 @@ public class RemoveFriendAction implements Action {
             if (ch.getUser() != null) {
                 if (ch.getUser().getUID().equals(beingRemovedUID)) {
                     synchronized (ch.getMySocket()) {
-                        ch.getMySocket().write(new LostAFriendModelUpdaterSignal(removerUID));
+                        ch.getMySocket().write(new LostAFriendModelUpdaterSignal(remover));
                     }
                     break;
                 }

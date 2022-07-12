@@ -717,6 +717,7 @@ public class Controller {
 
         refreshEverything();
 
+
         initializeMyProfile();
 
         constructBlockedCells();

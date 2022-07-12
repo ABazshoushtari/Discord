@@ -4,15 +4,21 @@ import discord.client.Model;
 
 public class CancelFriendRequestModelUpdaterSignal extends ModelUpdaterSignal {
 
+    private final Model canceller;
     private final Integer cancellerUID;
 
-    public CancelFriendRequestModelUpdaterSignal(Integer cancellerUID) {
-        this.cancellerUID = cancellerUID;
+    public CancelFriendRequestModelUpdaterSignal(Model canceller) {
+        this.canceller = canceller;
+        cancellerUID = canceller.getUID();
     }
 
     @Override
     public Model getUpdatedModel() {
         beingUpdatedModel.getIncomingFriendRequests().remove(cancellerUID);
         return beingUpdatedModel;
+    }
+
+    public Model getCanceller() {
+        return canceller;
     }
 }

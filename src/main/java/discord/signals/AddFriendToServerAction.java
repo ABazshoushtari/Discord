@@ -31,7 +31,7 @@ public class AddFriendToServerAction implements Action {
             if (user != null) {
                 if (user.getUID().equals(newMemberUID)) {
                     synchronized (ch.getMySocket()) {
-                        ch.getMySocket().write(new AddedToNewServerModelUpdaterSignal(unicode));
+                        ch.getMySocket().write(new AddedToNewServerModelUpdaterSignal(MainServer.getServers().get(unicode)));
                     }
                     break;
                 }

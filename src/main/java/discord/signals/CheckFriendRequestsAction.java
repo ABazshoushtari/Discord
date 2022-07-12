@@ -32,17 +32,6 @@ public class CheckFriendRequestsAction implements Action {
             requester.addFriend(myUID);
         }
 
-        for (ClientHandler ch : clientHandlers) {
-            if (ch.getUser() != null) {
-                if (ch.getUser().getUID().equals(requesterID)) {
-                    synchronized (ch.getMySocket()) {
-                        ch.getMySocket().write(new RespondFriendRequestModelUpdaterSignal(myUID, accept));
-                    }
-                    break;
-                }
-            }
-        }
-
         requester.getSentFriendRequests().remove(myUID);
         myUser.getIncomingFriendRequests().remove(index);
 
@@ -51,6 +40,17 @@ public class CheckFriendRequestsAction implements Action {
 
         //MainServer.getUsers().replace(requesterID, requester);
         MainServer.updateDatabase(requester);
+
+        for (ClientHandler ch : clientHandlers) {
+            if (ch.getUser() != null) {
+                if (ch.getUser().getUID().equals(requesterID)) {
+                    synchronized (ch.getMySocket()) {
+                        ch.getMySocket().write(new RespondFriendRequestModelUpdaterSignal(myUser, accept));
+                    }
+                    break;
+                }
+            }
+        }
 
         return myUser;
     }

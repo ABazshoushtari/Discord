@@ -95,7 +95,7 @@ public class ClientHandler implements Runnable {
                         updatedMe.getIncomingFriendRequests().contains(UID);    //someone who has sent a friend request to me
                 if (related) {
                     synchronized (ch.getMySocket()) {
-                        ch.getMySocket().write(new RelatedUserChangedSignal());
+                        ch.getMySocket().write(new RelatedUserChangedSignal(updatedMe));
                     }
                 }
             }

@@ -1,10 +1,7 @@
 package discord.client;
 
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.*;
 
 public class Model implements Asset {
     // Fields:
@@ -198,6 +195,19 @@ public class Model implements Asset {
 
     public String toString() {
         return username + " " + password + " " + email + " " + phoneNumber;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Model)) return false;
+        Model model = (Model) o;
+        return getUID().equals(model.getUID());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getUID());
     }
 }
 

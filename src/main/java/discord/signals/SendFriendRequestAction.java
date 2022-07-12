@@ -47,7 +47,7 @@ public class SendFriendRequestAction implements Action {
                 if (ch.getUser() != null) {
                     if (ch.getUser().getUID().equals(receiverUID)) {
                         synchronized (ch.getMySocket()) {
-                            ch.getMySocket().write(new FriendRequestModelUpdaterSignal(requesterUID));
+                            ch.getMySocket().write(new FriendRequestModelUpdaterSignal(requesterUser));
                         }
                         break;
                     }

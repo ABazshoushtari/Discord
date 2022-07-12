@@ -36,7 +36,7 @@ public class CancelSentFriendRequestAction implements Action{
         for (ClientHandler ch : clientHandlers) {
             if (ch.getUser() != null) {
                 if (ch.getUser().getUID().equals(beingCanceledUID)) {
-                    ch.getMySocket().write(new CancelFriendRequestModelUpdaterSignal(cancellerUID));
+                    ch.getMySocket().write(new CancelFriendRequestModelUpdaterSignal(canceller));
                     break;
                 }
             }
