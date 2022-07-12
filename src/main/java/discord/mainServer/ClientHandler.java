@@ -87,15 +87,27 @@ public class ClientHandler implements Runnable {
 
     public static void informRelatedPeople(Model updatedMe) throws IOException {
         for (ClientHandler ch : clientHandlers) {
-            if (ch.getUser() != null) {
-                Model user = ch.getUser();
+            if (ch.user != null) {
+                Model user = ch.user;
                 Integer UID = user.getUID();
                 boolean related = updatedMe.getFriends().contains(UID) ||   // a friend
                         updatedMe.getSentFriendRequests().contains(UID) ||  // someone whom I've sent a friend request to
                         updatedMe.getIncomingFriendRequests().contains(UID);    //someone who has sent a friend request to me
                 if (related) {
-                    synchronized (ch.getMySocket()) {
-                        ch.getMySocket().write(new RelatedUserChangedSignal());
+                    synchronized (ch.mySocket) {
+                        ch.mySocket.write(new RelatedUserChangedUpdaterSignal(updatedMe.getUID()));
+                    }
+                }
+            }
+        }
+    }
+
+    public static void informServerRelatedPeople(Server server) throws IOException {
+        for (ClientHandler ch : clientHandlers) {
+            if (ch.user != null) {
+                if (server.getMembers().containsKey(ch.user.getUID())) {
+                    synchronized (ch.mySocket) {
+                        ch.mySocket.write(new AServerIsChangedSignal(server.getUnicode()));
                     }
                 }
             }

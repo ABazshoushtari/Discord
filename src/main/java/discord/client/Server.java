@@ -7,7 +7,7 @@ import java.util.*;
 
 public class Server implements Asset {
     // Fields:
-    private final int unicode;
+    private final Integer unicode;
     private String serverName;
     private final Integer creatorUID;
     private byte[] avatarImage;
@@ -43,7 +43,7 @@ public class Server implements Asset {
     }
 
     // Getters:
-    public int getUnicode() {
+    public Integer getUnicode() {
         return unicode;
     }
     public Integer getID() {
@@ -569,7 +569,7 @@ public class Server implements Asset {
         return false;
     }
 
-    private HashSet<Ability> getAllAbilities(int UID) {
+    public HashSet<Ability> getAllAbilities(int UID) {
         HashSet<Ability> abilities = new HashSet<>();
         for (Role role : members.get(UID)) {
             abilities.addAll(role.getAbilities());

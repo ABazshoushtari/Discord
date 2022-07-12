@@ -1,10 +1,7 @@
 package discord.client;
 
 import discord.signals.Action;
-import discord.signals.ModelUpdaterSignal;
 
-import java.io.IOException;
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -13,6 +10,9 @@ import java.util.HashSet;
 public abstract class ChatMessage implements Action {
     // Fields:
     protected Integer senderUID;
+    protected byte[] senderImage;
+    protected String senderImageType;
+    protected String senderUsername;
     protected Integer receiverUID;
     protected String dateTime;
     protected HashMap<Integer, HashSet<Reaction>> reactions;  //  maps UID of the person who has reacted to this message to its reactions
@@ -29,6 +29,19 @@ public abstract class ChatMessage implements Action {
 
     // Methods:
     // Getter Methods:
+
+    public byte[] getSenderImage() {
+        return senderImage;
+    }
+
+    public String getSenderImageType() {
+        return senderImageType;
+    }
+
+    public String getSenderUsername() {
+        return senderUsername;
+    }
+
     public Integer getSenderUID() {
         return senderUID;
     }
@@ -50,6 +63,15 @@ public abstract class ChatMessage implements Action {
     }
 
     // Setter Methods:
+
+    public void setSenderImage(byte[] senderImage) {
+        this.senderImage = senderImage;
+    }
+
+    public void setSenderUsername(String senderUsername) {
+        this.senderUsername = senderUsername;
+    }
+
     public void setSenderUID(Integer senderUID) {
         this.senderUID = senderUID;
     }

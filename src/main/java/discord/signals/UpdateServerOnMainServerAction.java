@@ -1,7 +1,10 @@
 package discord.signals;
 
+import discord.mainServer.ClientHandler;
 import discord.mainServer.MainServer;
 import discord.client.Server;
+
+import java.io.IOException;
 
 public class UpdateServerOnMainServerAction implements Action {
     private final Server server;
@@ -11,9 +14,13 @@ public class UpdateServerOnMainServerAction implements Action {
     }
 
     @Override
-    public Object act() {
+    public Object act() throws IOException {
+
         MainServer.getServers().replace(server.getUnicode(), server);
         MainServer.updateDatabase(server);
+
+        ClientHandler.informServerRelatedPeople(server);
+
         return null;
     }
 }

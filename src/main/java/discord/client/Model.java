@@ -3,7 +3,6 @@ package discord.client;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 
 public class Model implements Asset {
@@ -198,6 +197,11 @@ public class Model implements Asset {
 
     public String toString() {
         return username + " " + password + " " + email + " " + phoneNumber;
+    }
+
+    public FriendRecord getFriendRecord(Integer friendUID) {
+        return new FriendRecord(avatarImage, avatarContentType, username, email, phoneNumber, status,
+                privateChats.get(friendUID), urlsOfPrivateChat.get(friendUID), filesOfPrivateChat.get(friendUID));
     }
 }
 

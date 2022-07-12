@@ -41,6 +41,10 @@ public class ChatStringMessage extends ChatMessage {
         Model senderUser = MainServer.getUsers().get(senderUID);
         Model receiverUser = MainServer.getUsers().get(receiverUID);
 
+        senderUsername = senderUser.getUsername();
+        senderImage = senderUser.getAvatarImage();
+        senderImageType = senderUser.getAvatarContentType();
+
         senderUser.getPrivateChats().get(receiverUID).add(this);
         receiverUser.getPrivateChats().get(senderUID).add(this);
 
@@ -52,7 +56,7 @@ public class ChatStringMessage extends ChatMessage {
             if (user != null) {
                 if (receiverUID.equals(user.getUID())) {
 
-                    user = MainServer.getUsers().get(receiverUID);  //userOfClientHandler.getUID()
+                    user = MainServer.getUsers().get(receiverUID);  //userOfClientHandler.getChangerUserUID()
 
                     if (user.getIsInChat().get(senderUID)) {
                         synchronized (ch.getMySocket()) {
