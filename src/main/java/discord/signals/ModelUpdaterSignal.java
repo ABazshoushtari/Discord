@@ -2,9 +2,7 @@ package discord.signals;
 
 import discord.client.Model;
 
-import java.io.Serializable;
-
-public abstract class ModelUpdaterSignal implements Serializable {
+public abstract class ModelUpdaterSignal extends UpdaterSignal {
     protected Model beingUpdatedModel;
 
     public void setBeingUpdatedModel(Model beingUpdatedModel) {

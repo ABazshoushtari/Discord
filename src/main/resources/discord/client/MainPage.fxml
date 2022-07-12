@@ -27,7 +27,7 @@
    <center>
       <StackPane maxWidth="1.7976931348623157E308" prefWidth="714.0" style="-fx-background-color: #36393F;" BorderPane.alignment="CENTER">
          <children>
-            <TabPane fx:id="theTabPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #36393F;" stylesheets="@styles/TabPaneStyle.css" tabClosingPolicy="UNAVAILABLE" tabMinWidth="68.0">
+            <TabPane fx:id="theTabPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #36393F;" stylesheets="@styles/TabPaneStyle.css" tabClosingPolicy="UNAVAILABLE" tabMinWidth="68.0" visible="false">
                <tabs>
                   <Tab disable="true" text="Friends" />
                   <Tab text="Online">
@@ -266,7 +266,7 @@
                   <Insets bottom="10.0" top="10.0" />
                </padding>
             </GridPane>
-            <BorderPane fx:id="serverBorderPane" maxWidth="1.7976931348623157E308" visible="false">
+            <BorderPane fx:id="serverBorderPane" maxWidth="1.7976931348623157E308">
                <center>
                   <GridPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #36393F;" vgap="5.0" BorderPane.alignment="CENTER">
                      <columnConstraints>
@@ -288,11 +288,16 @@
                               <Insets left="10.0" />
                            </padding>
                         </Label>
-                        <TextField fx:id="newTextChannelNameTextField" onAction="#createNewTextChannel" visible="false" GridPane.columnIndex="1">
-                           <GridPane.margin>
-                              <Insets left="10.0" right="10.0" />
-                           </GridPane.margin>
-                        </TextField>
+                        <StackPane prefHeight="150.0" prefWidth="200.0" GridPane.columnIndex="1">
+                           <children>
+                              <TextField fx:id="newTextChannelNameTextField" onAction="#createNewTextChannel" visible="false" />
+                              <Label fx:id="permissionErrorMessage" alignment="CENTER" contentDisplay="CENTER" text="You don't have the permission to do this" textFill="RED" visible="false">
+                                 <font>
+                                    <Font name="System Bold" size="14.0" />
+                                 </font>
+                              </Label>
+                           </children>
+                        </StackPane>
                         <Separator focusTraversable="false" maxWidth="1.7976931348623157E308" opacity="0.4" prefWidth="395.0" valignment="TOP" GridPane.columnSpan="2147483647" GridPane.rowIndex="1" GridPane.valignment="TOP" />
                         <ListView fx:id="textChannelChatListView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #36393F;" styleClass="list-cell" stylesheets="@styles/ListViewColor.css" GridPane.columnSpan="2147483647" GridPane.rowIndex="2">
                            <padding>
@@ -398,12 +403,12 @@
                <children>
                   <StackPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
                      <children>
-                        <Label fx:id="friendsLabel" text="Friends" textFill="WHITE">
+                        <Label fx:id="friendsLabel" text="Friends" textFill="WHITE" visible="false">
                            <font>
                               <Font name="System Bold" size="14.0" />
                            </font>
                         </Label>
-                        <MenuButton fx:id="serverMenuButton" alignment="CENTER" mnemonicParsing="false" style="-fx-background-color: #2f3136;" text="Server Name" textFill="WHITE" visible="false">
+                        <MenuButton fx:id="serverMenuButton" alignment="CENTER" mnemonicParsing="false" style="-fx-background-color: #2f3136;" text="Server Name" textFill="WHITE">
                            <items>
                               <MenuItem mnemonicParsing="false" onAction="#InvitePeople" text="Invite People" />
                               <MenuItem mnemonicParsing="false" onAction="#changeServerSettings" text="Server Settings" />
@@ -418,7 +423,7 @@
                   <Separator opacity="0.4" prefHeight="0.0" prefWidth="110.0" valignment="BOTTOM" GridPane.valignment="BOTTOM" />
                   <StackPane maxHeight="1.7976931348623157E308" prefHeight="494.0" prefWidth="200.0" style="-fx-background-color: #2f3136;" GridPane.rowIndex="1">
                      <children>
-                        <VBox fx:id="friendsDMVBox" maxHeight="1.7976931348623157E308" prefHeight="494.0" prefWidth="100.0" spacing="10.0" style="-fx-background-color: #2f3136;">
+                        <VBox fx:id="friendsDMVBox" maxHeight="1.7976931348623157E308" prefHeight="494.0" prefWidth="100.0" spacing="10.0" style="-fx-background-color: #2f3136;" visible="false">
                            <children>
                               <Label text="Direct Messages" textFill="WHITE">
                                  <font>
@@ -437,7 +442,7 @@
                               <Insets bottom="8.0" />
                            </padding>
                         </VBox>
-                        <VBox fx:id="textChannelsVBox" maxHeight="1.7976931348623157E308" prefWidth="150.0" spacing="10.0" style="-fx-background-color: #2f3136;" visible="false">
+                        <VBox fx:id="textChannelsVBox" maxHeight="1.7976931348623157E308" prefWidth="150.0" spacing="10.0" style="-fx-background-color: #2f3136;">
                            <children>
                               <GridPane>
                                  <columnConstraints>

@@ -12,6 +12,8 @@ public class ChatStringMessage extends ChatMessage {
     // Fields:
     /* inherited fields:
     protected Integer senderUID;
+    protected byte[] senderImage;
+    protected String senderUsername;
     protected Integer receiverUID;
     protected String dateTime;
     protected HashMap<Integer, HashSet<Reaction>> reactions;  //  maps UID of the person who reacted to this message to its reactions
@@ -55,7 +57,7 @@ public class ChatStringMessage extends ChatMessage {
             if (user != null) {
                 if (receiverUID.equals(user.getUID())) {
 
-                    user = MainServer.getUsers().get(receiverUID);  //userOfClientHandler.getUID()
+                    user = MainServer.getUsers().get(receiverUID);  //userOfClientHandler.getChangerUserUID()
 
                     if (user.getIsInChat().get(senderUID)) {
                         synchronized (ch.getMySocket()) {

@@ -16,6 +16,10 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 
 import javafx.scene.input.ContextMenuEvent;
@@ -101,6 +105,14 @@ public class Controller {
 
     public MySocket getMySocket() {
         return mySocket;
+    }
+
+    public Server getCurrentServer() {
+        return currentServer;
+    }
+
+    public TextChannel getCurrentTextChannel() {
+        return currentTextChannel;
     }
 
     // some useful universal methods:
@@ -193,6 +205,22 @@ public class Controller {
 //        fis.close();
 //        return avatarImage;
         return new Image(new ByteArrayInputStream(asset.getAvatarImage()));
+    }
+
+    private Image readAvatarImage(byte[] imageBytes, String avatarContentType) throws IOException {
+        if (imageBytes == null) {
+            return new Image(getAbsolutePath("requirements" + File.separator + "emojipng.com-11701703.png"));
+        }
+        makeDirectory("cache2");
+        String directory = "cache2" + File.separator;
+        FileOutputStream fos = new FileOutputStream(directory + File.separator + "beingRead." + avatarContentType);
+        fos.write(imageBytes);
+        fos.flush();
+        fos.close();
+        FileInputStream fis = new FileInputStream(directory + File.separator + "beingRead." + avatarContentType);
+        Image avatarImage = new Image(fis);
+        fis.close();
+        return avatarImage;
     }
 
     //////////////////////////////////////////////////////////// login scene ->
@@ -1049,7 +1077,7 @@ public class Controller {
                     });
 
                     removeButton.setOnAction(actionEvent -> {
-                        //int index = user.getFriends().indexOf(model.getUID());  // NECESSARY AND IMPORTANT for removing from directMessagesObservableList. 6 lines later
+                        //int index = user.getFriends().indexOf(model.getChangerUserUID());  // NECESSARY AND IMPORTANT for removing from directMessagesObservableList. 6 lines later
                         // because now the model is different from the one saved in observableList
                         // finglish: in model mal hamun listView hastesh ke az tush remove ro zadim, be hamin khater doroste ama baraye un yeki listView ok nist
                         user.removeFriend(model.getUID());
@@ -1255,7 +1283,7 @@ public class Controller {
                         MenuItem menuItemReactions = new MenuItem("Reactions");
                         MenuItem menuItemDeleteForMe = new MenuItem("Delete Message for me");
                         MenuItem menuItemDeleteForAll = new MenuItem("Delete Message for all");
-                        if (chatMessage.getSenderUID() == user.getUID().intValue()) {
+                        if (chatMessage.getSenderUID().intValue() == user.getUID().intValue()) {
                             MenuItem menuItemEdit = new MenuItem("Edit Message");
                             /* setOnActions
 
@@ -1431,10 +1459,6 @@ public class Controller {
 
         chatStringMessage.setSenderUsername(user.getUsername());
         chatStringMessage.setSenderImage(user.getAvatarImage());
-//        if (chatMessageObservableList == null) {
-//            currentFriendDM = friendUID;
-//            refreshPrivateChat();
-//        }
 
         user.getPrivateChats().get(friendUID).add(chatStringMessage);
 //        refreshPrivateChat();
@@ -1484,12 +1508,16 @@ public class Controller {
     }
 
     public void setUpdatedValuesForServerObservableLists() throws IOException {
+
+        writeAndWait(new GetServerFromMainServerAction(currentServer.getUnicode()));
+        currentServer = smartListener.getReceivedServer();
+
         refreshTextChannels();
         refreshTextChannelChat();
         refreshMembers();
     }
 
-    private void refreshTextChannels() {
+    public void refreshTextChannels() {
         ObservableList<TextChannel> textChannelsObservableList = FXCollections.observableArrayList();
         textChannelsListView.setStyle("-fx-background-color: #2f3136");
 
@@ -1499,7 +1527,7 @@ public class Controller {
         textChannelsListView.setItems(textChannelsObservableList);
     }
 
-    private void refreshTextChannelChat() {
+    public void refreshTextChannelChat() {
 
         textChannelName.setText(currentTextChannel.getName());
 
@@ -1512,7 +1540,7 @@ public class Controller {
         textChannelChatListView.setItems(textChannelChatObservableList);
     }
 
-    private void refreshMembers() throws IOException {
+    public void refreshMembers() throws IOException {
 
         ObservableList<Model> onlineMembersObservableList = FXCollections.observableArrayList();
         ObservableList<Model> offlineMembersObservableList = FXCollections.observableArrayList();
@@ -1585,8 +1613,10 @@ public class Controller {
                     setGraphic(null);
                 } else {
                     GridPane gridPane = getUserGridPane(model);
-
-                    //gridPane.setOnMouseClicked(mouseClickEvent -> seeProfile/enterChat?(model.getUID()));
+                    ContextMenu contextMenu = new ContextMenu();
+                    contextMenu.getItems().addAll(new MenuItem("Profile"), new MenuItem("Kick"));
+                    //TODO set context menu for right clicking on a server member
+                    //gridPane.
 
                     setGraphic(gridPane);
                 }
@@ -1594,7 +1624,7 @@ public class Controller {
         });
     }
 
-    private GridPane getUserGridPane(Model user) {
+    private GridPane getUserGridPane(Model model) {
 
         GridPane gridPane = new GridPane();
         Circle avatarPic = new Circle(20);
@@ -1621,15 +1651,15 @@ public class Controller {
         GridPane.setHalignment(username, HPos.LEFT);
 
         try {
-            avatarPic.setFill(new ImagePattern(readAvatarImage(user)));
+            avatarPic.setFill(new ImagePattern(readAvatarImage(model)));
         } catch (IOException e) {
             e.printStackTrace();
             avatarPic.setFill(new ImagePattern(new Image(getAbsolutePath("requirements" + File.separator + "emojipng.com-11701703.png"))));
         }
 
-        username.setText(user.getUsername());
-        status.setText(user.getStatus().toString());
-        switch (user.getStatus()) {
+        username.setText(model.getUsername());
+        status.setText(model.getStatus().toString());
+        switch (model.getStatus()) {
             case Online -> status.setTextFill(new Color(0.24, 0.64, 0.36, 1));
             case Idle -> status.setTextFill(new Color(0.98, 0.66, 0.1, 1));
             case DoNotDisturb -> status.setTextFill(new Color(0.85, 0.24, 0.24, 1));
@@ -1666,6 +1696,8 @@ public class Controller {
     private ListView<Model> onlineMembersListView;
     @FXML
     private ListView<Model> offlineMembersListView;
+    @FXML
+    private Label permissionErrorMessage;
 
     // server scene methods:
     @FXML
@@ -1734,11 +1766,12 @@ public class Controller {
 
                     username.setText(model.getUsername());
 
-                    inviteButton.setOnAction(new EventHandler<ActionEvent>() {
+                    inviteButton.setOnAction(new EventHandler<>() {
                         @Override
                         public void handle(ActionEvent event) {
                             if (currentServer.addNewMember(model.getUID())) {
                                 successOrFailMessageLabel.setText("Invited successfully!");
+                                inviteButton.setText("Done");
                                 try {
                                     writeAndWait(new UpdateServerOnMainServerAction(currentServer));
                                     writeAndWait(new AddFriendToServerAction(currentServer.getUnicode(), model.getUID()));
@@ -1771,20 +1804,27 @@ public class Controller {
 
     @FXML
     void createChannel() {
-        newTextChannelNameTextField.setVisible(true);
-        textChannelName.setText("Enter the name:");
+        if (currentServer.getAllAbilities(user.getUID()).contains(Ability.CreateChannel)) {
+            newTextChannelNameTextField.setVisible(true);
+            textChannelName.setText("Enter the name:");
+        } else {
+            permissionErrorMessage.setVisible(true);
+        }
     }
 
     @FXML
     void createNewTextChannel() throws IOException {
+
         String newTextChannelName = newTextChannelNameTextField.getText().trim();
         if (newTextChannelName.equals("")) return;
+        newTextChannelNameTextField.setVisible(false);
+
         currentServer.addNewTextChannel(newTextChannelName);
         writeAndWait(new UpdateServerOnMainServerAction(currentServer));
-        newTextChannelNameTextField.setVisible(false);
-        textChannelName.setText(currentTextChannel.getName());
+
         int currentIndex = currentServer.getTextChannels().indexOf(currentTextChannel);
         currentTextChannel = currentServer.getTextChannels().get(currentIndex + 1);
+        textChannelName.setText(currentTextChannel.getName());
         refreshTextChannels();
         refreshTextChannelChat();
     }

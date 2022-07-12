@@ -1,10 +1,7 @@
 package discord.client;
 
 import discord.signals.Action;
-import discord.signals.ModelUpdaterSignal;
 
-import java.io.IOException;
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -31,6 +28,7 @@ public abstract class ChatMessage implements Action {
 
     // Methods:
     // Getter Methods:
+
     public Integer getSenderUID() {
         return senderUID;
     }
@@ -60,6 +58,7 @@ public abstract class ChatMessage implements Action {
     }
 
     // Setter Methods:
+
     public void setSenderUID(Integer senderUID) {
         this.senderUID = senderUID;
     }

@@ -209,5 +209,10 @@ public class Model implements Asset {
     public int hashCode() {
         return Objects.hash(getUID());
     }
+    
+    public FriendRecord getFriendRecord(Integer friendUID) {
+        return new FriendRecord(avatarImage, avatarContentType, username, email, phoneNumber, status,
+                privateChats.get(friendUID), urlsOfPrivateChat.get(friendUID), filesOfPrivateChat.get(friendUID));
+    }
 }
 

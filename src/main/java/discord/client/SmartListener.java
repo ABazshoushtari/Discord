@@ -26,10 +26,13 @@ public class SmartListener implements Runnable {
                 Object mainServerResponse = mySocket.read();
                 if (mainServerResponse != null) {
 
-                    if (mainServerResponse instanceof ModelUpdaterSignal mus) {
+                    if (mainServerResponse instanceof UpdaterSignal us) {
+
                         // a signal generated from another client to inform us of a change
                         // these signals are sent by other users in the act method of Actions to inform us something
-                        if (!(mus instanceof RelatedUserChangedSignal)) {
+                        //              if (!(mus instanceof RelatedUserChangedSignal)) {
+
+                        if (us instanceof ModelUpdaterSignal mus) {
                             mus.setBeingUpdatedModel(controller.getUser());
                             controller.setUser(mus.getUpdatedModel());  // update receiver of the signal
                         }
@@ -152,6 +155,19 @@ public class SmartListener implements Runnable {
 
                                     case "RelatedUserChangedSignal" -> controller.refreshEverything();  // odd(distinctive) signal
 
+
+                        Platform.runLater(() -> {
+                            try {
+                                switch (us.getClass().getSimpleName()) {
+                                    case "RelatedUserChangedUpdaterSignal" -> {
+                                        controller.refreshEverything();
+                                        // controller -> refresh us.getID() related people
+                                    }
+                                    case "AServerIsChangedSignal" -> {
+                                        if (controller.getCurrentServer().getUnicode().equals(us.getID())) {
+                                            controller.setUpdatedValuesForServerObservableLists();
+                                        }
+                                    }
                                     case "RespondFriendRequestModelUpdaterSignal" -> {
                                         controller.refreshPending();
                                         controller.refreshFriends();
