@@ -160,6 +160,7 @@ public abstract class ChatMessage implements Action {
             // updating database and server
             synchronized (MainServer.getServers().get(serverUnicode).getTextChannels().get(textChannelIndex)) {
                 MainServer.getServers().get(serverUnicode).getTextChannels().get(textChannelIndex).getTextChannelMessages().add(this);
+                System.out.println("server: " + serverUnicode + "\ntext channel index: " + textChannelIndex);
                 MainServer.updateDatabase(MainServer.getServers().get(serverUnicode));
             }
             TextChannel updatedTextChannelFromMainServer = MainServer.getServers().get(serverUnicode).getTextChannels().get(textChannelIndex);
@@ -175,7 +176,7 @@ public abstract class ChatMessage implements Action {
                         if (updatedTextChannelFromMainServer.getMembers().get(user.getUID())) {
                             // synchronize!!!!!!!
                             synchronized (ch.getMySocket()) {
-                                ch.getMySocket().write(new ChatMessageSignal(this, false)); // we can also pass isTextChannelMessage
+                                ch.getMySocket().write(new ChatMessageSignal(this, true)); // we can also pass isTextChannelMessage
                             }
                         }
                     }

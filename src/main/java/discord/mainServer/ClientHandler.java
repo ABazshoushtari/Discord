@@ -81,6 +81,15 @@ public class ClientHandler implements Runnable {
         user.setStatus(Status.Invisible);
         informRelatedPeople(user);
 
+//        outer: for (Server server : MainServer.getServers().values()) {
+//            for (TextChannel textChannel : server.getTextChannels()) {
+//                if (textChannel.getMembers().get(user.getUID())) {
+//                    textChannel.getMembers().replace(user.getUID(), false);
+//                    break outer;
+//                }
+//            }
+//        }
+
         MainServer.getUsers().replace(user.getUID(), user);
         MainServer.updateDatabase(user);
     }

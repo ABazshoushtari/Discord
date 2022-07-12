@@ -87,19 +87,6 @@ public class Server implements Asset {
         this.serverName = serverName;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Server server)) return false;
-        return getUnicode().equals(server.getUnicode());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(getUnicode());
-    }
-
-
     private void addInitialRoleHolders(Role newRole, ArrayList<Integer> list) {
         for (int UID : list) {
             if (members.containsKey(UID)) {
@@ -121,7 +108,7 @@ public class Server implements Asset {
     }
 
     public TextChannel addNewTextChannel(String newTextChannelName) {
-        TextChannel newTextChannel = new TextChannel(newTextChannelName, members.keySet());
+        TextChannel newTextChannel = new TextChannel(newTextChannelName, textChannels.size(), members.keySet());
         textChannels.add(newTextChannel);
         return newTextChannel;
     }

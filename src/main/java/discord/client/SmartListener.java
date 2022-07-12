@@ -72,7 +72,13 @@ public class SmartListener implements Runnable {
 
                                         case "ChatMessageSignal" -> {
                                             ChatMessage chatMessage = (ChatMessage) beingChangedScreenElement;
-                                            controller.getChatMessageObservableList().add(chatMessage);
+                                            if (mus instanceof ChatMessageSignal chatMessageSignal) {
+                                                if (chatMessageSignal.isTextChannelMessaage()) {
+                                                    controller.getTextChannelChatObservableList().add(chatMessage);
+                                                } else {
+                                                    controller.getChatMessageObservableList().add(chatMessage);
+                                                }
+                                            }
                                         }
 
                                         case "AddedToNewServerModelUpdaterSignal" -> {

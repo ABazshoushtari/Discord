@@ -5,13 +5,11 @@ import discord.client.Model;
 
 public class ChatMessageSignal extends ModelUpdaterSignal {
 
-    //private final ChatMessage chatMessage;
     private final boolean isTextChannelMessaage;
 
     public ChatMessageSignal(ChatMessage chatMessage, boolean isTextChannelMessaage) {
         super(chatMessage);
         this.isTextChannelMessaage = isTextChannelMessaage;
-        //this.chatMessage = chatMessage;
     }
 
     @Override

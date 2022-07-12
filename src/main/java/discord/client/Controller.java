@@ -69,7 +69,7 @@ public class Controller {
     private ObservableList<Server> serversObservableList;
     private ObservableList<ChatMessage> chatMessageObservableList;
     private ObservableList<TextChannel> textChannelsObservableList;
-    private ObservableList<TextChannelMessage> textChannelChatObservableList;
+    private ObservableList<ChatMessage> textChannelChatObservableList;
     private ObservableList<Model> onlineMembersObservableList;
     private ObservableList<Model> offlineMembersObservableList;
 
@@ -1199,8 +1199,11 @@ public class Controller {
 
                     avatarPic.setOnMouseClicked(mouseClickEvent -> {
                         try {
+                            exitTextChannel();
                             currentServer = server;
                             loadServer();
+//                            currentTextChannel = currentServer.getTextChannels().get(0);
+                            enterTextChannelChat();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -1646,6 +1649,7 @@ public class Controller {
 
     @FXML
     void loadCreateNewServerScene(Event event) {
+        exitTextChannel();
         loadScene(event, "CreateOrEditServerPage.fxml");
         serverNameTextField.setText(user.getUsername() + "'s Server");
     }
@@ -1653,6 +1657,7 @@ public class Controller {
     @FXML
     void loadProfile(MouseEvent event) throws IOException {
 
+        exitTextChannel();
         permissionErrorMessage.setVisible(false);
         //user.getIsInChat().replace(currentFriendDM, false);
         user.makeAllIsInChatsFalse();
@@ -1709,6 +1714,7 @@ public class Controller {
     @FXML
     void loadHome() throws IOException {
 
+        exitTextChannel();
         permissionErrorMessage.setVisible(false);
 //        user.getIsInChat().replace(currentFriendDM, false);
         user.makeAllIsInChatsFalse();
@@ -1998,6 +2004,7 @@ public class Controller {
 
                     textChannelName.setOnMouseClicked(mouseClickEvent -> {
                         //TODO textChannel enter
+                        exitTextChannel();
                         currentTextChannel = textChannel;
                         enterTextChannelChat();
                     });
@@ -2172,15 +2179,39 @@ public class Controller {
         refreshPeople();
     }
 
+    private void exitTextChannel() {
+        if (currentTextChannel != null) {
+            if (currentTextChannel.getMembers().get(user.getUID())) {
+                try {
+                    writeAndWait(new GetServerFromMainServerAction(currentServer.getUnicode()));
+                    currentServer = smartListener.getReceivedServer();
+                    int index = currentTextChannel.getIndex();
+                    currentTextChannel = currentServer.getTextChannels().get(index);
+                    currentTextChannel.getMembers().replace(user.getUID(), false);
+                    // debug
+                    writeAndWait(new UpdateServerOnMainServerAction(currentServer));
+
+//            writeAndWait(new GetUserFromMainServerAction(user.getUID()));
+//            user = smartListener.getReceivedUser();
+//            user.enterPrivateChat(currentFriendDM);
+//            writeAndWait(new UpdateUserOnMainServerAction(user));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
     // text channel chat
     private void enterTextChannelChat() {
         try {
-            int index = currentServer.getTextChannels().indexOf(currentTextChannel);
+            writeAndWait(new GetServerFromMainServerAction(currentServer.getUnicode()));
+            currentServer = smartListener.getReceivedServer();
+            int index = currentTextChannel.getIndex();
+            currentTextChannel = currentServer.getTextChannels().get(index);
             currentTextChannel.getMembers().replace(user.getUID(), true);
             // debug
             writeAndWait(new UpdateServerOnMainServerAction(currentServer));
-            currentServer = smartListener.getReceivedServer();
-            currentTextChannel = currentServer.getTextChannels().get(index);
 
 //            writeAndWait(new GetUserFromMainServerAction(user.getUID()));
 //            user = smartListener.getReceivedUser();
@@ -2202,8 +2233,8 @@ public class Controller {
     @FXML
     void sendTextChannelMessage(ActionEvent event) throws IOException {
         TextField textField = (TextField) event.getSource();
-        ArrayList<Integer> friendUIDsArrayList = new ArrayList<>(currentTextChannel.getMembers().keySet());
-
+        ArrayList<Integer> receivers = new ArrayList<>(currentTextChannel.getMembers().keySet());
+        receivers.remove(user.getUID());  // removing myself
         ChatMessage chatMessage; // ChatStringMessage or ChatURLMessage
 
         String textFieldGetText = textField.getText();
@@ -2211,7 +2242,7 @@ public class Controller {
             URL url;
             try {
                 url = new URL(textFieldGetText.split(" ")[1]);
-                chatMessage = new ChatURLMessage(user.getUID(), friendUIDsArrayList, currentServer.getUnicode(), currentTextChannel.getIndex(), true, url);
+                chatMessage = new ChatURLMessage(user.getUID(), receivers, currentServer.getUnicode(), currentTextChannel.getIndex(), true, url);
             } catch (MalformedURLException e) {
                 textField.setText("Invalid Format! enter a url");
                 textField.selectAll();
@@ -2219,9 +2250,9 @@ public class Controller {
                 return;
             }
         } else {
-            chatMessage = new ChatStringMessage(user.getUID(), friendUIDsArrayList, currentServer.getUnicode(), currentTextChannel.getIndex(), true, textFieldGetText);
+            chatMessage = new ChatStringMessage(user.getUID(), receivers, currentServer.getUnicode(), currentTextChannel.getIndex(), true, textFieldGetText);
         }
-//        System.out.println(currentServer.getUnicode());
+        System.out.println(currentServer.getUnicode());
 
         chatMessage.setSenderUsername(user.getUsername());
         chatMessage.setSenderImage(user.getAvatarImage());
@@ -2249,7 +2280,8 @@ public class Controller {
         ChatFileMessage chatFileMessage;
         try (FileInputStream fileInputStream = new FileInputStream(selectedFile)) {
             ArrayList<Integer> receivers = new ArrayList<>(currentTextChannel.getMembers().keySet());
-            chatFileMessage = new ChatFileMessage(user.getUID(), receivers, -1, -1, true, selectedFile.getName(), fileInputStream);
+            receivers.remove(user.getUID());  // removing myself
+            chatFileMessage = new ChatFileMessage(user.getUID(), receivers, currentServer.getUnicode(), currentTextChannel.getIndex(), true, selectedFile.getName(), fileInputStream);
         } catch (IOException e) {
             e.printStackTrace();
             return;
