@@ -30,7 +30,6 @@ public class SmartListener implements Runnable {
 
                         // a signal generated from another client to inform us of a change
                         // these signals are sent by other users in the act method of Actions to inform us something
-                        //              if (!(mus instanceof RelatedUserChangedSignal)) {
 
                         if (updaterSignal instanceof ModelUpdaterSignal mus) {
                             mus.setBeingUpdatedModel(controller.getUser());

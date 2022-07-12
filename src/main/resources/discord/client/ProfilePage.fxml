@@ -209,7 +209,7 @@
    <left>
       <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" spacing="7.0" BorderPane.alignment="CENTER">
          <children>
-            <Button alignment="CENTER" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#loadMainPage" style="-fx-background-color: #3ca45c; -fx-background-radius: 5;" text="Enter" textFill="WHITE">
+            <Button alignment="CENTER" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" onAction="#loadMainPage" style="-fx-background-color: #3ca45c; -fx-background-radius: 5;" text="Back" textFill="WHITE">
                <font>
                   <Font name="System Bold" size="14.0" />
                </font>

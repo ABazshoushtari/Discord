@@ -200,24 +200,6 @@ public class Controller {
         }
     }
 
-    private void loadProfilePage(Event event) throws IOException {
-
-//        user.getIsInChat().replace(currentFriendDM, false);
-        user.makeAllIsInChatsFalse();
-        writeAndWait(new UpdateUserOnMainServerAction(user));
-
-        loadScene(event, "ProfilePage.fxml");
-        avatar.setFill(new ImagePattern(readAvatarImage(user)));
-        profileUsername.setText(user.getUsername());
-        profileEmail.setText(user.getEmail());
-        setStatusColor(user.getPreviousSetStatus());
-        if (user.getPhoneNumber() != null) {
-            profilePhoneNumber.setText(user.getPhoneNumber());
-        } else {
-            profilePhoneNumber.setText("You haven't added a phone number yet.");
-        }
-    }
-
     private void setStatusColor(Status status) {
         switch (status) {
             case Online -> profileStatus.setFill(new Color(0.24, 0.64, 0.36, 1));
@@ -521,6 +503,7 @@ public class Controller {
         constructServersCells();
         constructChatMessagesCells();
 
+        //initializeMyProfile();
         discordLogo.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\discordLogo.jpg"))));
         setting.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\user setting.jpg"))));
 
@@ -714,7 +697,6 @@ public class Controller {
         //TODO
 //        refreshEverything();
 
-
         initializeMyProfile();
 
 //        constructBlockedCells();
@@ -736,12 +718,11 @@ public class Controller {
     }
 
     private void initializeMyProfile() throws IOException {
-
-
         mainPageAvatar.setFill(new ImagePattern(readAvatarImage(user)));
-
         usernameLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
         usernameLabel.setText(user.getUsername());
+        //discordLogo.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\discordLogo.jpg"))));
+        //setting.setFill(new ImagePattern(new Image(getAbsolutePath("requirements\\user setting.jpg"))));
     }
 
     private void setUpGridPaneSizes(GridPane gridPane) {
@@ -1330,14 +1311,45 @@ public class Controller {
     }
 
     @FXML
-    void createNewServer(Event event) {
+    void loadCreateNewServerScene(Event event) {
         loadScene(event, "CreateNewServerPage.fxml");
         newServerNameTextField.setText(user.getUsername() + "'s Server");
     }
 
     @FXML
     void loadProfile(MouseEvent event) throws IOException {
-        loadProfilePage(event);
+
+        //user.getIsInChat().replace(currentFriendDM, false);
+        user.makeAllIsInChatsFalse();
+        writeAndWait(new UpdateUserOnMainServerAction(user));
+
+        loadScene(event, "ProfilePage.fxml");
+        avatar.setFill(new ImagePattern(readAvatarImage(user)));
+        profileUsername.setText(user.getUsername());
+        profileEmail.setText(user.getEmail());
+        setStatusColor(user.getPreviousSetStatus());
+        if (user.getPhoneNumber() != null) {
+            profilePhoneNumber.setText(user.getPhoneNumber());
+        } else {
+            profilePhoneNumber.setText("You haven't added a phone number yet.");
+        }
+    }
+
+    private void loadProfile(Model user) throws IOException {
+
+        loadScene("ProfilePage.fxml"); //TODO load profile
+        avatar.setFill(new ImagePattern(readAvatarImage(user)));
+        profileUsername.setText(user.getUsername());
+        profileEmail.setText(user.getEmail());
+        setStatusColor(user.getPreviousSetStatus());
+        if (user.getPhoneNumber() != null) {
+            profilePhoneNumber.setText(user.getPhoneNumber());
+        } else {
+            profilePhoneNumber.setText("This user hasn't added a phone number yet.");
+        }
+        profileStatus.setDisable(true);
+        editButton.setVisible(false);
+
     }
 
     @FXML
@@ -1430,10 +1442,9 @@ public class Controller {
             writeAndWait(new AddNewServerToDatabaseAction(newServer));
             user.getServers().add(newUnicode);
             writeAndWait(new UpdateUserOnMainServerAction(user));
-            loadScene(event, "MainPage.fxml");
-            initializeMyProfile();
-            refreshServers();
-            constructServersCells();
+
+            loadMainPage(event);
+
             currentServer = newServer;
             loadServer();
         }
@@ -1555,9 +1566,36 @@ public class Controller {
                 } else {
                     GridPane gridPane = getUserGridPane(model);
                     ContextMenu contextMenu = new ContextMenu();
-                    contextMenu.getItems().addAll(new MenuItem("Profile"), new MenuItem("Kick"));
-                    //TODO set context menu for right clicking on a server member
-                    //gridPane.
+
+                    MenuItem profile = new MenuItem("Profile");
+                    MenuItem kick = new MenuItem("Kick");
+
+                    profile.setOnAction(new EventHandler<>() {
+                        @Override
+                        public void handle(ActionEvent event) {
+                            // TODO load another person's profile
+                            try {
+                                loadProfile(model);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+
+                    kick.setOnAction(new EventHandler<>() {
+                        @Override
+                        public void handle(ActionEvent event) {
+
+                        }
+                    });
+
+                    contextMenu.getItems().addAll(profile, kick);
+                    gridPane.setOnContextMenuRequested(new EventHandler<>() {
+                        @Override
+                        public void handle(ContextMenuEvent contextMenuEvent) {
+                            contextMenu.show(gridPane, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
+                        }
+                    });
 
                     setGraphic(gridPane);
                 }
@@ -1782,10 +1820,6 @@ public class Controller {
     // methods:
     @FXML
     private void backFromInvitePeople(Event event) throws IOException {
-        loadScene(event, "MainPage.fxml");
-        initializeMyProfile();
-        loadServer();
-        refreshServers();
-        constructServersCells();
+        loadMainPage(event);
     }
 }

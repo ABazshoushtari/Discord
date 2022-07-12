@@ -27,7 +27,7 @@
    <center>
       <StackPane maxWidth="1.7976931348623157E308" prefWidth="714.0" style="-fx-background-color: #36393F;" BorderPane.alignment="CENTER">
          <children>
-            <TabPane fx:id="theTabPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #36393F;" stylesheets="@styles/TabPaneStyle.css" tabClosingPolicy="UNAVAILABLE" tabMinWidth="68.0" visible="false">
+            <TabPane fx:id="theTabPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #36393F;" stylesheets="@styles/TabPaneStyle.css" tabClosingPolicy="UNAVAILABLE" tabMinWidth="68.0">
                <tabs>
                   <Tab disable="true" text="Friends" />
                   <Tab text="Online">
@@ -266,7 +266,7 @@
                   <Insets bottom="10.0" top="10.0" />
                </padding>
             </GridPane>
-            <BorderPane fx:id="serverBorderPane" maxWidth="1.7976931348623157E308">
+            <BorderPane fx:id="serverBorderPane" maxWidth="1.7976931348623157E308" visible="false">
                <center>
                   <GridPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #36393F;" vgap="5.0" BorderPane.alignment="CENTER">
                      <columnConstraints>
@@ -349,13 +349,23 @@
                               <Font name="System Bold" size="12.0" />
                            </font>
                         </Label>
-                        <ListView fx:id="onlineMembersListView" style="-fx-background-color: #2f3136;" styleClass="list-cell" stylesheets="@styles/ListViewColor2.css" GridPane.halignment="LEFT" GridPane.rowIndex="1" />
+                        <ListView fx:id="onlineMembersListView" style="-fx-background-color: #2f3136;" stylesheets="@styles/ListViewColor2.css" GridPane.halignment="LEFT" GridPane.rowIndex="1">
+                           <styleClass>
+                              <String fx:value="list-cell" />
+                              <String fx:value="menu-item" />
+                              <String fx:value="label" />
+                           </styleClass></ListView>
                         <Label fx:id="offlineCountInServer" alignment="TOP_LEFT" text="Offline - " textFill="WHITE" GridPane.rowIndex="2" GridPane.valignment="TOP">
                            <font>
                               <Font name="System Bold" size="12.0" />
                            </font>
                         </Label>
-                        <ListView fx:id="offlineMembersListView" style="-fx-background-color: #2f3136;" styleClass="list-cell" stylesheets="@styles/ListViewColor2.css" GridPane.halignment="LEFT" GridPane.rowIndex="3" />
+                        <ListView fx:id="offlineMembersListView" style="-fx-background-color: #2f3136;" stylesheets="@styles/ListViewColor2.css" GridPane.halignment="LEFT" GridPane.rowIndex="3">
+                           <styleClass>
+                              <String fx:value="list-cell" />
+                              <String fx:value="menu-item" />
+                              <String fx:value="label" />
+                           </styleClass></ListView>
                      </children>
                      <padding>
                         <Insets left="10.0" top="65.0" />
@@ -384,9 +394,9 @@
                   <Separator opacity="0.4" prefHeight="0.0" prefWidth="110.0" valignment="BOTTOM" GridPane.valignment="BOTTOM" />
                   <StackPane prefWidth="110.0" style="-fx-background-color: #202225;" GridPane.rowIndex="2">
                      <children>
-                        <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#36393f" height="50.0" onMouseClicked="#createNewServer" stroke="#ffffff00" strokeType="INSIDE" style="-fx-arc-width: 200; -fx-arc-height: 200;" width="50.0" />
-                        <Line endX="35.292877197265625" endY="-0.03391063213348389" onMouseClicked="#createNewServer" startX="18.0" stroke="#3ba55d" style="-fx-stroke-width: 2;" />
-                        <Line endY="17.0" onMouseClicked="#createNewServer" stroke="#3ba55d" style="-fx-stroke-width: 2;" />
+                        <Rectangle arcHeight="5.0" arcWidth="5.0" fill="#36393f" height="50.0" onMouseClicked="#loadCreateNewServerScene" stroke="#ffffff00" strokeType="INSIDE" style="-fx-arc-width: 200; -fx-arc-height: 200;" width="50.0" />
+                        <Line endX="35.292877197265625" endY="-0.03391063213348389" onMouseClicked="#loadCreateNewServerScene" startX="18.0" stroke="#3ba55d" style="-fx-stroke-width: 2;" />
+                        <Line endY="17.0" onMouseClicked="#loadCreateNewServerScene" stroke="#3ba55d" style="-fx-stroke-width: 2;" />
                      </children>
                   </StackPane>
                </children>
@@ -403,12 +413,12 @@
                <children>
                   <StackPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
                      <children>
-                        <Label fx:id="friendsLabel" text="Friends" textFill="WHITE" visible="false">
+                        <Label fx:id="friendsLabel" text="Friends" textFill="WHITE">
                            <font>
                               <Font name="System Bold" size="14.0" />
                            </font>
                         </Label>
-                        <MenuButton fx:id="serverMenuButton" alignment="CENTER" mnemonicParsing="false" style="-fx-background-color: #2f3136;" text="Server Name" textFill="WHITE">
+                        <MenuButton fx:id="serverMenuButton" alignment="CENTER" mnemonicParsing="false" style="-fx-background-color: #2f3136;" stylesheets="@styles/MenuButtonStyle.css" text="Server Name" textFill="WHITE" visible="false">
                            <items>
                               <MenuItem mnemonicParsing="false" onAction="#InvitePeople" text="Invite People" />
                               <MenuItem mnemonicParsing="false" onAction="#changeServerSettings" text="Server Settings" />
@@ -417,13 +427,17 @@
                            <font>
                               <Font name="System Bold" size="14.0" />
                            </font>
+                           <styleClass>
+                              <String fx:value="menu-item" />
+                              <String fx:value="label" />
+                           </styleClass>
                         </MenuButton>
                      </children>
                   </StackPane>
                   <Separator opacity="0.4" prefHeight="0.0" prefWidth="110.0" valignment="BOTTOM" GridPane.valignment="BOTTOM" />
                   <StackPane maxHeight="1.7976931348623157E308" prefHeight="494.0" prefWidth="200.0" style="-fx-background-color: #2f3136;" GridPane.rowIndex="1">
                      <children>
-                        <VBox fx:id="friendsDMVBox" maxHeight="1.7976931348623157E308" prefHeight="494.0" prefWidth="100.0" spacing="10.0" style="-fx-background-color: #2f3136;" visible="false">
+                        <VBox fx:id="friendsDMVBox" maxHeight="1.7976931348623157E308" prefHeight="494.0" prefWidth="100.0" spacing="10.0" style="-fx-background-color: #2f3136;">
                            <children>
                               <Label text="Direct Messages" textFill="WHITE">
                                  <font>
@@ -442,7 +456,7 @@
                               <Insets bottom="8.0" />
                            </padding>
                         </VBox>
-                        <VBox fx:id="textChannelsVBox" maxHeight="1.7976931348623157E308" prefWidth="150.0" spacing="10.0" style="-fx-background-color: #2f3136;">
+                        <VBox fx:id="textChannelsVBox" maxHeight="1.7976931348623157E308" prefWidth="150.0" spacing="10.0" style="-fx-background-color: #2f3136;" visible="false">
                            <children>
                               <GridPane>
                                  <columnConstraints>
