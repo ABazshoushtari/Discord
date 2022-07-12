@@ -30,7 +30,7 @@ public class TextChannelListener implements Runnable {
                 } else if (inObject instanceof DownloadURL downloadUrl) {
                     executorService.execute(new HttpDownloader(user.getUsername(), downloadUrl.getUrl(), downloadUrl.getFileName()/*, printer*/));
                 } else if (inObject instanceof DownloadableFile downloadingFile) {
-                    executorService.execute(new FileDownloader(user.getUsername(), downloadingFile/*, printer*/));
+//                    executorService.execute(new FileDownloader(user.getUsername(), downloadingFile/*, printer*/));
                 } else if (inObject instanceof Model) {
                     synchronized (user.getUsername()) {  // should it be user or user.getUsername() ??????????????????????????
                         user.getUsername().notify();

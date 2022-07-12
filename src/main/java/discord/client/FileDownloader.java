@@ -7,14 +7,12 @@ import java.io.IOException;
 public class FileDownloader implements Runnable {
     // Fields:
     private final String username;
-    private final DownloadableFile downloadingFile;
-    //private final View printer;
+    private final ChatFileMessage downloadingFile;
 
     // Constructors:
-    public FileDownloader(String username, DownloadableFile downloadingFile/*, View printer*/) {
+    public FileDownloader(String username, ChatFileMessage downloadingFile) {
         this.username = username;
         this.downloadingFile = downloadingFile;
-        //this.printer = printer;
     }
 
     // Methods:
@@ -24,11 +22,12 @@ public class FileDownloader implements Runnable {
         makeDirectory("Downloads" + File.separator + username + "'s downloads");
         makeDirectory("Downloads" + File.separator + username + "'s downloads" + File.separator + "Files");
         String directory = "Downloads" + File.separator + username + "'s downloads" + File.separator + "Files";
-        File file = new File(directory, downloadingFile.getFileName());
+        File file = new File(directory, downloadingFile.getMessage());  // getMessage returns file name
         try (FileOutputStream fileOutputStream = new FileOutputStream(file)) {
-            //printer.println("Download of the file started.");
+            System.out.println("Download of the file started.");
             fileOutputStream.write(downloadingFile.getBytes());
-            //printer.println("Download finished. the file saved in " + directory + File.separator + downloadingFile.getFileName());
+            fileOutputStream.flush();
+            System.out.println("Download finished. the file saved in " + directory + File.separator + downloadingFile.getMessage());  // getMessage returns file name
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -38,7 +37,7 @@ public class FileDownloader implements Runnable {
         File directory = new File(path);
         if (!directory.exists()) {
             if (!directory.mkdir()) {
-                //printer.printErrorMessage("Could not create the " + path + " directory!");
+                System.out.println("Could not create the " + path + " directory!");
                 throw new RuntimeException();
             }
         }

@@ -34,6 +34,12 @@ import javafx.stage.Stage;
 
 import java.io.*;
 import java.util.HashSet;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 public class Controller {
 
@@ -44,6 +50,15 @@ public class Controller {
     private TextChannel currentTextChannel;
     private final MySocket mySocket;
     private final SmartListener smartListener;
+
+    //TODO check
+    private ExecutorService executorService = Executors.newCachedThreadPool(new ThreadFactory() {
+        public Thread newThread(Runnable r) {
+            Thread t = Executors.defaultThreadFactory().newThread(r);
+            t.setDaemon(true);
+            return t;
+        }
+    });
 
     // ObservableLists:
     private ObservableList<Model> blockedPeopleObservableList;
@@ -151,6 +166,14 @@ public class Controller {
 
     public ObservableList<ChatMessage> getChatMessageObservableList() {
         return chatMessageObservableList;
+    }
+
+    public ObservableList<ChatMessage> getTextChannelChatObservableList() {
+        return textChannelChatObservableList;
+    }
+
+    public ObservableList<TextChannel> getTextChannelsObservableList() {
+        return textChannelsObservableList;
     }
 
     // the constructor:
@@ -1326,9 +1349,207 @@ public class Controller {
                         } else {
                             contextMenu.getItems().addAll(reactionMenuItem, menuItemReactions, menuItemDeleteForMe, menuItemDeleteForAll);
                         }
-                    } /*else if (chatMessage instanceof FileChatMessage fileChatMessage) {
+                    } else {
+                        messageLabel.setText(chatMessage.getMessage());
+                        messageLabel.setStyle("-fx-text-fill: #3480eb");
+                        if (chatMessage instanceof ChatFileMessage chatFileMessage) {
+                            messageLabel.setOnMouseClicked(new EventHandler<MouseEvent>() {
+                                @Override
+                                public void handle(MouseEvent mouseEvent) {
+                                    executorService.execute(new FileDownloader(user.getUsername(), chatFileMessage));
+                                }
+                            });
+                        } else if (chatMessage instanceof ChatURLMessage chatURLMessage) {
+                            messageLabel.setOnMouseClicked(new EventHandler<MouseEvent>() {
+                                @Override
+                                public void handle(MouseEvent mouseEvent) {
+                                    executorService.execute(new HttpDownloader(user.getUsername(), chatURLMessage.getUrl(), chatURLMessage.getMessage()));
+                                }
+                            });
+                        }
+                        vBox.getChildren().addAll(hBox2, messageLabel, editedLabel);
+                        MenuItem menuItemReactions = new MenuItem("Reactions");
+                        MenuItem menuItemDeleteForMe = new MenuItem("Delete Message for me");
+                        MenuItem menuItemDeleteForAll = new MenuItem("Delete Message for all");
 
-                    }*/
+                        contextMenu.getItems().addAll(reactionMenuItem, menuItemReactions, menuItemDeleteForMe, menuItemDeleteForAll);
+                    }
+                    hBox.getChildren().addAll(avatarPic, vBox);
+                    hBox.setOnContextMenuRequested(new EventHandler<>() {
+                        @Override
+                        public void handle(ContextMenuEvent contextMenuEvent) {
+                            contextMenu.show(hBox, contextMenuEvent.getScreenX(), contextMenuEvent.getScreenY());
+                        }
+                    });
+
+                    setGraphic(hBox);
+                }
+            }
+        });
+    }
+
+    private void constructTextChannelChatCells() {
+        textChannelChatListView.setCellFactory(cmc -> new ListCell<>() {
+            @Override
+            protected void updateItem(ChatMessage chatMessage, boolean empty) {
+                super.updateItem(chatMessage, empty);
+
+                if (chatMessage == null || empty) {
+                    setGraphic(null);
+                } else {
+
+                    // Variables (Controls; GUI components):
+                    HBox hBox = new HBox(10);
+                    Circle avatarPic = new Circle(20);
+                    VBox vBox = new VBox(7);
+                    HBox hBox2 = new HBox(10);
+                    Label usernameLabel = new Label();
+                    Label dateTimeLabel = new Label();
+                    Label messageLabel = new Label();
+                    Label editedLabel = new Label();
+                    ContextMenu contextMenu = new ContextMenu();
+                    CustomMenuItem reactionMenuItem;
+                    HBox hBoxReaction = new HBox(10);
+                    Circle laughReaction = new Circle(14);
+                    Circle likeReaction = new Circle(14);
+                    Circle dislikeReaction = new Circle(14);
+
+                    // css styles
+                    hBox.setStyle("-fx-background-color: #36393F");
+                    hBox.setOnMouseEntered(new EventHandler<>() {
+                        @Override
+                        public void handle(MouseEvent mouseEvent) {
+                            hBox.setStyle("-fx-background-color: #32353b");
+                        }
+                    });
+                    hBox.setOnMouseExited(new EventHandler<>() {
+                        @Override
+                        public void handle(MouseEvent mouseEvent) {
+                            hBox.setStyle("-fx-background-color: #36393F");
+                        }
+                    });
+
+                    usernameLabel.setStyle("-fx-text-fill: White");
+
+                    dateTimeLabel.setStyle("-fx-text-fill: #6f7681");
+
+                    messageLabel.setStyle("-fx-background-color: #36393F");
+                    messageLabel.setStyle("-fx-text-fill: white");
+                    messageLabel.setFont(Font.font("System", FontWeight.NORMAL, 14));
+
+                    editedLabel.setStyle("-fx-text-fill: #6f7681");
+
+//                    hBoxReaction.setStyle("-fx-background-color: #18191c");
+                    laughReaction.setStyle("-fx-background-color: #202225");
+//                    laughReaction.setStyle("-fx-background-size: 20");
+                    likeReaction.setStyle("-fx-background-color: #202225");
+//                    likeReaction.setStyle("-fx-background-size: cover");
+                    dislikeReaction.setStyle("-fx-background-color: #202225");
+//                    dislikeReaction.setStyle("-fx-background-size: auto");
+
+                    // javafx codes.
+                    hBox.setAlignment(Pos.TOP_LEFT);
+                    hBox.setPadding((new Insets(10, 10, 0, 10)));
+                    avatarPic.setStroke(Color.TRANSPARENT);
+                    vBox.setAlignment(Pos.TOP_LEFT);
+                    hBox2.setAlignment(Pos.CENTER_LEFT);
+                    usernameLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
+                    dateTimeLabel.setFont(Font.font("System", FontWeight.NORMAL, 12));
+                    editedLabel.setFont(Font.font("System", FontWeight.NORMAL, 12));
+                    editedLabel.setPadding(new Insets(0, 0, 0, 10));
+
+                    messageLabel.setMinWidth(USE_COMPUTED_SIZE);
+                    messageLabel.setMinHeight(USE_COMPUTED_SIZE);
+                    messageLabel.setPrefWidth(USE_COMPUTED_SIZE);
+                    messageLabel.setPrefHeight(USE_COMPUTED_SIZE);
+                    messageLabel.setMaxWidth(Double.MAX_VALUE);
+                    messageLabel.setMaxHeight(USE_COMPUTED_SIZE);
+
+                    hBox2.getChildren().addAll(usernameLabel, dateTimeLabel);
+
+                    //reactionsMenuItem:
+                    laughReaction.setFill(new ImagePattern(new Image(getAbsolutePath("requirements" + File.separator + "laugh emoji.png"))));
+                    laughReaction.setOnMouseClicked(new EventHandler<>() {
+                        @Override
+                        public void handle(MouseEvent mouseEvent) {
+                            chatMessage.laugh(user.getUID());
+                            // send signal
+                        }
+                    });
+                    likeReaction.setFill(new ImagePattern(new Image(getAbsolutePath("requirements" + File.separator + "like emoji.png"))));
+                    likeReaction.setOnMouseClicked(new EventHandler<>() {
+                        @Override
+                        public void handle(MouseEvent mouseEvent) {
+                            chatMessage.like(user.getUID());
+                            // send signal
+                        }
+                    });
+                    dislikeReaction.setFill(new ImagePattern(new Image(getAbsolutePath("requirements" + File.separator + "dislike emoji2.png"))));
+                    dislikeReaction.setOnMouseClicked(new EventHandler<>() {
+                        @Override
+                        public void handle(MouseEvent mouseEvent) {
+                            chatMessage.dislike(user.getUID());
+                            // send signal
+                        }
+                    });
+                    hBoxReaction.setAlignment(Pos.CENTER_LEFT);
+                    hBoxReaction.getChildren().addAll(laughReaction, likeReaction, dislikeReaction);
+                    reactionMenuItem = new CustomMenuItem(hBoxReaction);
+
+                    try {
+                        avatarPic.setFill(new ImagePattern(readAvatarImage(chatMessage.getSenderImage())));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    usernameLabel.setText(chatMessage.getSenderUsername());
+                    dateTimeLabel.setText(chatMessage.getDateTime());
+                    if (chatMessage.isEdited()) {
+                        editedLabel.setText("(edited)");
+                    }
+
+                    // String chat Message
+                    if (chatMessage instanceof ChatStringMessage chatStringMessage) {
+                        messageLabel.setText(chatStringMessage.getMessage());
+                        vBox.getChildren().addAll(hBox2, messageLabel, editedLabel);
+                        MenuItem menuItemReactions = new MenuItem("Reactions");
+                        MenuItem menuItemDeleteForMe = new MenuItem("Delete Message for me");
+                        MenuItem menuItemDeleteForAll = new MenuItem("Delete Message for all");
+                        if (chatMessage.getSenderUID().intValue() == user.getUID().intValue()) {
+                            MenuItem menuItemEdit = new MenuItem("Edit Message");
+                            /* setOnActions
+
+
+                             */
+                            contextMenu.getItems().addAll(reactionMenuItem, menuItemReactions, menuItemEdit, menuItemDeleteForMe, menuItemDeleteForAll);
+                        } else {
+                            contextMenu.getItems().addAll(reactionMenuItem, menuItemReactions, menuItemDeleteForMe, menuItemDeleteForAll);
+                        }
+                    } else {
+                        messageLabel.setText(chatMessage.getMessage());
+                        messageLabel.setStyle("-fx-text-fill: #3480eb");
+                        if (chatMessage instanceof ChatFileMessage chatFileMessage) {
+                            messageLabel.setOnMouseClicked(new EventHandler<MouseEvent>() {
+                                @Override
+                                public void handle(MouseEvent mouseEvent) {
+                                    executorService.execute(new FileDownloader(user.getUsername(), chatFileMessage));
+                                }
+                            });
+                        } else if (chatMessage instanceof ChatURLMessage chatURLMessage) {
+                            messageLabel.setOnMouseClicked(new EventHandler<MouseEvent>() {
+                                @Override
+                                public void handle(MouseEvent mouseEvent) {
+                                    executorService.execute(new HttpDownloader(user.getUsername(), chatURLMessage.getUrl(), chatURLMessage.getMessage()));
+                                }
+                            });
+                        }
+                        vBox.getChildren().addAll(hBox2, messageLabel, editedLabel);
+                        MenuItem menuItemReactions = new MenuItem("Reactions");
+                        MenuItem menuItemDeleteForMe = new MenuItem("Delete Message for me");
+                        MenuItem menuItemDeleteForAll = new MenuItem("Delete Message for all");
+
+                        contextMenu.getItems().addAll(reactionMenuItem, menuItemReactions, menuItemDeleteForMe, menuItemDeleteForAll);
+                    }
                     hBox.getChildren().addAll(avatarPic, vBox);
                     hBox.setOnContextMenuRequested(new EventHandler<>() {
                         @Override
@@ -1400,6 +1621,8 @@ public class Controller {
 
         friendNameLabel.setText(friendName);
 
+//        ArrayList<Integer> receiver = new ArrayList<>();
+//        receiver.add(currentFriendDM);
         sendMessageTextField.setUserData(currentFriendDM);
 
         constructChatMessagesCells();
@@ -1528,24 +1751,72 @@ public class Controller {
     private Label friendNameLabel;
 
     @FXML
-    void sendChatStringMessage(ActionEvent event) throws IOException {
+    void sendPrivateChatMessage(ActionEvent event) throws IOException {
         TextField textField = (TextField) event.getSource();
         Integer friendUID = (Integer) textField.getUserData();
-        ChatStringMessage chatStringMessage = new ChatStringMessage(user.getUID(), friendUID, textField.getText());
+        ArrayList<Integer> friendUIDArrayList = new ArrayList<>();
+        friendUIDArrayList.add(friendUID);
 
-        chatStringMessage.setSenderUsername(user.getUsername());
-        chatStringMessage.setSenderImage(user.getAvatarImage());
+        ChatMessage chatMessage; // ChatStringMessage or ChatURLMessage
 
-        user.getPrivateChats().get(friendUID).add(chatStringMessage);
+        String textFieldGetText = textField.getText();
+        if (textFieldGetText.startsWith("/url ")) {
+            URL url;
+            try {
+                url = new URL(textFieldGetText.split(" ")[1]);
+                chatMessage = new ChatURLMessage(user.getUID(), friendUIDArrayList, -1, -1, false, url);
+            } catch (MalformedURLException e) {
+                textField.setText("Invalid Format! enter a url");
+                textField.selectAll();
+                textField.requestFocus();
+                return;
+            }
+        } else {
+            chatMessage = new ChatStringMessage(user.getUID(), friendUIDArrayList, -1, -1, false, textFieldGetText);
+        }
+
+        chatMessage.setSenderUsername(user.getUsername());
+        chatMessage.setSenderImage(user.getAvatarImage());
+
+        user.getPrivateChats().get(friendUID).add(chatMessage);
 //        refreshPrivateChat();
-        chatMessageObservableList.add(chatStringMessage);
+        chatMessageObservableList.add(chatMessage);
 
-        writeAndWait(chatStringMessage);
+        writeAndWait(chatMessage);
         textField.setText("");
     }
+    
+    @FXML
+    void uploadPrivateChatFile(MouseEvent event) throws IOException {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Select a file to send");
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("All Files", "*.*"));
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        File selectedFile = fileChooser.showOpenDialog(stage);
+        if (selectedFile == null) {
+            return;
+        }
 
-    //////////////////////////////////////////////////////////// create or edit server scene ->
+        ChatFileMessage chatFileMessage;
+        try (FileInputStream fileInputStream = new FileInputStream(selectedFile)) {
+            ArrayList <Integer> receiver = new ArrayList<>();
+            receiver.add(currentFriendDM);
+            chatFileMessage = new ChatFileMessage(user.getUID(), receiver, -1, -1, false, selectedFile.getName(), fileInputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
 
+        chatFileMessage.setSenderUsername(user.getUsername());
+        chatFileMessage.setSenderImage(user.getAvatarImage());
+
+        user.getPrivateChats().get(currentFriendDM).add(chatFileMessage);
+        chatMessageObservableList.add(chatFileMessage);
+
+        writeAndWait(chatFileMessage);
+    }
+
+    //////////////////////////////////////////////////////////// create new server scene ->
     @FXML
     private Label createServerLabel1;
     @FXML
@@ -1632,9 +1903,8 @@ public class Controller {
     private void initializeServerPage() throws IOException {
         serverMenuButton.setText(currentServer.getServerName());
         currentTextChannel = currentServer.getTextChannels().get(0);
-
         constructTextChannelsCells();
-        // construct textChannelChatCells();
+        constructTextChannelChatCells();
         constructMembersCells();
 
         refreshEveryServerThing();
@@ -1662,9 +1932,12 @@ public class Controller {
         textChannelsListView.setItems(textChannelsObservableList);
     }
 
+    //TODO refreshTextChannelChat
     public void refreshTextChannelChat() {
 
         textChannelName.setText(currentTextChannel.getName());
+
+        constructTextChannelChatCells();
 
         textChannelChatObservableList = FXCollections.observableArrayList();
         textChannelChatListView.setStyle("-fx-background-color: #36393F");
@@ -1724,8 +1997,9 @@ public class Controller {
                     textChannelName.setStyle("-fx-text-fill: White");
 
                     textChannelName.setOnMouseClicked(mouseClickEvent -> {
+                        //TODO textChannel enter
                         currentTextChannel = textChannel;
-                        refreshTextChannelChat();
+                        enterTextChannelChat();
                     });
 
                     setGraphic(textChannelName);
@@ -1875,7 +2149,7 @@ public class Controller {
     @FXML
     private ListView<TextChannel> textChannelsListView;
     @FXML
-    private ListView<TextChannelMessage> textChannelChatListView;
+    private ListView<ChatMessage> textChannelChatListView;
     @FXML
     private BorderPane serverBorderPane;
     @FXML
@@ -1897,6 +2171,102 @@ public class Controller {
         constructPeopleCells(true);
         refreshPeople();
     }
+
+    // text channel chat
+    private void enterTextChannelChat() {
+        try {
+            int index = currentServer.getTextChannels().indexOf(currentTextChannel);
+            currentTextChannel.getMembers().replace(user.getUID(), true);
+            // debug
+            writeAndWait(new UpdateServerOnMainServerAction(currentServer));
+            currentServer = smartListener.getReceivedServer();
+            currentTextChannel = currentServer.getTextChannels().get(index);
+
+//            writeAndWait(new GetUserFromMainServerAction(user.getUID()));
+//            user = smartListener.getReceivedUser();
+//            user.enterPrivateChat(currentFriendDM);
+//            writeAndWait(new UpdateUserOnMainServerAction(user));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        ArrayList<Integer> receivers = new ArrayList<>(currentTextChannel.getMembers().keySet());
+        sendMessageTextField.setUserData(receivers);
+
+        refreshTextChannelChat();
+
+//        theTabPane.setVisible(false);
+//        serverBorderPane.setVisible(true);
+//        directMessageGridPane.setVisible(false);
+    }
+    @FXML
+    void sendTextChannelMessage(ActionEvent event) throws IOException {
+        TextField textField = (TextField) event.getSource();
+        ArrayList<Integer> friendUIDsArrayList = new ArrayList<>(currentTextChannel.getMembers().keySet());
+
+        ChatMessage chatMessage; // ChatStringMessage or ChatURLMessage
+
+        String textFieldGetText = textField.getText();
+        if (textFieldGetText.startsWith("/url ")) {
+            URL url;
+            try {
+                url = new URL(textFieldGetText.split(" ")[1]);
+                chatMessage = new ChatURLMessage(user.getUID(), friendUIDsArrayList, currentServer.getUnicode(), currentTextChannel.getIndex(), true, url);
+            } catch (MalformedURLException e) {
+                textField.setText("Invalid Format! enter a url");
+                textField.selectAll();
+                textField.requestFocus();
+                return;
+            }
+        } else {
+            chatMessage = new ChatStringMessage(user.getUID(), friendUIDsArrayList, currentServer.getUnicode(), currentTextChannel.getIndex(), true, textFieldGetText);
+        }
+//        System.out.println(currentServer.getUnicode());
+
+        chatMessage.setSenderUsername(user.getUsername());
+        chatMessage.setSenderImage(user.getAvatarImage());
+
+        currentTextChannel.getTextChannelMessages().add(chatMessage);
+//        user.getPrivateChats().get(friendUID).add(chatMessage);
+//        refreshPrivateChat();
+        textChannelChatObservableList.add(chatMessage);
+
+        writeAndWait(chatMessage);
+        textField.setText("");
+    }
+
+    @FXML
+    void uploadTextChannelFile(MouseEvent event) throws IOException {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Select a file to send");
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("All Files", "*.*"));
+        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+        File selectedFile = fileChooser.showOpenDialog(stage);
+        if (selectedFile == null) {
+            return;
+        }
+
+        ChatFileMessage chatFileMessage;
+        try (FileInputStream fileInputStream = new FileInputStream(selectedFile)) {
+            ArrayList<Integer> receivers = new ArrayList<>(currentTextChannel.getMembers().keySet());
+            chatFileMessage = new ChatFileMessage(user.getUID(), receivers, -1, -1, true, selectedFile.getName(), fileInputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        chatFileMessage.setSenderUsername(user.getUsername());
+        chatFileMessage.setSenderImage(user.getAvatarImage());
+
+
+
+        currentTextChannel.getTextChannelMessages().add(chatFileMessage);
+//        user.getPrivateChats().get(currentFriendDM).add(chatFileMessage);
+        textChannelChatObservableList.add(chatFileMessage);
+
+        writeAndWait(chatFileMessage);
+    }
+    ////
 
     private void refreshPeople() throws IOException {
         ObservableList<Model> peopleObservableList = FXCollections.observableArrayList();

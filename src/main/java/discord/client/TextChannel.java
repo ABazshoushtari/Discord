@@ -9,17 +9,19 @@ import java.util.Set;
 public class TextChannel implements Serializable {
     // Fields:
     private String name;
+    private final int index;
     private String pinnedMessage;
     private final HashMap<Integer, Boolean> members;
     // maps all the members' IDs to whether they're in this text channel right now (true) or not (false)
-    private final ArrayList<TextChannelMessage> textChannelMessages;
+    private final ArrayList<ChatMessage> textChannelMessages;
     // holds all the messages exchanged in this text channel
     private final ArrayList<URL> urls;
     private final ArrayList<DownloadableFile> files;
 
     // Constructors:
-    public TextChannel(String name, Set<Integer> membersIDs) {
+    public TextChannel(String name, int index, Set<Integer> membersIDs) {
         this.name = name;
+        this.index = index;
         pinnedMessage = "";
         this.members = new HashMap<>();
         for (int member : membersIDs) {
@@ -38,6 +40,10 @@ public class TextChannel implements Serializable {
         return name;
     }
 
+    public int getIndex() {
+        return index;
+    }
+
     public String getPinnedMessage() {
         return pinnedMessage;
     }
@@ -46,13 +52,13 @@ public class TextChannel implements Serializable {
         return members;
     }
 
-    public ArrayList<TextChannelMessage> getTextChannelMessages() {
+    public ArrayList<ChatMessage> getTextChannelMessages() {
         return textChannelMessages;
     }
 
     public ArrayList<String> getMessages() {
         ArrayList<String> messages = new ArrayList<>();
-        for (TextChannelMessage m : textChannelMessages) {
+        for (ChatMessage m : textChannelMessages) {
             messages.add(m.getMessage());
         }
         return messages;
@@ -74,6 +80,8 @@ public class TextChannel implements Serializable {
     public void setPinnedMessage(String pinnedMessage) {
         this.pinnedMessage = pinnedMessage;
     }
+
+
 
     public void removeMember(int UID) {
         members.remove(UID);

@@ -101,11 +101,13 @@ public class SmartListener implements Runnable {
                                             } catch (IOException e) {
                                                 e.printStackTrace();
                                             }
+
                                         }
                                     }
                                 }
                             }
                         });
+
                     } else {    // the write-back of the written action by the user themselves (get part of "send and get response")
                         synchronized (controller) {
                             switch (mainServerResponse.getClass().getSimpleName()) {

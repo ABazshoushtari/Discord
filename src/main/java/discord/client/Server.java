@@ -37,7 +37,7 @@ public class Server implements Asset {
         members.put(creatorUID, ownerRoleSet);
 
         //initialize the first default text channel called general with just a creator member
-        textChannels.add(new TextChannel("general", new HashSet<>(List.of(creatorUID))));
+        textChannels.add(new TextChannel("general", 0, new HashSet<>(List.of(creatorUID))));
     }
 
     // Getters:
@@ -124,6 +124,19 @@ public class Server implements Asset {
         TextChannel newTextChannel = new TextChannel(newTextChannelName, members.keySet());
         textChannels.add(newTextChannel);
         return newTextChannel;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Server)) return false;
+        Server server = (Server) o;
+        return getUnicode().equals(server.getUnicode());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getUnicode());
     }
 
     public HashSet<Ability> getAllAbilities(int UID) {
