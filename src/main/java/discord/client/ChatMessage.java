@@ -8,6 +8,7 @@ import discord.signals.ChatMessageSignal;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -18,25 +19,29 @@ public abstract class ChatMessage implements Action {
     protected Integer senderUID;
     protected byte[] senderImage;
     protected String senderUsername;
-    protected Integer receiverUID;
+    protected ArrayList<Integer> receiverUIDs;
+    private final int serverUnicode;  // enter -1 if its privateChat
+    private final int textChannelIndex;  // enter -1 if its privateChat
     protected String dateTime;
     protected HashMap<Integer, HashSet<Reaction>> reactions;  //  maps UID of the person who has reacted to this message to its reactions
     protected boolean edited;
-
     protected String message = ""; // a message or fileName
+    protected boolean isTextChannelMessage;
 
     // Constructors:
-    public ChatMessage(Integer senderUID, Integer receiverUID) {
+    public ChatMessage(Integer senderUID, ArrayList<Integer> receiverUIDs, int serverUnicode, int textChannelIndex, boolean isTextChannelMessage) {
         this.senderUID = senderUID;
-        this.receiverUID = receiverUID;
+        this.receiverUIDs = receiverUIDs;
+        this.serverUnicode = serverUnicode;
+        this.textChannelIndex = textChannelIndex;
         dateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm"));
         reactions = new HashMap<>();
         edited = false;
+        this.isTextChannelMessage = isTextChannelMessage;
     }
 
     // Methods:
     // Getter Methods:
-
     public Integer getSenderUID() {
         return senderUID;
     }
@@ -49,8 +54,16 @@ public abstract class ChatMessage implements Action {
         return senderUsername;
     }
 
-    public Integer getReceiverUID() {
-        return receiverUID;
+    public ArrayList<Integer> getReceiverUIDs() {
+        return receiverUIDs;
+    }
+
+    public int getServerUnicode() {
+        return serverUnicode;
+    }
+
+    public int getTextChannelIndex() {
+        return textChannelIndex;
     }
 
     public String getDateTime() {
@@ -69,8 +82,11 @@ public abstract class ChatMessage implements Action {
         return message;
     }
 
-    // Setter Methods:
+    public boolean isTextChannelMessage() {
+        return isTextChannelMessage;
+    }
 
+    // Setter Methods:
     public void setSenderUID(Integer senderUID) {
         this.senderUID = senderUID;
     }
@@ -83,8 +99,8 @@ public abstract class ChatMessage implements Action {
         this.senderUsername = senderUsername;
     }
 
-    public void setReceiverUID(Integer receiverUID) {
-        this.receiverUID = receiverUID;
+    public void setReceiverUIDs(ArrayList<Integer> receiverUIDs) {
+        this.receiverUIDs = receiverUIDs;
     }
 
     public void setDateTime(String dateTime) {
@@ -101,6 +117,10 @@ public abstract class ChatMessage implements Action {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public void setTextChannelMessage(boolean textChannelMessage) {
+        isTextChannelMessage = textChannelMessage;
     }
 
     // Other Methods:
@@ -132,28 +152,58 @@ public abstract class ChatMessage implements Action {
     public Object act() throws IOException {
 
         Model senderUser = MainServer.getUsers().get(senderUID);
-        Model receiverUser = MainServer.getUsers().get(receiverUID);
 
         senderUsername = senderUser.getUsername();
         senderImage = senderUser.getAvatarImage();
 
-        senderUser.getPrivateChats().get(receiverUID).add(this);
-        receiverUser.getPrivateChats().get(senderUID).add(this);
+        if (isTextChannelMessage) {
+            // updating database and server
+            synchronized (MainServer.getServers().get(serverUnicode).getTextChannels().get(textChannelIndex)) {
+                MainServer.getServers().get(serverUnicode).getTextChannels().get(textChannelIndex).getTextChannelMessages().add(this);
+                MainServer.updateDatabase(MainServer.getServers().get(serverUnicode));
+            }
+            TextChannel updatedTextChannelFromMainServer = MainServer.getServers().get(serverUnicode).getTextChannels().get(textChannelIndex);
 
-        MainServer.updateDatabase(senderUser);
-        MainServer.updateDatabase(receiverUser);
+            // sending message from socket if the receiver is online and in the textChannel chat
+            for (ClientHandler ch : clientHandlers) {
+                Model user = ch.getUser();
+                if (user != null) {
+                    if (receiverUIDs.contains(user.getUID())) {
 
-        for (ClientHandler ch : clientHandlers) {
-            Model user = ch.getUser();
-            if (user != null) {
-                if (receiverUID.equals(user.getUID())) {
+                        user = MainServer.getUsers().get(user.getUID()); // updating user
 
-                    user = MainServer.getUsers().get(receiverUID);  //userOfClientHandler.getChangerUserUID()
+                        if (updatedTextChannelFromMainServer.getMembers().get(user.getUID())) {
+                            // synchronize!!!!!!!
+                            synchronized (ch.getMySocket()) {
+                                ch.getMySocket().write(new ChatMessageSignal(this, false)); // we can also pass isTextChannelMessage
+                            }
+                        }
+                    }
+                }
+            }
 
-                    if (user.getIsInChat().get(senderUID)) {
-                        synchronized (ch.getMySocket()) {
-                            ch.getMySocket().write(new ChatMessageSignal(this));
-                            break;
+        } else {
+            Integer receiverUID = receiverUIDs.get(0);
+            Model receiverUser = MainServer.getUsers().get(receiverUID);
+
+            senderUser.getPrivateChats().get(receiverUID).add(this);
+            receiverUser.getPrivateChats().get(senderUID).add(this);
+
+            MainServer.updateDatabase(senderUser);
+            MainServer.updateDatabase(receiverUser);
+
+            for (ClientHandler ch : clientHandlers) {
+                Model user = ch.getUser();
+                if (user != null) {
+                    if (receiverUID.equals(user.getUID())) {
+
+                        user = MainServer.getUsers().get(receiverUID);  //userOfClientHandler.getChangerUserUID()
+
+                        if (user.getIsInChat().get(senderUID)) {
+                            synchronized (ch.getMySocket()) {
+                                ch.getMySocket().write(new ChatMessageSignal(this, false)); // we can also pass isTextChannelMessage
+                                break;
+                            }
                         }
                     }
                 }

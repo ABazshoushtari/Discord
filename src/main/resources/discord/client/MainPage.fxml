@@ -207,7 +207,7 @@
                   <String fx:value="tab-pane" />
                </styleClass>
             </TabPane>
-            <GridPane fx:id="directMessageGridPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #36393F;" vgap="5.0">
+            <GridPane fx:id="directMessageGridPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: #36393F;" vgap="5.0" visible="false">
                <columnConstraints>
                   <ColumnConstraints hgrow="SOMETIMES" maxWidth="1.7976931348623157E308" />
                </columnConstraints>
@@ -242,12 +242,12 @@
                      <children>
                         <StackPane>
                            <children>
-                              <Circle fill="#b9bbbe" onMouseClicked="#uploadFile" radius="12.0" stroke="TRANSPARENT" strokeType="INSIDE" />
-                              <Line endX="10.0" onMouseClicked="#uploadFile" stroke="#36393f" style="-fx-stroke-width: 2;" />
-                              <Line endY="10.0" onMouseClicked="#uploadFile" stroke="#36393f" style="-fx-stroke-width: 2;" />
+                              <Circle fill="#b9bbbe" onMouseClicked="#uploadPrivateChatFile" radius="12.0" stroke="TRANSPARENT" strokeType="INSIDE" />
+                              <Line endX="10.0" onMouseClicked="#uploadPrivateChatFile" stroke="#36393f" style="-fx-stroke-width: 2;" />
+                              <Line endY="10.0" onMouseClicked="#uploadPrivateChatFile" stroke="#36393f" style="-fx-stroke-width: 2;" />
                            </children>
                         </StackPane>
-                        <TextField fx:id="sendMessageTextField" maxWidth="1.7976931348623157E308" onAction="#sendChatStringMessage" prefHeight="30.0" prefWidth="639.0" promptText="Message" style="-fx-background-color: #40444b; -fx-text-fill: White;">
+                        <TextField fx:id="sendMessageTextField" maxWidth="1.7976931348623157E308" onAction="#sendPrivateChatMessage" prefHeight="30.0" prefWidth="639.0" promptText="Message" style="-fx-background-color: #40444b; -fx-text-fill: White;">
                            <font>
                               <Font size="14.0" />
                            </font>
@@ -311,12 +311,12 @@
                            <children>
                               <StackPane>
                                  <children>
-                                    <Circle fill="#b9bbbe" radius="12.0" stroke="TRANSPARENT" strokeType="INSIDE" />
-                                    <Line endX="10.0" stroke="#36393f" style="-fx-stroke-width: 2;" />
-                                    <Line endY="10.0" stroke="#36393f" style="-fx-stroke-width: 2;" />
+                                    <Circle fill="#b9bbbe" onMouseClicked="#uploadTextChannelFile" radius="12.0" stroke="TRANSPARENT" strokeType="INSIDE" />
+                                    <Line endX="10.0" onMouseClicked="#uploadTextChannelFile" stroke="#36393f" style="-fx-stroke-width: 2;" />
+                                    <Line endY="10.0" onMouseClicked="#uploadTextChannelFile" stroke="#36393f" style="-fx-stroke-width: 2;" />
                                  </children>
                               </StackPane>
-                              <TextField fx:id="textChannelMessage" maxWidth="1.7976931348623157E308" prefHeight="30.0" prefWidth="639.0" promptText="Message" style="-fx-background-color: #40444b; -fx-text-fill: White;">
+                              <TextField fx:id="textChannelMessage" maxWidth="1.7976931348623157E308" onAction="#sendTextChannelMessage" prefHeight="30.0" prefWidth="639.0" promptText="Message" style="-fx-background-color: #40444b; -fx-text-fill: White;">
                                  <font>
                                     <Font size="14.0" />
                                  </font>

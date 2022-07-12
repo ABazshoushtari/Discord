@@ -1,5 +1,6 @@
 package discord.signals;
 
+import discord.client.Server;
 import discord.mainServer.ClientHandler;
 import discord.mainServer.MainServer;
 import discord.client.Model;
@@ -23,7 +24,11 @@ public class AddFriendToServerAction implements Action {
         Model targetFriend = MainServer.getUsers().get(newMemberUID);
         targetFriend.getServers().add(unicode);
 
+//        Server server = MainServer.getServers().get(unicode);
+//        server.addNewMember(newMemberUID);
+
         MainServer.updateDatabase(targetFriend);
+//        MainServer.updateDatabase(server);
 
         for (ClientHandler ch : clientHandlers) {
             Model user = ch.getUser();

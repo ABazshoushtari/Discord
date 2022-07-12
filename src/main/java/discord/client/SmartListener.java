@@ -94,13 +94,12 @@ public class SmartListener implements Runnable {
                                             }
                                         }
                                         case "RelatedServerChangedUpdaterSignal" -> {
-                                            if (controller.getCurrentServer().getUnicode().equals(updaterSignal.getID())) {
-                                                try {
-                                                    controller.setUpdatedValuesForServerObservableLists();
-                                                } catch (IOException e) {
-                                                    throw new RuntimeException(e);
-                                                }
+                                            try {
+                                                controller.refreshEveryServerThing();
+                                            } catch (IOException e) {
+                                                throw new RuntimeException(e);
                                             }
+
                                         }
                                     }
                                 }
@@ -123,7 +122,7 @@ public class SmartListener implements Runnable {
                                     }
                                     case "AServerIsChangedSignal" -> {
                                         if (controller.getCurrentServer().getUnicode().equals(us.getID())) {
-                                            controller.setUpdatedValuesForServerObservableLists();
+                                            controller.refreshEveryServerThing();
                                         }
                                     }
                                     case "RespondFriendRequestModelUpdaterSignal" -> {
