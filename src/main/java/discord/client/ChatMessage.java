@@ -1,11 +1,17 @@
 package discord.client;
 
+import discord.mainServer.ClientHandler;
+import discord.mainServer.MainServer;
 import discord.signals.Action;
+import discord.signals.ChatMessageSignal;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.HashSet;
+
+import static discord.mainServer.ClientHandler.clientHandlers;
 
 public abstract class ChatMessage implements Action {
     // Fields:
@@ -16,6 +22,8 @@ public abstract class ChatMessage implements Action {
     protected String dateTime;
     protected HashMap<Integer, HashSet<Reaction>> reactions;  //  maps UID of the person who has reacted to this message to its reactions
     protected boolean edited;
+
+    protected String message = ""; // a message or fileName
 
     // Constructors:
     public ChatMessage(Integer senderUID, Integer receiverUID) {
@@ -57,6 +65,10 @@ public abstract class ChatMessage implements Action {
         return edited;
     }
 
+    public String getMessage() {
+        return message;
+    }
+
     // Setter Methods:
 
     public void setSenderUID(Integer senderUID) {
@@ -87,6 +99,10 @@ public abstract class ChatMessage implements Action {
         this.edited = edited;
     }
 
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
     // Other Methods:
     public void like(Integer UID) {
         if (!reactions.containsKey(UID)) {
@@ -110,5 +126,44 @@ public abstract class ChatMessage implements Action {
         }
         reactions.get(UID).add(Reaction.LAUGH);
         System.out.println("laughed");
+    }
+
+    @Override
+    public Object act() throws IOException {
+
+        Model senderUser = MainServer.getUsers().get(senderUID);
+        Model receiverUser = MainServer.getUsers().get(receiverUID);
+
+        senderUsername = senderUser.getUsername();
+        senderImage = senderUser.getAvatarImage();
+
+        senderUser.getPrivateChats().get(receiverUID).add(this);
+        receiverUser.getPrivateChats().get(senderUID).add(this);
+
+        MainServer.updateDatabase(senderUser);
+        MainServer.updateDatabase(receiverUser);
+
+        for (ClientHandler ch : clientHandlers) {
+            Model user = ch.getUser();
+            if (user != null) {
+                if (receiverUID.equals(user.getUID())) {
+
+                    user = MainServer.getUsers().get(receiverUID);  //userOfClientHandler.getChangerUserUID()
+
+                    if (user.getIsInChat().get(senderUID)) {
+                        synchronized (ch.getMySocket()) {
+                            ch.getMySocket().write(new ChatMessageSignal(this));
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public String toString() {
+        return message;
     }
 }

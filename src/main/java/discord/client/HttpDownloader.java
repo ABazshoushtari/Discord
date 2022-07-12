@@ -11,21 +11,18 @@ public class HttpDownloader implements Runnable {
     private final URL url;
     private final String fileName;
     private final String username;
-    //private final View printer;
 
     // Constructors:
-    public HttpDownloader(String username, URL url, String fileName/*, View printer*/) {
+    public HttpDownloader(String username, URL url, String fileName) {
         this.url = url;
         this.username = username;
         this.fileName = fileName;
-        //this.printer = printer;
     }
 
-    public HttpDownloader(String username, String url, String fileName/*, View printer*/) throws MalformedURLException {
+    public HttpDownloader(String username, String url, String fileName) throws MalformedURLException {
         this.url = new URL(url);
         this.username = username;
         this.fileName = fileName;
-        //this.printer = printer;
     }
 
     // Methods:
@@ -38,7 +35,7 @@ public class HttpDownloader implements Runnable {
             } else if (url.getProtocol().equals("https")) {
                 connection = (HttpsURLConnection) url.openConnection();
             } else {
-                //printer.printErrorMessage("UNSUPPORTED PROTOCOL!");
+                System.err.println("UNSUPPORTED PROTOCOL!");
                 return;
             }
 
@@ -47,12 +44,12 @@ public class HttpDownloader implements Runnable {
                 throw new IOException(connection.getResponseCode() + connection.getResponseMessage());
             }
         } catch (IOException e) {
-            //printer.printErrorMessage("Failed to get the content! " + e);
+            System.err.println("Failed to get the content! " + e);
             return;
         }
 
         long contentLength = connection.getContentLengthLong();
-        //printer.println("Content Length = " + contentLength + " bytes");
+        System.out.println("Content Length = " + contentLength + " bytes");
         makeDirectory("Downloads");
         makeDirectory("Downloads" + File.separator + username + "'s downloads");
         makeDirectory("Downloads" + File.separator + username + "'s downloads" + File.separator + "URLs");
@@ -61,7 +58,7 @@ public class HttpDownloader implements Runnable {
         try (FileOutputStream fileOutputStream = new FileOutputStream(file);
              InputStream inputStream = connection.getInputStream()) {
 
-            //printer.println("Download file from the URL started.");
+            System.out.println("Download file from the URL started.");
             int totalRead = 0;
             byte[] buffer = new byte[1048576];  // size of buffer: 1MB
             while (totalRead < contentLength) {
@@ -72,7 +69,7 @@ public class HttpDownloader implements Runnable {
                 totalRead += read;
                 fileOutputStream.write(buffer, 0, read);
             }
-            //printer.println("Download finished. the file saved in " + directory + fileName);
+            System.out.println("Download finished. the file saved in " + directory + fileName);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -82,7 +79,7 @@ public class HttpDownloader implements Runnable {
         File directory = new File(path);
         if (!directory.exists()) {
             if (!directory.mkdir()) {
-                //printer.printErrorMessage("Could not create the " + path + " directory!");
+                System.err.println("Could not create the " + path + " directory!");
                 throw new RuntimeException();
             }
         }
