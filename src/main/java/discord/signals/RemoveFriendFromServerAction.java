@@ -21,7 +21,6 @@ public class RemoveFriendFromServerAction implements Action {
         Server server = MainServer.getServers().get(serverUnicode);
         server.getMembers().remove(beingRemovedMemberID);
 
-        //MainServer.getServers().replace(serverUnicode, server);
         MainServer.updateDatabase(server);
         return null;
     }

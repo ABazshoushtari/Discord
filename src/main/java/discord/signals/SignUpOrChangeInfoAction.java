@@ -1,13 +1,10 @@
 package discord.signals;
 
-import discord.mainServer.ClientHandler;
 import discord.mainServer.MainServer;
 import discord.client.Model;
 
 import java.io.IOException;
 import java.util.regex.Pattern;
-
-import static discord.mainServer.ClientHandler.clientHandlers;
 
 public class SignUpOrChangeInfoAction implements Action {
     // Fields:

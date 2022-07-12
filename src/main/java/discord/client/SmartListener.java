@@ -26,128 +26,87 @@ public class SmartListener implements Runnable {
                 Object mainServerResponse = mySocket.read();
                 if (mainServerResponse != null) {
 
-                    if (mainServerResponse instanceof UpdaterSignal us) {
+                    if (mainServerResponse instanceof UpdaterSignal updaterSignal) {
 
                         // a signal generated from another client to inform us of a change
                         // these signals are sent by other users in the act method of Actions to inform us something
                         //              if (!(mus instanceof RelatedUserChangedSignal)) {
 
-                        if (us instanceof ModelUpdaterSignal mus) {
+                        if (updaterSignal instanceof ModelUpdaterSignal mus) {
                             mus.setBeingUpdatedModel(controller.getUser());
                             controller.setUser(mus.getUpdatedModel());  // update receiver of the signal
                         }
 
-                        Platform.runLater(new Runnable() {
-                            @Override
-                            public void run() {
-                                // maybe synchronized is necessary because another thread(smartListener) is working with controller
-                                // maybe it should be locked on ObservableLists except refreshServers and refreshPrivateChats
-                                synchronized (controller) {
-                                    if (mus instanceof RelatedUserChangedSignal relatedUserChangedSignal) {
-                                        try {
-                                            controller.refreshEverything();
-                                        } catch (IOException e) {
-                                            throw new RuntimeException(e);
-                                        }
-//                                        Platform.runLater(new Runnable() {
-//                                            @Override
-//                                            public void run() {
-//                                                Model relatedUserChanged = relatedUserChangedSignal.getUpdatedModel();
-//                                                int index = -1;
-//
-//                                                index = controller.getBlockedPeopleObservableList().indexOf(relatedUserChanged);
-//                                                if (index >= 0) {
-//                                                    controller.getBlockedPeopleObservableList().set(index, relatedUserChanged);
-//                                                }
-//
-//                                                index = controller.getPendingObservableList().indexOf(relatedUserChanged);
-//                                                if (index >= 0) {
-//                                                    controller.getPendingObservableList().set(index, relatedUserChanged);
-//                                                }
-//
-//                                                index = controller.getAllFriendsObservableList().indexOf(relatedUserChanged);
-//                                                if (index >= 0) {
-//                                                    controller.getAllFriendsObservableList().set(index, relatedUserChanged);
-//                                                }
-//
-//                                                index = controller.getOnlineFriendsObservableList().indexOf(relatedUserChanged);
-//                                                if (index >= 0) {
-//                                                    controller.getOnlineFriendsObservableList().set(index, relatedUserChanged);
-//                                                }
-//
-//                                                index = controller.getDirectMessagesObservableList().indexOf(relatedUserChanged);
-//                                                if (index >= 0) {
-//                                                    controller.getDirectMessagesObservableList().set(index, relatedUserChanged);
-//                                                }
-//
-//                                                try {
-//                                                    controller.refreshServers();
-//                                                } catch (IOException e) {
-//                                                    throw new RuntimeException(e);
-//                                                }
-//                                                controller.refreshPrivateChat();
-//                                            }
-//                                        });
+                        // maybe synchronized is necessary because another thread(smartListener) is working with controller
+                        // maybe it should be locked on ObservableLists except refreshServers and refreshPrivateChats
 
-                                    } else if (mus instanceof RespondFriendRequestModelUpdaterSignal respondFriendRequestModelUpdaterSignal) {
-                                        Model responder = respondFriendRequestModelUpdaterSignal.getResponder();
-                                        Platform.runLater(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                controller.getPendingObservableList().remove(responder);
-                                                if (respondFriendRequestModelUpdaterSignal.isAccept()) {
-                                                    controller.getAllFriendsObservableList().add(responder);
-                                                    controller.getDirectMessagesObservableList().add(responder);
-                                                    if (responder.getStatus() != Status.Invisible) {
-                                                        controller.getOnlineFriendsObservableList().add(responder);
-                                                    }
+                        Platform.runLater(() -> {
+                            synchronized (controller) {
+                                if (updaterSignal instanceof ModelUpdaterSignal mus) {
+                                    Object beingChangedScreenElement = mus.getBeingChangedScreenElement();
+                                    switch (mus.getClass().getSimpleName()) {
+                                        case "RespondFriendRequestModelUpdaterSignal" -> {
+                                            Model responder = (Model) beingChangedScreenElement;
+                                            controller.getPendingObservableList().remove(responder);
+                                            if (((RespondFriendRequestModelUpdaterSignal) mus).isAccept()) {
+                                                controller.getAllFriendsObservableList().add(responder);
+                                                controller.getDirectMessagesObservableList().add(responder);
+                                                if (responder.getStatus() != Status.Invisible) {
+                                                    controller.getOnlineFriendsObservableList().add(responder);
                                                 }
                                             }
-                                        });
-                                    } else if (mus instanceof FriendRequestModelUpdaterSignal friendRequestModelUpdaterSignal) {
-                                        Platform.runLater(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                controller.getPendingObservableList().add(friendRequestModelUpdaterSignal.getRequester());
+                                        }
+
+                                        case "FriendRequestModelUpdaterSignal" -> {
+                                            Model requester = (Model) beingChangedScreenElement;
+                                            controller.getPendingObservableList().add(requester);
+                                        }
+
+                                        case "CancelFriendRequestModelUpdaterSignal" -> {
+                                            Model canceller = (Model) beingChangedScreenElement;
+                                            controller.getPendingObservableList().remove(canceller);
+                                        }
+
+                                        case "LostAFriendModelUpdaterSignal" -> {
+                                            Model remover = (Model) beingChangedScreenElement;
+
+                                            controller.getAllFriendsObservableList().remove(remover);
+                                            controller.getOnlineFriendsObservableList().remove(remover);
+                                            controller.getDirectMessagesObservableList().remove(remover);
+                                        }
+
+                                        case "ChatMessageSignal" -> {
+                                            ChatMessage chatMessage = (ChatMessage) beingChangedScreenElement;
+                                            controller.getChatMessageObservableList().add(chatMessage);
+                                        }
+
+                                        case "AddedToNewServerModelUpdaterSignal" -> {
+                                            Server newServer = (Server) beingChangedScreenElement;
+                                            controller.getServersObservableList().add(newServer);
+                                        }
+                                    }
+                                } else {
+                                    switch (updaterSignal.getClass().getSimpleName()) {
+                                        case "RelatedUserChangedUpdaterSignal" -> {
+                                            try {
+                                                controller.refreshEverything();
+                                            } catch (IOException e) {
+                                                throw new RuntimeException(e);
                                             }
-                                        });
-                                    } else if (mus instanceof CancelFriendRequestModelUpdaterSignal cancelFriendRequestModelUpdaterSignal) {
-                                        Platform.runLater(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                controller.getPendingObservableList().remove(cancelFriendRequestModelUpdaterSignal.getCanceller());
+                                        }
+                                        case "RelatedServerChangedUpdaterSignal" -> {
+                                            if (controller.getCurrentServer().getUnicode().equals(updaterSignal.getID())) {
+                                                try {
+                                                    controller.setUpdatedValuesForServerObservableLists();
+                                                } catch (IOException e) {
+                                                    throw new RuntimeException(e);
+                                                }
                                             }
-                                        });
-                                    } else if (mus instanceof LostAFriendModelUpdaterSignal lostAFriendModelUpdaterSignal) {
-                                        Platform.runLater(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                Model remover = lostAFriendModelUpdaterSignal.getRemover();
-                                                controller.getAllFriendsObservableList().remove(remover);
-                                                controller.getOnlineFriendsObservableList().remove(remover);
-                                                controller.getDirectMessagesObservableList().remove(remover);
-                                            }
-                                        });
-                                    } else if (mus instanceof ChatMessageSignal chatMessageSignal) {
-                                        Platform.runLater(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                controller.getChatMessageObservableList().add(chatMessageSignal.getChatMessage());
-                                            }
-                                        });
-                                    } else if (mus instanceof AddedToNewServerModelUpdaterSignal addedToNewServerModelUpdaterSignal) {
-                                        Platform.runLater(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                controller.getServersObservableList().add(addedToNewServerModelUpdaterSignal.getNewServer());
-                                            }
-                                        });
+                                        }
                                     }
                                 }
                             }
                         });
-
-
                         /*
                         Platform.runLater(() -> {
                             try {
@@ -205,7 +164,6 @@ public class SmartListener implements Runnable {
             } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
             }
-
         }
     }
 
@@ -232,3 +190,43 @@ public class SmartListener implements Runnable {
         return receivedInteger;
     }
 }
+
+//                                        Platform.runLater(new Runnable() {
+//                                            @Override
+//                                            public void run() {
+//                                                Model relatedUserChanged = relatedUserChangedSignal.getUpdatedModel();
+//                                                int index = -1;
+//
+//                                                index = controller.getBlockedPeopleObservableList().indexOf(relatedUserChanged);
+//                                                if (index >= 0) {
+//                                                    controller.getBlockedPeopleObservableList().set(index, relatedUserChanged);
+//                                                }
+//
+//                                                index = controller.getPendingObservableList().indexOf(relatedUserChanged);
+//                                                if (index >= 0) {
+//                                                    controller.getPendingObservableList().set(index, relatedUserChanged);
+//                                                }
+//
+//                                                index = controller.getAllFriendsObservableList().indexOf(relatedUserChanged);
+//                                                if (index >= 0) {
+//                                                    controller.getAllFriendsObservableList().set(index, relatedUserChanged);
+//                                                }
+//
+//                                                index = controller.getOnlineFriendsObservableList().indexOf(relatedUserChanged);
+//                                                if (index >= 0) {
+//                                                    controller.getOnlineFriendsObservableList().set(index, relatedUserChanged);
+//                                                }
+//
+//                                                index = controller.getDirectMessagesObservableList().indexOf(relatedUserChanged);
+//                                                if (index >= 0) {
+//                                                    controller.getDirectMessagesObservableList().set(index, relatedUserChanged);
+//                                                }
+//
+//                                                try {
+//                                                    controller.refreshServers();
+//                                                } catch (IOException e) {
+//                                                    throw new RuntimeException(e);
+//                                                }
+//                                                controller.refreshPrivateChat();
+//                                            }
+//                                        });

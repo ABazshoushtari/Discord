@@ -200,8 +200,7 @@ public class Model implements Asset {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Model)) return false;
-        Model model = (Model) o;
+        if (!(o instanceof Model model)) return false;
         return getUID().equals(model.getUID());
     }
 

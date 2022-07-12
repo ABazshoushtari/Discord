@@ -36,7 +36,7 @@ public class ClientHandler implements Runnable {
                 Action action;
                 // the first while loop is for signing up or logging in
                 while (user == null) {
-                    action = mySocket.read();
+                    action = (Action) mySocket.read();
                     if (action instanceof LoginAction || ((action instanceof SignUpOrChangeInfoAction && ((SignUpOrChangeInfoAction) action).getStage() == 5))) {
                         user = (Model) action.act();
                         // write back the Model of the logged in/signed-up user
@@ -48,7 +48,7 @@ public class ClientHandler implements Runnable {
                 }
                 // the second while loop is for any other action after logging in or signing up
                 while (user != null) {
-                    action = mySocket.read();
+                    action = (Action) mySocket.read();
                     if (action instanceof LogoutAction) {
                         handleQuit();
                         user = null;
@@ -107,7 +107,7 @@ public class ClientHandler implements Runnable {
             if (ch.user != null) {
                 if (server.getMembers().containsKey(ch.user.getUID())) {
                     synchronized (ch.mySocket) {
-                        ch.mySocket.write(new AServerIsChangedSignal(server.getUnicode()));
+                        ch.mySocket.write(new RelatedServerChangedUpdaterSignal(server.getUnicode()));
                     }
                 }
             }

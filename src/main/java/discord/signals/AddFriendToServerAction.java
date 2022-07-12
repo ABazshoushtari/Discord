@@ -23,7 +23,6 @@ public class AddFriendToServerAction implements Action {
         Model targetFriend = MainServer.getUsers().get(newMemberUID);
         targetFriend.getServers().add(unicode);
 
-        //MainServer.getUsers().replace(newMemberUID, targetFriend);
         MainServer.updateDatabase(targetFriend);
 
         for (ClientHandler ch : clientHandlers) {

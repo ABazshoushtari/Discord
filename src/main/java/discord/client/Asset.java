@@ -6,5 +6,4 @@ public interface Asset extends Serializable {
 
     Integer getID();
     byte[] getAvatarImage();
-    String getAvatarContentType();
 }

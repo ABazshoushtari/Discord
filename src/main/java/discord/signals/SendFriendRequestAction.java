@@ -20,25 +20,22 @@ public class SendFriendRequestAction implements Action {
     @Override
     public Object act() throws IOException {
         if (!MainServer.getUsers().containsKey(receiverUID)) {
-            return -1;
+            return 0;
         } else {
 
             Model receiverUser = MainServer.getUsers().get(receiverUID);
 
             if (receiverUser.getIncomingFriendRequests().contains(requesterUID)) {
-                return -2;
+                return 1;
             }
             if (receiverUser.getBlockedList().contains(requesterUID)) {
-                return -3;
+                return 2;
             }
 
             Model requesterUser = MainServer.getUsers().get(requesterUID);
 
             requesterUser.getSentFriendRequests().add(receiverUID);
             receiverUser.getIncomingFriendRequests().add(requesterUID);
-
-            //MainServer.getUsers().replace(receiverUID, receiverUser);
-            //MainServer.getUsers().replace(requesterUID, requesterUser);
 
             MainServer.updateDatabase(receiverUser);
             MainServer.updateDatabase(requesterUser);
@@ -54,7 +51,7 @@ public class SendFriendRequestAction implements Action {
                 }
             }
 
-            return receiverUID;
+            return 3;
         }
     }
 }

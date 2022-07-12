@@ -1,7 +1,15 @@
 package discord.signals;
 
+import discord.client.Model;
+
 public class RelatedUserChangedUpdaterSignal extends UpdaterSignal {
-    public RelatedUserChangedUpdaterSignal(Integer UID) {
-        ID = UID;
+    private final Model relatedUserChanged;
+
+    public RelatedUserChangedUpdaterSignal(Model relatedUserChanged) {
+        this.relatedUserChanged = relatedUserChanged;
+    }
+
+    public Model getRelatedUserChanged() {
+        return relatedUserChanged;
     }
 }

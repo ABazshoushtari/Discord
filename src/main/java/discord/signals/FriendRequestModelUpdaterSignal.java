@@ -4,21 +4,22 @@ import discord.client.Model;
 
 public class FriendRequestModelUpdaterSignal extends ModelUpdaterSignal {
 
-    private final Model requester;
-    private final Integer requesterUID;
+    //private final Model requester;
+    //private final Integer requesterUID;
 
     public FriendRequestModelUpdaterSignal(Model requester) {
-        this.requester = requester;
-        requesterUID = requester.getUID();
+        super(requester);
+//        this.requester = requester;
+//        requesterUID = requester.getUID();
     }
 
     @Override
     public Model getUpdatedModel() {
-        beingUpdatedModel.getIncomingFriendRequests().add(requesterUID);
+        beingUpdatedModel.getIncomingFriendRequests().add(((Model) beingChangedScreenElement).getUID());
         return beingUpdatedModel;
     }
 
-    public Model getRequester() {
-        return requester;
-    }
+//    public Model getRequester() {
+//        return requester;
+//    }
 }

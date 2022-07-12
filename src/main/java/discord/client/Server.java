@@ -93,7 +93,7 @@ public class Server implements Asset {
             //int command = clientController.getMyScanner().getInt(1, 6);
 
             //update server from MainServer
-            selfUpdate(clientController);
+            //selfUpdate(clientController);
 
             // get all the member's abilities
             String myUsername = clientController.getUser().getUsername();
@@ -111,18 +111,18 @@ public class Server implements Asset {
         }
     }
 
-    private void selfUpdate(Controller clientController) throws IOException, ClassNotFoundException {
-        Server updatedThis = clientController.getMySocket().sendSignalAndGetResponse(new GetServerFromMainServerAction(unicode));
-        if (updatedThis == null) {
-            //clientController.getPrinter().printErrorMessage("db");
-            return;
-        }
-        updateThisFromMainServer(updatedThis);
-    }
-
-    public boolean updateThisOnMainServer(Controller clientController) throws IOException, ClassNotFoundException {
-        return clientController.getMySocket().sendSignalAndGetResponse(new UpdateServerOnMainServerAction(this));
-    }
+//    private void selfUpdate(Controller clientController) throws IOException, ClassNotFoundException {
+//        Server updatedThis = clientController.getMySocket().sendSignalAndGetResponse(new GetServerFromMainServerAction(unicode));
+//        if (updatedThis == null) {
+//            //clientController.getPrinter().printErrorMessage("db");
+//            return;
+//        }
+//        updateThisFromMainServer(updatedThis);
+//    }
+//
+//    public boolean updateThisOnMainServer(Controller clientController) throws IOException, ClassNotFoundException {
+//        return clientController.getMySocket().sendSignalAndGetResponse(new UpdateServerOnMainServerAction(this));
+//    }
 
     private void updateThisFromMainServer(Server updatedThis) {
         serverName = updatedThis.serverName;

@@ -49,13 +49,8 @@ public class MySocket {
         objectOutputStream.writeObject(object);
     }
 
-    public <Type> Type read() throws IOException, ClassNotFoundException {
-        return (Type) objectInputStream.readObject();
-    }
-
-    public <Type> Type sendSignalAndGetResponse(Object object) throws IOException, ClassNotFoundException {
-        write(object);
-        return read();
+    public Object read() throws IOException, ClassNotFoundException {
+        return objectInputStream.readObject();
     }
 }
 

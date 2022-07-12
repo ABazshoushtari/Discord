@@ -1,8 +1,6 @@
 package discord.client;
 
 import discord.signals.*;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -155,33 +153,8 @@ public class Controller {
         }
     }
 
-    private void makeDirectory(String path) {
-        File directory = new File(path);
-        if (!directory.exists()) {
-            if (!directory.mkdir()) {
-                System.err.println("Could not create the " + path + " directory!");
-                throw new RuntimeException();
-            }
-        }
-    }
-
     private String getAbsolutePath(String relativePath) {
         return new File("").getAbsolutePath() + File.separator + relativePath;
-    }
-
-    private String getAvatarImageCachePath(Asset asset) {
-        makeDirectory("cache");
-        if (asset instanceof Model model) {
-
-            makeDirectory("cache" + File.separator + "user profile pictures");
-            makeDirectory("cache" + File.separator + "user profile pictures" + File.separator + model.getUID());
-            return "cache" + File.separator + "user profile pictures" + File.separator + model.getUID();
-        } else if (asset instanceof Server server) {
-            makeDirectory("cache" + File.separator + "server profile pictures");
-            makeDirectory("cache" + File.separator + "server profile pictures" + File.separator + server.getUnicode());
-            return "cache" + File.separator + "server profile pictures" + File.separator + server.getUnicode();
-        }
-        return null;
     }
 
     private Image readAvatarImage(byte[] imageBytes) throws IOException {
@@ -195,32 +168,7 @@ public class Controller {
         if (asset.getAvatarImage() == null) {
             return new Image(getAbsolutePath("requirements" + File.separator + "emojipng.com-11701703.png"));
         }
-//        String directory = getAvatarImageCachePath(asset);
-//        FileOutputStream fos = new FileOutputStream(directory + File.separator + asset.getID() + "." + asset.getAvatarContentType());
-//        fos.write(asset.getAvatarImage());
-//        fos.flush();
-//        fos.close();
-//        FileInputStream fis = new FileInputStream(directory + File.separator + asset.getID() + "." + asset.getAvatarContentType());
-//        Image avatarImage = new Image(fis);
-//        fis.close();
-//        return avatarImage;
         return new Image(new ByteArrayInputStream(asset.getAvatarImage()));
-    }
-
-    private Image readAvatarImage(byte[] imageBytes, String avatarContentType) throws IOException {
-        if (imageBytes == null) {
-            return new Image(getAbsolutePath("requirements" + File.separator + "emojipng.com-11701703.png"));
-        }
-        makeDirectory("cache2");
-        String directory = "cache2" + File.separator;
-        FileOutputStream fos = new FileOutputStream(directory + File.separator + "beingRead." + avatarContentType);
-        fos.write(imageBytes);
-        fos.flush();
-        fos.close();
-        FileInputStream fis = new FileInputStream(directory + File.separator + "beingRead." + avatarContentType);
-        Image avatarImage = new Image(fis);
-        fis.close();
-        return avatarImage;
     }
 
     //////////////////////////////////////////////////////////// login scene ->
@@ -354,10 +302,10 @@ public class Controller {
 
             signupAction.finalizeStage();
             writeAndWait(signupAction);
-            //user = smartListener.getReceivedUser();     // we can get the signed-up user here but ignore for now
             loadLoginMenu(event);
-            //loadProfilePage(event);
-            //loadMainPage();
+
+            //user = smartListener.getReceivedUser();// we could also get the signed-up user here and load the main page
+            //loadMainPage(event);
         }
     }
 
@@ -543,16 +491,9 @@ public class Controller {
 
         avatar.setFill(new ImagePattern(new Image(selectedFile.getAbsolutePath())));
 
-//        BufferedImage image = ImageIO.read(selectedFile);
-//        user.setAvatarImage(((DataBufferByte) image.getRaster().getDataBuffer()).getData());
-
-//        ByteArrayOutputStream outStreamObj = new ByteArrayOutputStream();
         String[] parts = selectedFile.getName().split("\\.");
         user.setAvatarContentType(parts[parts.length - 1]);
-//        ImageIO.write(image, parts[parts.length - 1], outStreamObj);
-//        user.setAvatarImage(outStreamObj.toByteArray());
 
-        String directory = getAvatarImageCachePath(user);
         try (FileInputStream fileInputStream = new FileInputStream(selectedFile)) {
             user.setAvatarImage(fileInputStream.readAllBytes());
         }
@@ -1336,13 +1277,13 @@ public class Controller {
             writeAndWait(new SendFriendRequestAction(user.getUID(), receiverUID));
             Integer scenario = smartListener.getReceivedInteger();
             switch (scenario) {
-                case -1 -> successOrError.setText("A user by this username was not found!");
-                case -2 -> successOrError.setText("You have already sent a friend request to this user!");
-                case -3 -> successOrError.setText("This user has blocked you! You can't send them a friend request");
-                default -> {    // the UID of the receiver user is sent back
+                case 0 -> successOrError.setText("A user by this username was not found!");
+                case 1 -> successOrError.setText("You have already sent a friend request to this user!");
+                case 2 -> successOrError.setText("This user has blocked you! You can't send them a friend request");
+                case 3 -> {    // the UID of the receiver user is sent back
                     successOrError.setStyle("-fx-text-fill: #46C46E");
                     successOrError.setText("The request was sent successfully");
-                    user.getSentFriendRequests().add(scenario);
+                    user.getSentFriendRequests().add(receiverUID);
                     //writeAndWait(new UpdateUserOnMainServerAction(user));
                 }
             }
